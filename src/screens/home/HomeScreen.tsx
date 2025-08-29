@@ -95,7 +95,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       {/* Header with hamburger menu */}
       <View style={styles.header}>
         <TouchableOpacity 
-          onPress={() => navigation.openDrawer()} 
+          onPress={() => navigation.navigate('AisleMenu')} 
           style={styles.menuButton}
         >
           <Ionicons name="menu" size={24} color={theme.colors.primary} />

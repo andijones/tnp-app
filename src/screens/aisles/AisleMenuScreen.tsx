@@ -128,11 +128,9 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity 
-            onPress={() => navigation.openDrawer()} 
-            style={styles.navButton}
-          >
-            <Ionicons name="menu" size={24} color={theme.colors.primary} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navButton}>
+            <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
+            <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
         )}
         <Text style={styles.headerTitle}>

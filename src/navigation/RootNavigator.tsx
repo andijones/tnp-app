@@ -2,7 +2,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme';
 
@@ -18,39 +17,7 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-const Drawer = createDrawerNavigator();
-
-// Drawer Navigator (Only for Aisle Browsing)
-function AisleDrawerNavigator() {
-  return (
-    <Drawer.Navigator
-      screenOptions={{
-        headerShown: false,
-        drawerStyle: {
-          backgroundColor: theme.colors.background,
-          width: 280,
-        },
-        drawerActiveTintColor: theme.colors.primary,
-        drawerInactiveTintColor: theme.colors.text.secondary,
-        drawerLabelStyle: {
-          fontSize: theme.typography.fontSize.md,
-          fontWeight: '500',
-        },
-      }}
-    >
-      <Drawer.Screen
-        name="AisleMenu"
-        component={AisleMenuView}
-        options={{
-          title: 'Browse Aisles',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Drawer.Navigator>
-  );
-}
+// Drawer removed – Aisle browsing lives as a regular stack screen
 
 // Bottom Tab Navigator (Main App Navigation)
 function TabNavigator() {
@@ -81,16 +48,6 @@ function TabNavigator() {
           title: 'All Foods',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Browse"
-        component={AisleDrawerNavigator}
-        options={{
-          title: 'Browse',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
           ),
         }}
       />
@@ -148,6 +105,10 @@ export function RootNavigator() {
       }}
     >
       <Stack.Screen name="Main" component={TabNavigator} />
+      <Stack.Screen 
+        name="AisleMenu" 
+        component={AisleMenuView}
+      />
       <Stack.Screen 
         name="AisleDetail" 
         component={AisleDetailView}
