@@ -1,0 +1,161 @@
+// src/navigation/RootNavigator.tsx
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { Ionicons } from '@expo/vector-icons';
+import { theme } from '../theme';
+
+// Import your screens
+import { HomeScreen } from '../screens/home/HomeScreen';
+import { FavoritesScreen } from '../screens/favorites/FavoritesScreen';
+import { AisleMenuView } from '../screens/aisles/AisleMenuScreen';
+import { AisleDetailView } from '../screens/aisles/AisleDetailScreen';
+import { FoodDetailScreen } from '../screens/food/FoodDetailScreen';
+import { IngredientScannerScreen } from '../screens/scanner/IngredientScannerScreen';
+import { SubmissionScreen } from '../screens/scanner/SubmissionScreen';
+import { ProfileScreen } from '../screens/profile/ProfileScreen';
+
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
+
+// Drawer Navigator (Only for Aisle Browsing)
+function AisleDrawerNavigator() {
+  return (
+    <Drawer.Navigator
+      screenOptions={{
+        headerShown: false,
+        drawerStyle: {
+          backgroundColor: theme.colors.background,
+          width: 280,
+        },
+        drawerActiveTintColor: theme.colors.primary,
+        drawerInactiveTintColor: theme.colors.text.secondary,
+        drawerLabelStyle: {
+          fontSize: theme.typography.fontSize.md,
+          fontWeight: '500',
+        },
+      }}
+    >
+      <Drawer.Screen
+        name="AisleMenu"
+        component={AisleMenuView}
+        options={{
+          title: 'Browse Aisles',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Drawer.Navigator>
+  );
+}
+
+// Bottom Tab Navigator (Main App Navigation)
+function TabNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: theme.colors.background,
+          borderTopColor: theme.colors.surface,
+          height: 85,
+          paddingTop: 5,
+          paddingBottom: 25,
+        },
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.text.secondary,
+        tabBarLabelStyle: {
+          fontSize: theme.typography.fontSize.xs,
+          fontWeight: '500',
+          marginTop: 4,
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: 'All Foods',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Browse"
+        component={AisleDrawerNavigator}
+        options={{
+          title: 'Browse',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Scanner"
+        component={IngredientScannerScreen}
+        options={{
+          title: 'Scanner',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="scan-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Submit"
+        component={SubmissionScreen}
+        options={{
+          title: 'Submit',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add-circle-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Favorites"
+        component={FavoritesScreen}
+        options={{
+          title: 'Favorites',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+// Root Stack Navigator
+export function RootNavigator() {
+  return (
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="Main" component={TabNavigator} />
+      <Stack.Screen 
+        name="AisleDetail" 
+        component={AisleDetailView}
+      />
+      <Stack.Screen 
+        name="FoodDetail" 
+        component={FoodDetailScreen}
+      />
+    </Stack.Navigator>
+  );
+}

@@ -1,0 +1,334 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { theme } from '../../theme';
+import { Aisle } from '../../types/aisle';
+import { Food } from '../../types';
+import { aisleService } from '../../services/aisleService';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { FoodCard } from '../../components/common/FoodCard';
+import { useFavorites } from '../../hooks/useFavorites';
+
+interface AisleDetailViewProps {
+  navigation: any;
+  route: {
+    params: {
+      slug: string;
+      title: string;
+    };
+  };
+}
+
+export const AisleDetailView: React.FC<AisleDetailViewProps> = ({ 
+  navigation, 
+  route 
+}) => {
+  const { slug, title } = route.params;
+  const [aisle, setAisle] = useState<Aisle | null>(null);
+  const [foods, setFoods] = useState<Food[]>([]);
+  const [childAisles, setChildAisles] = useState<Aisle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
+  
+  const { isFavorite, toggleFavorite } = useFavorites();
+
+  useEffect(() => {
+    loadAisleData();
+  }, [slug]);
+
+  useEffect(() => {
+    filterFoods();
+  }, [searchQuery, foods]);
+
+  const loadAisleData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get aisle by slug
+      const aisleData = await aisleService.getAisleBySlug(slug);
+      if (!aisleData) {
+        Alert.alert('Error', 'Aisle not found');
+        navigation.goBack();
+        return;
+      }
+      
+      setAisle(aisleData);
+      
+      // Get child aisles
+      const children = await aisleService.getChildAisles(aisleData.id);
+      setChildAisles(children);
+      
+      // Get foods for this aisle
+      const aislefoods = await aisleService.getFoodsForAisle(aisleData.id);
+      setFoods(aislefoods);
+      
+    } catch (error) {
+      console.error('Error loading aisle data:', error);
+      Alert.alert('Error', 'Failed to load aisle data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterFoods = () => {
+    if (searchQuery.trim() === '') {
+      setFilteredFoods(foods);
+    } else {
+      const filtered = foods.filter(food =>
+        food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        food.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredFoods(filtered);
+    }
+  };
+
+  const navigateToFoodDetail = (foodId: string) => {
+    navigation.navigate('FoodDetail', { foodId });
+  };
+
+  const navigateToChildAisle = (childAisle: Aisle) => {
+    navigation.push('AisleDetail', { 
+      slug: childAisle.slug, 
+      title: childAisle.name 
+    });
+  };
+
+  const renderChildAisle = ({ item }: { item: Aisle }) => (
+    <TouchableOpacity
+      style={styles.childAisleItem}
+      onPress={() => navigateToChildAisle(item)}
+    >
+      <Text style={styles.childAisleName}>{item.name}</Text>
+      <Ionicons 
+        name="chevron-forward" 
+        size={16} 
+        color={theme.colors.text.secondary} 
+      />
+    </TouchableOpacity>
+  );
+
+  const renderFoodItem = ({ item }: { item: Food }) => (
+    <FoodCard
+      food={item}
+      onPress={() => navigateToFoodDetail(item.id)}
+      isFavorite={isFavorite(item.id)}
+      onToggleFavorite={toggleFavorite}
+    />
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingSpinner message="Loading aisle..." />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={2}>
+          {title}
+        </Text>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={20} color={theme.colors.text.secondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={`Search in ${title}...`}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={theme.colors.text.hint}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <FlatList
+        data={filteredFoods}
+        renderItem={renderFoodItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.contentContainer}
+        ListHeaderComponent={() => (
+          <View>
+            {/* Results count */}
+            <Text style={styles.resultsText}>
+              {searchQuery 
+                ? `${filteredFoods.length} results for "${searchQuery}"` 
+                : `${foods.length} foods available`
+              }
+            </Text>
+
+            {/* Child aisles section */}
+            {childAisles.length > 0 && !searchQuery && (
+              <View style={styles.childAislesSection}>
+                <Text style={styles.sectionTitle}>Shop by Category</Text>
+                <FlatList
+                  data={childAisles}
+                  renderItem={renderChildAisle}
+                  keyExtractor={(item) => item.id}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.childAislesList}
+                />
+              </View>
+            )}
+          </View>
+        )}
+        ListEmptyComponent={() => (
+          searchQuery ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search-outline" size={48} color={theme.colors.text.hint} />
+              <Text style={styles.emptyText}>No foods found</Text>
+              <Text style={styles.emptySubtext}>
+                Try adjusting your search terms
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="storefront-outline" size={48} color={theme.colors.text.hint} />
+              <Text style={styles.emptyText}>No foods in this aisle yet</Text>
+              <Text style={styles.emptySubtext}>
+                Check back later or explore other aisles
+              </Text>
+            </View>
+          )
+        )}
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.surface,
+  },
+  
+  backButton: {
+    marginRight: theme.spacing.md,
+  },
+  
+  headerTitle: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+  },
+  
+  searchContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+  },
+  
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+  },
+  
+  searchInput: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    marginLeft: theme.spacing.sm,
+  },
+  
+  contentContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+  },
+  
+  resultsText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  
+  childAislesSection: {
+    marginBottom: theme.spacing.lg,
+  },
+  
+  sectionTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  
+  childAislesList: {
+    marginBottom: theme.spacing.md,
+  },
+  
+  childAisleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    marginRight: theme.spacing.sm,
+  },
+  
+  childAisleName: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+    marginRight: theme.spacing.xs,
+  },
+  
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  
+  emptyText: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.md,
+  },
+  
+  emptySubtext: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+  },
+});
