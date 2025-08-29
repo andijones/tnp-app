@@ -4,12 +4,20 @@ export interface Food {
     description?: string;
     image?: string;
     category?: string;
+    aisle_id?: string;
+    aisle?: Aisle;
     status: 'pending' | 'approved' | 'rejected';
     nova_group?: 1 | 2 | 3 | 4;
     user_id: string;
     created_at: string;
     ingredients?: string;
+    nutrition_data?: NutritionInfo;
     nutrition?: NutritionInfo;
+    supermarket?: string;
+    supermarkets?: FoodSupermarket[];
+    ratings?: Rating[];
+    average_rating?: number;
+    ratings_count?: number;
   }
   
   export interface NutritionInfo {
@@ -20,6 +28,7 @@ export interface Food {
     fiber?: number;
     sugar?: number;
     sodium?: number;
+    servingSize?: string;
   }
   
   export interface User {
@@ -49,9 +58,13 @@ export interface Food {
     id: string;
     user_id: string;
     food_id: string;
-    rating: number;
+    rating: string;
     review?: string;
     created_at: string;
+    profiles?: UserProfile;
+    username?: string;
+    avatar_url?: string;
+    ratingValue?: number;
   }
   
   export interface Supermarket {
@@ -65,4 +78,14 @@ export interface Food {
     name: string;
     slug: string;
     parent_id?: string;
+  }
+
+  export interface FoodSupermarket {
+    id: string;
+    food_id: string;
+    supermarket_id: string;
+    available: boolean;
+    price?: number;
+    last_updated: string;
+    supermarket?: Supermarket;
   }

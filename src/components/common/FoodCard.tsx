@@ -19,6 +19,22 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   isFavorite,
   onToggleFavorite,
 }) => {
+  const getIngredientCount = (ingredientsText?: string, description?: string): number => {
+    const text = ingredientsText || description || '';
+    if (!text) return 0;
+    
+    // Split by common delimiters and clean up
+    const ingredients = text
+      .split(/[,;]/)
+      .map(item => item.trim())
+      .filter(item => item.length > 0)
+      .filter(item => item.length < 100); // Remove suspiciously long strings
+      
+    return ingredients.length;
+  };
+
+  const ingredientCount = getIngredientCount(food.ingredients, food.description);
+
   return (
     <TouchableOpacity 
       style={styles.foodCard} 
@@ -33,14 +49,25 @@ export const FoodCard: React.FC<FoodCardProps> = ({
       
       <View style={styles.foodInfo}>
         <Text style={styles.foodName}>{food.name}</Text>
-        {food.description && (
-          <Text style={styles.foodDescription} numberOfLines={2}>
-            {food.description}
-          </Text>
-        )}
-        <View style={styles.foodMeta}>
-          <Ionicons name="storefront-outline" size={16} color={theme.colors.text.secondary} />
-          <Text style={styles.foodMetaText}>Available in stores</Text>
+        
+        <View style={styles.metaRow}>
+          {/* Ingredient Count */}
+          {ingredientCount > 0 && (
+            <View style={styles.metaItem}>
+              <Ionicons name="list-outline" size={14} color={theme.colors.text.secondary} />
+              <Text style={styles.metaText}>
+                {ingredientCount} ingredient{ingredientCount === 1 ? '' : 's'}
+              </Text>
+            </View>
+          )}
+          
+          {/* Supermarket */}
+          <View style={styles.metaItem}>
+            <Ionicons name="storefront-outline" size={14} color={theme.colors.text.secondary} />
+            <Text style={styles.metaText}>
+              {food.supermarket || 'Store not specified'}
+            </Text>
+          </View>
         </View>
       </View>
       
@@ -77,23 +104,23 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     fontWeight: '600',
     color: theme.colors.text.primary,
-    marginBottom: 2,
+    marginBottom: theme.spacing.sm,
   },
   
-  foodDescription: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
   },
   
-  foodMeta: {
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
   
-  foodMetaText: {
+  metaText: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
-    marginLeft: 4,
   },
 });

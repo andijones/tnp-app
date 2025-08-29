@@ -15,7 +15,7 @@ import { Aisle } from '../../types/aisle';
 import { Food } from '../../types';
 import { aisleService } from '../../services/aisleService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { FoodCard } from '../../components/common/FoodCard';
+import { FoodGrid } from '../../components/common/FoodGrid';
 import { useFavorites } from '../../hooks/useFavorites';
 
 interface AisleDetailViewProps {
@@ -117,14 +117,6 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
     </TouchableOpacity>
   );
 
-  const renderFoodItem = ({ item }: { item: Food }) => (
-    <FoodCard
-      food={item}
-      onPress={() => navigateToFoodDetail(item.id)}
-      isFavorite={isFavorite(item.id)}
-      onToggleFavorite={toggleFavorite}
-    />
-  );
 
   if (loading) {
     return (
@@ -168,11 +160,11 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
         </View>
       </View>
 
-      <FlatList
-        data={filteredFoods}
-        renderItem={renderFoodItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.contentContainer}
+      <FoodGrid
+        foods={filteredFoods}
+        onFoodPress={navigateToFoodDetail}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
         ListHeaderComponent={() => (
           <View>
             {/* Results count */}
@@ -218,7 +210,6 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
             </View>
           )
         )}
-        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );
@@ -270,10 +261,6 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   
-  contentContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
   
   resultsText: {
     fontSize: theme.typography.fontSize.sm,

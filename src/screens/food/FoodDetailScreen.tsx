@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,11 @@ import { Button } from '../../components/common/Button';
 import { NovaBadge } from '../../components/common/NovaBadge';
 import { IconBadge } from '../../components/common/IconBadge';
 import { SectionHeader } from '../../components/common/SectionHeader';
+import { NutritionPanel } from '../../components/food/NutritionPanel';
+import { IngredientsList } from '../../components/food/IngredientsList';
+import { MinimalNutritionPanel } from '../../components/food/MinimalNutritionPanel';
+import { RatingsSection } from '../../components/food/RatingsSection';
+import { ReviewSubmission } from '../../components/food/ReviewSubmission';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -28,6 +33,9 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [hasUserReview, setHasUserReview] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const reviewSectionRef = useRef<View>(null);
 
   useEffect(() => {
     fetchFoodDetails();
@@ -49,7 +57,82 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
         return;
       }
 
-      setFood(foodData);
+      // Fetch aisle associations
+      const { data: aisleData } = await supabase
+        .from('food_item_aisles')
+        .select(`
+          aisle_id,
+          aisles!inner(
+            id,
+            name,
+            slug
+          )
+        `)
+        .eq('food_id', foodId)
+        .limit(1)
+        .single();
+
+      // Fetch ratings first
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from('ratings')
+        .select('id, rating, review, created_at, user_id')
+        .eq('food_id', foodId)
+        .order('created_at', { ascending: false });
+
+      if (ratingsError) {
+        console.error('Error fetching ratings:', ratingsError);
+      }
+
+      console.log('Raw ratings data:', ratingsData);
+      console.log('Aisle data from food item:', aisleData);
+
+      // Fetch user profiles for ratings
+      const ratings = [];
+      if (ratingsData && ratingsData.length > 0) {
+        for (const rating of ratingsData) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', rating.user_id)
+            .single();
+
+          ratings.push({
+            ...rating,
+            ratingValue: parseInt(rating.rating) || 0,
+            username: profileData?.username,
+            avatar_url: profileData?.avatar_url
+          });
+        }
+      }
+
+      console.log('Processed ratings:', ratings);
+
+      const averageRating = ratings.length > 0 
+        ? ratings.reduce((sum, r) => sum + r.ratingValue, 0) / ratings.length 
+        : 0;
+
+      // Check if current user has already reviewed this food
+      const { data: { user } } = await supabase.auth.getUser();
+      let userHasReview = false;
+      if (user && ratingsData && ratingsData.length > 0) {
+        userHasReview = ratingsData.some(rating => rating.user_id === user.id);
+      }
+      setHasUserReview(userHasReview);
+
+      // Parse nutrition data from JSONB column
+      let nutritionData = null;
+      if (foodData.nutrition_data) {
+        nutritionData = foodData.nutrition_data;
+      }
+
+      setFood({
+        ...foodData,
+        aisle: aisleData?.aisles || null,
+        nutrition: nutritionData,
+        ratings,
+        average_rating: averageRating,
+        ratings_count: ratings.length
+      });
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -143,7 +226,11 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header Image */}
         <View style={styles.imageContainer}>
           {food.image ? (
@@ -188,124 +275,135 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
         {/* Content */}
         <View style={styles.contentContainer}>
-          {/* Title & NOVA Badge */}
+          {/* Title */}
           <View style={styles.titleSection}>
-            <View style={styles.titleContent}>
-              <Text style={styles.foodName}>{food.name}</Text>
-              {food.nova_group && (
-                <View style={styles.novaBadgeContainer}>
-                  <NovaBadge novaGroup={food.nova_group} size="large" showLabel />
+            <Text style={styles.foodName}>{food.name}</Text>
+          </View>
+          
+          {/* NOVA Badge - Full Width */}
+          {food.nova_group && (
+            <View style={styles.fullWidthNovaBadge}>
+              <NovaBadge novaGroup={food.nova_group} size="large" showLabel />
+            </View>
+          )}
+
+          {/* Supermarket & Rating Info */}
+          <View style={styles.infoSection}>
+            {/* Supermarket Info */}
+            <View style={styles.supermarketInfo}>
+              <Ionicons name="storefront" size={18} color={theme.colors.primary} />
+              <Text style={styles.supermarketText}>
+                {food.supermarket || 'Supermarket not specified'}
+              </Text>
+            </View>
+            
+            {/* Aisle Info */}
+            {food.aisle?.name && (
+              <TouchableOpacity 
+                style={styles.aisleInfo}
+                onPress={() => {
+                  if (food.aisle?.slug && food.aisle?.name) {
+                    console.log('Navigating to aisle:', food.aisle);
+                    navigation.navigate('AisleDetail', {
+                      slug: food.aisle.slug,
+                      title: food.aisle.name
+                    });
+                  } else {
+                    console.warn('Missing aisle data:', food.aisle);
+                    Alert.alert('Navigation Error', 'Unable to navigate to aisle. Missing data.');
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="apps" size={18} color={theme.colors.primary} />
+                <Text style={styles.aisleText}>
+                  {food.aisle.name}
+                </Text>
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={16} 
+                  color={theme.colors.text.hint} 
+                  style={styles.aisleChevron}
+                />
+              </TouchableOpacity>
+            )}
+            
+            {/* Rating Info */}
+            <TouchableOpacity 
+              style={styles.ratingInfo}
+              onPress={() => {
+                reviewSectionRef.current?.measureLayout(
+                  scrollViewRef.current as any,
+                  (x, y) => {
+                    scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
+                  },
+                  () => {}
+                );
+              }}
+              activeOpacity={0.7}
+            >
+              {food.average_rating && food.ratings_count && food.ratings_count > 0 ? (
+                <View style={styles.starRating}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Ionicons
+                      key={star}
+                      name={star <= Math.round(food.average_rating) ? "star" : "star-outline"}
+                      size={16}
+                      color={star <= Math.round(food.average_rating) ? theme.colors.warning : theme.colors.text.hint}
+                      style={styles.star}
+                    />
+                  ))}
+                  <Text style={styles.ratingText}>
+                    {food.average_rating.toFixed(1)} ({food.ratings_count} review{food.ratings_count === 1 ? '' : 's'})
+                  </Text>
+                  <Ionicons 
+                    name="chevron-down" 
+                    size={16} 
+                    color={theme.colors.text.secondary} 
+                    style={styles.chevron}
+                  />
+                </View>
+              ) : (
+                <View style={styles.starRating}>
+                  <Text style={styles.noRatingText}>No ratings yet</Text>
+                  <Ionicons 
+                    name="chevron-down" 
+                    size={16} 
+                    color={theme.colors.text.secondary} 
+                    style={styles.chevron}
+                  />
                 </View>
               )}
-            </View>
-          </View>
-
-          {/* Quick Actions */}
-          <View style={styles.quickActions}>
-            <IconBadge
-              icon="storefront-outline"
-              label="Available"
-              value="15 stores"
-              onPress={() => Alert.alert('Store Locator', 'Coming soon!')}
-            />
-            <IconBadge
-              icon="star-outline"
-              label="Rating"
-              value="4.2"
-              onPress={() => Alert.alert('Reviews', 'Coming soon!')}
-            />
-            <IconBadge
-              icon="information-circle-outline"
-              label="More Info"
-              onPress={() => Alert.alert('Nutrition Facts', 'Coming soon!')}
-            />
+            </TouchableOpacity>
           </View>
 
           {/* Ingredients Section */}
-          {food.description && (
-            <View style={styles.section}>
-              <SectionHeader 
-                title="Ingredients" 
-                icon="list-outline"
-                subtitle="What's inside this product"
-              />
-              <View style={styles.ingredientsContainer}>
-                <Text style={styles.ingredientsText}>{food.description}</Text>
-              </View>
-            </View>
-          )}
+          <IngredientsList 
+            ingredients={food.ingredients} 
+            description={food.description} 
+          />
 
-          {/* Health Score Section */}
-          <View style={styles.section}>
-            <SectionHeader 
-              title="Health Assessment" 
-              icon="fitness-outline"
-              subtitle="Based on processing level"
+          {/* Nutrition Facts */}
+          <MinimalNutritionPanel nutrition={food.nutrition} />
+
+
+          {/* Review Submission */}
+          <View ref={reviewSectionRef}>
+            <ReviewSubmission 
+              foodId={foodId}
+              onReviewSubmitted={fetchFoodDetails}
+              hasExistingReview={hasUserReview}
             />
-            <View style={styles.healthScore}>
-              <View style={styles.scoreContainer}>
-                <Text style={styles.scoreNumber}>
-                  {food.nova_group ? (5 - food.nova_group) * 25 : 'N/A'}
-                </Text>
-                <Text style={styles.scoreLabel}>Health Score</Text>
-              </View>
-              <View style={styles.scoreDescription}>
-                <Text style={styles.scoreDescriptionText}>
-                  {food.nova_group === 1 && "Excellent choice! This is a minimally processed, whole food."}
-                  {food.nova_group === 2 && "Good choice! This contains natural culinary ingredients."}
-                  {food.nova_group === 3 && "Moderate processing. Consider frequency of consumption."}
-                  {food.nova_group === 4 && "Ultra-processed. Best consumed occasionally."}
-                  {!food.nova_group && "Processing level not yet determined."}
-                </Text>
-              </View>
-            </View>
+
+            {/* Ratings & Reviews */}
+            <RatingsSection 
+              ratings={food.ratings}
+              averageRating={food.average_rating}
+              ratingsCount={food.ratings_count}
+            />
           </View>
 
-          {/* Warnings Section (if applicable) */}
-          {food.nova_group && food.nova_group >= 3 && (
-            <View style={styles.section}>
-              <SectionHeader 
-                title="Things to Consider" 
-                icon="warning-outline"
-              />
-              <View style={styles.warningContainer}>
-                <View style={styles.warningItem}>
-                  <Ionicons name="alert-circle-outline" size={20} color={theme.colors.warning} />
-                  <Text style={styles.warningText}>
-                    {food.nova_group === 3 
-                      ? "Contains added ingredients for preservation or flavor" 
-                      : "Highly processed with multiple industrial ingredients"
-                    }
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
 
-          {/* Submission Info */}
-          <View style={styles.section}>
-            <SectionHeader 
-              title="Product Info" 
-              icon="document-text-outline"
-            />
-            <View style={styles.metaInfo}>
-              <View style={styles.metaItem}>
-                <Text style={styles.metaLabel}>Added</Text>
-                <Text style={styles.metaValue}>
-                  {new Date(food.created_at).toLocaleDateString()}
-                </Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Text style={styles.metaLabel}>Status</Text>
-                <Text style={[
-                  styles.metaValue, 
-                  { color: food.status === 'approved' ? theme.colors.success : theme.colors.warning }
-                ]}>
-                  {food.status.charAt(0).toUpperCase() + food.status.slice(1)}
-                </Text>
-              </View>
-            </View>
-          </View>
 
           {/* Report Button */}
           <TouchableOpacity style={styles.reportButton} onPress={reportFood}>
@@ -336,7 +434,8 @@ const styles = StyleSheet.create({
   foodImage: {
     width: screenWidth,
     height: 250,
-    resizeMode: 'cover',
+    resizeMode: 'contain',
+    backgroundColor: theme.colors.background,
   },
   
   placeholderImage: {
@@ -380,11 +479,7 @@ const styles = StyleSheet.create({
   },
   
   titleSection: {
-    marginBottom: theme.spacing.xl,
-  },
-  
-  titleContent: {
-    alignItems: 'flex-start',
+    marginBottom: theme.spacing.lg,
   },
   
   foodName: {
@@ -395,20 +490,76 @@ const styles = StyleSheet.create({
     lineHeight: 36,
   },
   
-  novaBadgeContainer: {
-    alignSelf: 'flex-start',
+  fullWidthNovaBadge: {
+    width: '100%',
+    marginBottom: theme.spacing.xl,
+    alignItems: 'flex-start',
   },
   
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  infoSection: {
     marginBottom: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  
+  supermarketInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing.sm,
   },
   
-  section: {
-    marginBottom: theme.spacing.xl,
+  supermarketText: {
+    fontSize: theme.typography.fontSize.lg,
+    color: theme.colors.text.primary,
+    fontWeight: '500',
   },
+  
+  aisleInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  
+  aisleText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.primary,
+    fontWeight: '500',
+    flex: 1,
+  },
+  
+  aisleChevron: {
+    marginLeft: theme.spacing.xs,
+  },
+  
+  ratingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  starRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  star: {
+    marginRight: 2,
+  },
+  
+  ratingText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    marginLeft: theme.spacing.sm,
+  },
+  
+  noRatingText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  
+  chevron: {
+    marginLeft: theme.spacing.sm,
+  },
+  
   
   ingredientsContainer: {
     backgroundColor: theme.colors.surface,
@@ -422,61 +573,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   
-  healthScore: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.lg,
-    alignItems: 'center',
-  },
-  
-  scoreContainer: {
-    alignItems: 'center',
-    marginRight: theme.spacing.lg,
-  },
-  
-  scoreNumber: {
-    fontSize: theme.typography.fontSize.xxxl,
-    fontWeight: '700',
-    color: theme.colors.primary,
-  },
-  
-  scoreLabel: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  
-  scoreDescription: {
-    flex: 1,
-  },
-  
-  scoreDescriptionText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    lineHeight: 22,
-  },
-  
-  warningContainer: {
-    backgroundColor: `${theme.colors.warning}15`,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.warning,
-  },
-  
-  warningItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  
-  warningText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginLeft: theme.spacing.sm,
-    flex: 1,
-    lineHeight: 22,
-  },
   
   metaInfo: {
     backgroundColor: theme.colors.surface,

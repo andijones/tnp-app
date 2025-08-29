@@ -14,7 +14,7 @@ import { theme } from '../../theme';
 import { Food } from '../../types';
 import { supabase } from '../../services/supabase/config';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { FoodCard } from '../../components/common/FoodCard';
+import { FoodGrid } from '../../components/common/FoodGrid';
 import { useFavorites } from '../../hooks/useFavorites';
 
 interface HomeScreenProps {
@@ -72,14 +72,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.navigate('FoodDetail', { foodId });
   };
 
-  const renderFoodItem = ({ item }: { item: Food }) => (
-    <FoodCard
-      food={item}
-      onPress={() => navigateToFoodDetail(item.id)}
-      isFavorite={isFavorite(item.id)}
-      onToggleFavorite={toggleFavorite}
-    />
-  );
 
   if (loading) {
     return (
@@ -129,12 +121,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <Text style={styles.statsText}>{foods.length} foods available</Text>
       </View>
 
-      <FlatList
-        data={filteredFoods}
-        renderItem={renderFoodItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.foodList}
-        showsVerticalScrollIndicator={false}
+      <FoodGrid
+        foods={filteredFoods}
+        onFoodPress={navigateToFoodDetail}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={48} color={theme.colors.text.hint} />
@@ -214,10 +205,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   
-  foodList: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
   
   emptyContainer: {
     alignItems: 'center',

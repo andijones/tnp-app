@@ -14,7 +14,7 @@ import { theme } from '../../theme';
 import { Food } from '../../types';
 import { supabase } from '../../services/supabase/config';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { FoodCard } from '../../components/common/FoodCard';
+import { FoodGrid } from '../../components/common/FoodGrid';
 import { useFavorites } from '../../hooks/useFavorites';
 
 interface FavoritesScreenProps {
@@ -99,14 +99,6 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
     fetchFavoritesFoods();
   };
 
-  const renderFoodItem = ({ item }: { item: Food }) => (
-    <FoodCard
-      food={item}
-      onPress={() => navigateToFoodDetail(item.id)}
-      isFavorite={isFavorite(item.id)}
-      onToggleFavorite={handleToggleFavorite}
-    />
-  );
 
   if (loading) {
     return (
@@ -134,12 +126,11 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         </View>
       </View>
 
-      <FlatList
-        data={favoritesFoods}
-        renderItem={renderFoodItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.foodList}
-        showsVerticalScrollIndicator={false}
+      <FoodGrid
+        foods={favoritesFoods}
+        onFoodPress={navigateToFoodDetail}
+        isFavorite={isFavorite}
+        onToggleFavorite={handleToggleFavorite}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="heart-outline" size={48} color={theme.colors.text.hint} />
@@ -190,10 +181,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   
-  foodList: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
   
   emptyContainer: {
     alignItems: 'center',

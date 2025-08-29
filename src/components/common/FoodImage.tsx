@@ -74,7 +74,7 @@ export const FoodImage: React.FC<FoodImageProps> = ({
           width: config.width,
           height: config.height,
           borderRadius: theme.borderRadius.sm,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: style?.borderRadius === 0 ? 'transparent' : theme.colors.surface,
           justifyContent: 'center',
           alignItems: 'center',
           position: 'relative',
@@ -89,11 +89,11 @@ export const FoodImage: React.FC<FoodImageProps> = ({
             style={{
               width: config.width,
               height: config.height,
-              borderRadius: theme.borderRadius.sm,
+              borderRadius: style?.borderRadius === 0 ? 0 : theme.borderRadius.sm,
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
-            resizeMode="cover"
+            resizeMode="contain"
           />
           {loading && (
             <View 
@@ -104,7 +104,7 @@ export const FoodImage: React.FC<FoodImageProps> = ({
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 width: config.width,
                 height: config.height,
-                borderRadius: theme.borderRadius.sm,
+                borderRadius: style?.borderRadius === 0 ? 0 : theme.borderRadius.sm,
               }}
             >
               <ActivityIndicator size="small" color={theme.colors.text.secondary} />
@@ -119,8 +119,8 @@ export const FoodImage: React.FC<FoodImageProps> = ({
         />
       )}
       
-      {/* NOVA Tag - positioned absolutely like in your original design */}
-      {novaGroup && (
+      {/* NOVA Tag - only show if not in grid layout (when borderRadius isn't 0) */}
+      {novaGroup && style?.borderRadius !== 0 && (
         <View style={{
           position: 'absolute',
           top: -4,
