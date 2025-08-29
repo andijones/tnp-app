@@ -51,8 +51,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         .from('foods')
         .select('*')
         .eq('status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching foods:', error);
