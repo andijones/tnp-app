@@ -93,7 +93,7 @@ export const FoodImage: React.FC<FoodImageProps> = ({
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
-            resizeMode="contain"
+            resizeMode={style?.borderRadius === 0 ? "cover" : "contain"}
           />
           {loading && (
             <View 

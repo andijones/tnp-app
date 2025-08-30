@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: theme.spacing.md,
     justifyContent: 'center',
+    paddingVertical: theme.spacing.xs,
   },
   
   foodName: {
@@ -105,12 +106,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
   },
   
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xs,
   },
   
   metaItem: {

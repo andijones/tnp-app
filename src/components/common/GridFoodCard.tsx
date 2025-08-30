@@ -201,8 +201,8 @@ const styles = StyleSheet.create({
   },
   
   contentContainer: {
-    padding: theme.spacing.xs,
-    paddingTop: theme.spacing.sm,
+    padding: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
     flex: 1,
   },
   
@@ -210,12 +210,14 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     fontWeight: '600',
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
     lineHeight: 18,
+    paddingHorizontal: theme.spacing.xs,
   },
   
   metaContainer: {
     gap: 2,
+    paddingHorizontal: theme.spacing.xs,
   },
   
   metaItem: {
