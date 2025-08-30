@@ -22,11 +22,11 @@ const Tab = createBottomTabNavigator();
 // Drawer removed – Aisle browsing lives as a regular stack screen
 
 // Profile Tab Icon Component
-function ProfileTabIcon({ color, size }: { color: string; size: number }) {
+function ProfileTabIcon({ color, size, focused }: { color: string; size: number; focused: boolean }) {
   const { user, profile, loading } = useUser();
   
   if (loading) {
-    return <Ionicons name="person-outline" size={size} color={color} />;
+    return <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />;
   }
   
   return (
@@ -39,6 +39,8 @@ function ProfileTabIcon({ color, size }: { color: string; size: number }) {
         width: size,
         height: size,
         borderRadius: size / 2,
+        borderWidth: focused ? 2 : 0,
+        borderColor: focused ? color : 'transparent',
       }}
     />
   );
@@ -50,20 +52,25 @@ function TabNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: theme.colors.background,
-          borderTopColor: theme.colors.surface,
-          height: 85,
-          paddingTop: 5,
-          paddingBottom: 25,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E5EA',
+          height: 84,
+          paddingTop: 12,
+          paddingBottom: 20,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 8,
         },
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.text.secondary,
-        tabBarLabelStyle: {
-          fontSize: theme.typography.fontSize.xs,
-          fontWeight: '500',
-          marginTop: 4,
-        },
+        tabBarInactiveTintColor: '#8E8E93',
       }}
     >
       <Tab.Screen
@@ -71,8 +78,8 @@ function TabNavigator() {
         component={HomeScreen}
         options={{
           title: 'All Foods',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -81,8 +88,8 @@ function TabNavigator() {
         component={IngredientScannerScreen}
         options={{
           title: 'Scanner',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="scan-outline" size={size} color={color} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? "scan" : "scan-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -91,8 +98,8 @@ function TabNavigator() {
         component={SubmissionScreen}
         options={{
           title: 'Submit',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle-outline" size={size} color={color} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -101,8 +108,8 @@ function TabNavigator() {
         component={FavoritesScreen}
         options={{
           title: 'Favorites',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart-outline" size={size} color={color} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? "heart" : "heart-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -111,8 +118,8 @@ function TabNavigator() {
         component={ProfileScreen}
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <ProfileTabIcon color={color} size={size} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <ProfileTabIcon color={color} size={size} focused={focused} />
           ),
         }}
       />
