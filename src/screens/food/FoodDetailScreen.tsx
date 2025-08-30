@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -204,6 +205,47 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
     Alert.alert('Report', 'Report functionality coming soon!');
   };
 
+  const handleViewFood = async () => {
+    if (!food?.url) {
+      Alert.alert('Not Available', 'This food doesn\'t have a supermarket link available.');
+      return;
+    }
+
+    try {
+      const supported = await Linking.canOpenURL(food.url);
+      if (supported) {
+        await Linking.openURL(food.url);
+      } else {
+        Alert.alert('Error', 'Unable to open this link on your device.');
+      }
+    } catch (error) {
+      console.error('Error opening URL:', error);
+      Alert.alert('Error', 'Failed to open supermarket link.');
+    }
+  };
+
+  const handleGoogleSearch = async () => {
+    if (!food?.name) {
+      Alert.alert('Error', 'Food name not available.');
+      return;
+    }
+
+    try {
+      const encodedFoodName = encodeURIComponent(food.name);
+      const googleSearchUrl = `https://www.google.com/search?q=${encodedFoodName}`;
+      
+      const supported = await Linking.canOpenURL(googleSearchUrl);
+      if (supported) {
+        await Linking.openURL(googleSearchUrl);
+      } else {
+        Alert.alert('Error', 'Unable to open Google search on your device.');
+      }
+    } catch (error) {
+      console.error('Error opening Google search:', error);
+      Alert.alert('Error', 'Failed to open Google search.');
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -286,6 +328,29 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               <NovaBadge novaGroup={food.nova_group} size="large" showLabel />
             </View>
           )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtonsContainer}>
+            {/* View Food Button (Primary) - Only show if URL exists */}
+            {food.url && (
+              <Button
+                title="View Food"
+                onPress={handleViewFood}
+                variant="primary"
+                style={styles.primaryActionButton}
+                leftIcon={<Ionicons name="storefront" size={20} color="white" />}
+              />
+            )}
+            
+            {/* Google Search Button (Secondary) */}
+            <Button
+              title="Search Google"
+              onPress={handleGoogleSearch}
+              variant="outline"
+              style={styles.secondaryActionButton}
+              leftIcon={<Ionicons name="search" size={20} color={theme.colors.primary} />}
+            />
+          </View>
 
           {/* Supermarket & Rating Info */}
           <View style={styles.infoSection}>
@@ -386,20 +451,19 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
           {/* Nutrition Facts */}
           <MinimalNutritionPanel nutrition={food.nutrition} />
 
-
-          {/* Review Submission */}
+          {/* Ratings & Reviews */}
           <View ref={reviewSectionRef}>
-            <ReviewSubmission 
-              foodId={foodId}
-              onReviewSubmitted={fetchFoodDetails}
-              hasExistingReview={hasUserReview}
-            />
-
-            {/* Ratings & Reviews */}
             <RatingsSection 
               ratings={food.ratings}
               averageRating={food.average_rating}
               ratingsCount={food.ratings_count}
+              reviewSubmission={
+                <ReviewSubmission 
+                  foodId={foodId}
+                  onReviewSubmitted={fetchFoodDetails}
+                  hasExistingReview={hasUserReview}
+                />
+              }
             />
           </View>
 
@@ -558,6 +622,21 @@ const styles = StyleSheet.create({
   
   chevron: {
     marginLeft: theme.spacing.sm,
+  },
+
+  actionButtonsContainer: {
+    marginVertical: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+
+  primaryActionButton: {
+    backgroundColor: theme.colors.primary,
+    borderWidth: 0,
+  },
+
+  secondaryActionButton: {
+    borderColor: theme.colors.primary,
+    backgroundColor: 'transparent',
   },
   
   

@@ -9,6 +9,7 @@ interface RatingsSectionProps {
   ratings?: Rating[];
   averageRating?: number;
   ratingsCount?: number;
+  reviewSubmission?: React.ReactNode;
 }
 
 interface StarRatingProps {
@@ -92,7 +93,8 @@ const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
 export const RatingsSection: React.FC<RatingsSectionProps> = ({ 
   ratings = [], 
   averageRating = 0, 
-  ratingsCount = 0 
+  ratingsCount = 0,
+  reviewSubmission 
 }) => {
   if (ratingsCount === 0) {
     return (
@@ -101,6 +103,7 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({
           title="Reviews" 
           icon="star-outline"
         />
+        {reviewSubmission}
         <View style={styles.noRatingsContainer}>
           <Ionicons name="star-outline" size={32} color={theme.colors.text.hint} />
           <Text style={styles.noRatingsText}>No reviews yet</Text>
@@ -117,6 +120,8 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({
         icon="star-outline"
         subtitle={`${ratingsCount} review${ratingsCount === 1 ? '' : 's'}`}
       />
+      
+      {reviewSubmission}
       
       {/* Rating Summary */}
       <View style={styles.ratingSummary}>

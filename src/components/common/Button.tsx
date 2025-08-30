@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, View } from 'react-native';
 import { theme } from '../../theme';
 
 interface ButtonProps {
@@ -9,6 +9,8 @@ interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   style?: ViewStyle;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -18,7 +20,11 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'md',
   disabled = false,
   style,
+  leftIcon,
+  rightIcon,
 }) => {
+  const hasIcons = leftIcon || rightIcon;
+
   return (
     <TouchableOpacity
       style={[
@@ -31,7 +37,15 @@ export const Button: React.FC<ButtonProps> = ({
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Text>
+      {hasIcons ? (
+        <View style={styles.content}>
+          {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+          <Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Text>
+          {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
+        </View>
+      ) : (
+        <Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Text>
+      )}
     </TouchableOpacity>
   );
 };
@@ -87,5 +101,19 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: theme.colors.primary,
+  },
+  
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  leftIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  
+  rightIcon: {
+    marginLeft: theme.spacing.sm,
   },
 });

@@ -18,6 +18,7 @@ export interface Food {
     ratings?: Rating[];
     average_rating?: number;
     ratings_count?: number;
+    url?: string;
   }
   
   export interface NutritionInfo {
