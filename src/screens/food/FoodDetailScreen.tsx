@@ -10,6 +10,7 @@ import {
   Alert,
   Dimensions,
   Linking,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -267,11 +268,49 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar 
+        barStyle="dark-content" 
+        backgroundColor="#FFFFFF" 
+        translucent={false}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        {/* Fixed Header */}
+        <View style={styles.fixedHeader}>
+        <TouchableOpacity
+          style={styles.headerActionButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+        </TouchableOpacity>
+        
+        <View style={styles.rightActions}>
+          <TouchableOpacity
+            style={styles.headerActionButton}
+            onPress={shareFood}
+          >
+            <Ionicons name="share-outline" size={24} color="#1A1A1A" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.headerActionButton, favoriteLoading && styles.actionButtonDisabled]}
+            onPress={toggleFavorite}
+            disabled={favoriteLoading}
+          >
+            <Ionicons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={24}
+              color={isFavorite ? theme.colors.error : "#1A1A1A"}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <ScrollView 
         ref={scrollViewRef}
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* Hero Image Section */}
         <View style={styles.heroContainer}>
@@ -282,38 +321,6 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               <Ionicons name="image-outline" size={80} color={theme.colors.text.hint} />
             </View>
           )}
-          
-          {/* Header Actions */}
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.headerActionButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            
-            <View style={styles.rightActions}>
-              <TouchableOpacity
-                style={styles.headerActionButton}
-                onPress={shareFood}
-              >
-                <Ionicons name="share-outline" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.headerActionButton, favoriteLoading && styles.actionButtonDisabled]}
-                onPress={toggleFavorite}
-                disabled={favoriteLoading}
-              >
-                <Ionicons
-                  name={isFavorite ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={isFavorite ? theme.colors.error : "#FFFFFF"}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
         </View>
 
         {/* Content Cards */}
@@ -457,54 +464,67 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
+  },
+  
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  
+  // Fixed Header
+  fixedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+    zIndex: 10,
   },
   
   scrollView: {
     flex: 1,
   },
   
+  scrollContent: {
+    paddingBottom: 40,
+    backgroundColor: '#F8F9FA',
+  },
+  
   // Hero Section
   heroContainer: {
-    position: 'relative',
-    height: 400,
-    marginBottom: -40, // Creates overlap with content
+    height: 300,
+    marginBottom: -30, // Creates overlap with content
+    backgroundColor: '#FFFFFF',
   },
   
   heroImage: {
     width: screenWidth,
-    height: 400,
-    resizeMode: 'cover',
+    height: 300,
+    resizeMode: 'contain',
   },
   
   heroPlaceholder: {
     width: screenWidth,
-    height: 400,
+    height: 300,
     backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   
   
-  // Header Actions
-  headerActions: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    zIndex: 10,
-  },
-  
+  // Header Action Buttons
   rightActions: {
     flexDirection: 'row',
     gap: 12,
@@ -514,17 +534,17 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   
   actionButtonDisabled: {
@@ -533,16 +553,15 @@ const styles = StyleSheet.create({
   
   // Content Wrapper
   contentWrapper: {
-    paddingTop: 60, // Account for overlap with hero
+    paddingTop: 50, // Account for overlap with hero
     paddingHorizontal: 20,
-    paddingBottom: 40,
     gap: 20,
   },
   
   // Main Content Card
   mainCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 6,
     padding: 24,
     shadowColor: '#000',
     shadowOffset: {
@@ -574,7 +593,7 @@ const styles = StyleSheet.create({
 
   primaryActionButton: {
     backgroundColor: theme.colors.primary,
-    borderRadius: 16,
+    borderRadius: 4,
     paddingVertical: 16,
     shadowColor: theme.colors.primary,
     shadowOffset: {
@@ -590,14 +609,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(34, 139, 34, 0.08)',
     borderColor: theme.colors.primary,
     borderWidth: 1.5,
-    borderRadius: 16,
+    borderRadius: 4,
     paddingVertical: 16,
   },
   
   // Info Card
   infoCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 6,
     padding: 20,
     shadowColor: '#000',
     shadowOffset: {
@@ -638,7 +657,7 @@ const styles = StyleSheet.create({
   // Section Cards
   sectionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 6,
     padding: 20,
     shadowColor: '#000',
     shadowOffset: {
@@ -657,7 +676,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     marginTop: 20,
     backgroundColor: 'rgba(255, 59, 48, 0.05)',
-    borderRadius: 16,
+    borderRadius: 4,
     flexDirection: 'row',
   },
   

@@ -31,7 +31,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <StatusBar style="light" backgroundColor={theme.colors.primary} />
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
       {session && session.user ? <RootNavigator /> : <AuthScreen />}
     </NavigationContainer>
   );
