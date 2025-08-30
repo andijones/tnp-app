@@ -96,13 +96,24 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
         onPress={onPress}
         activeOpacity={0.7}
       >
-      {/* Image Container with Favorite Button Overlay */}
+      {/* Image Container with Overlays */}
       <View style={styles.imageContainer}>
         <FoodImage 
           imageUrl={food.image}
           size="large"
           style={styles.cardImage}
         />
+        
+        {/* NOVA Rating Overlay */}
+        {food.nova_group && getNovaLabel(food.nova_group) && (
+          <View style={styles.novaOverlay}>
+            <View style={[styles.novaBadge, { backgroundColor: getNovaColor(food.nova_group) }]}>
+              <Text style={styles.novaNumber}>{food.nova_group}</Text>
+            </View>
+          </View>
+        )}
+        
+        {/* Favorite Button Overlay */}
         <View style={styles.favoriteOverlay}>
           <FavoriteButton
             foodId={food.id}
@@ -111,7 +122,7 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
               onToggleFavorite(foodId);
               return true;
             }}
-            size={20}
+            size={22}
           />
         </View>
       </View>
@@ -122,36 +133,18 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
           {food.name}
         </Text>
         
-        {/* Meta Information */}
+        {/* Simplified Meta Information */}
         <View style={styles.metaContainer}>
-          {/* Ingredient Count */}
+          {/* Supermarket - Primary info */}
+          <Text style={styles.supermarketText} numberOfLines={1}>
+            {food.supermarket || 'Store not specified'}
+          </Text>
+          
+          {/* Ingredient Count - Secondary info */}
           {ingredientCount > 0 && (
-            <View style={styles.metaItem}>
-              <Ionicons name="list-outline" size={12} color={theme.colors.text.secondary} />
-              <Text style={styles.metaText}>
-                {ingredientCount} ingredient{ingredientCount === 1 ? '' : 's'}
-              </Text>
-            </View>
-          )}
-          
-          {/* Supermarket */}
-          <View style={styles.metaItem}>
-            <Ionicons name="storefront-outline" size={12} color={theme.colors.text.secondary} />
-            <Text style={styles.metaText} numberOfLines={1}>
-              {food.supermarket || 'Store not specified'}
+            <Text style={styles.ingredientText}>
+              {ingredientCount} ingredient{ingredientCount === 1 ? '' : 's'}
             </Text>
-          </View>
-          
-          {/* NOVA Rating */}
-          {food.nova_group && getNovaLabel(food.nova_group) && (
-            <View style={styles.metaItem}>
-              <View style={[styles.novaBadge, { backgroundColor: getNovaColor(food.nova_group) }]}>
-                <Text style={styles.novaNumber}>{food.nova_group}</Text>
-              </View>
-              <Text style={styles.metaText} numberOfLines={1}>
-                {getNovaLabel(food.nova_group)}
-              </Text>
-            </View>
           )}
         </View>
       </View>
@@ -181,7 +174,7 @@ const styles = StyleSheet.create({
   
   imageContainer: {
     position: 'relative',
-    aspectRatio: 1.1,
+    aspectRatio: 1.4,
     backgroundColor: 'transparent',
   },
   
@@ -191,58 +184,81 @@ const styles = StyleSheet.create({
     borderRadius: 0,
   },
   
+  
+  novaOverlay: {
+    position: 'absolute',
+    top: theme.spacing.sm,
+    left: theme.spacing.sm,
+  },
+  
   favoriteOverlay: {
     position: 'absolute',
-    top: theme.spacing.xs,
-    right: theme.spacing.xs,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
+    top: theme.spacing.sm,
+    right: theme.spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 22,
     padding: theme.spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   
   contentContainer: {
-    padding: theme.spacing.sm,
+    padding: theme.spacing.md,
     paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
     flex: 1,
   },
   
   foodName: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '600',
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: '700',
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-    lineHeight: 18,
-    paddingHorizontal: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+    lineHeight: 22,
+    letterSpacing: -0.2,
   },
   
   metaContainer: {
-    gap: 2,
-    paddingHorizontal: theme.spacing.xs,
+    gap: theme.spacing.xs,
   },
   
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  
-  metaText: {
-    fontSize: theme.typography.fontSize.xs,
+  supermarketText: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: '500',
     color: theme.colors.text.secondary,
-    flex: 1,
+    marginBottom: 2,
+  },
+  
+  ingredientText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.hint,
+    fontWeight: '400',
   },
   
   novaBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
   },
   
   novaNumber: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#FFFFFF',
   },

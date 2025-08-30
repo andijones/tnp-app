@@ -23,7 +23,7 @@ export const FoodImage: React.FC<FoodImageProps> = ({
   const sizeConfig = {
     small: { width: 40, height: 40, iconSize: 16 },
     medium: { width: 60, height: 60, iconSize: 24 },
-    large: { width: 80, height: 80, iconSize: 32 }
+    large: { width: '100%', height: '100%', iconSize: 40 }
   };
 
   const config = sizeConfig[size];
@@ -93,7 +93,7 @@ export const FoodImage: React.FC<FoodImageProps> = ({
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
-            resizeMode={style?.borderRadius === 0 ? "cover" : "contain"}
+            resizeMode="contain"
           />
           {loading && (
             <View 
@@ -102,8 +102,8 @@ export const FoodImage: React.FC<FoodImageProps> = ({
                 justifyContent: 'center',
                 alignItems: 'center',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                width: config.width,
-                height: config.height,
+                width: '100%',
+                height: '100%',
                 borderRadius: style?.borderRadius === 0 ? 0 : theme.borderRadius.sm,
               }}
             >
