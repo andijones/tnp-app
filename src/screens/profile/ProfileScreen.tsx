@@ -6,13 +6,18 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
+import { ProfilePicture } from '../../components/common/ProfilePicture';
 import { supabase } from '../../services/supabase/config';
+import { useUser } from '../../hooks/useUser';
 
 export const ProfileScreen: React.FC = () => {
+  const { user, profile, loading, error } = useUser();
+
   const handleSignOut = async () => {
     Alert.alert(
       'Sign Out',
@@ -33,14 +38,45 @@ export const ProfileScreen: React.FC = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person" size={32} color={theme.colors.text.hint} />
-        </View>
-        <Text style={styles.userName}>Your Profile</Text>
-        <Text style={styles.userEmail}>Profile features coming soon</Text>
+        <ProfilePicture
+          imageUrl={profile?.avatar_url}
+          fullName={profile?.full_name}
+          email={user?.email}
+          size="large"
+          style={styles.profilePicture}
+        />
+        <Text style={styles.userName}>
+          {profile?.full_name || user?.email || 'Your Profile'}
+        </Text>
+        <Text style={styles.userEmail}>{user?.email}</Text>
+        {profile?.bio && (
+          <Text style={styles.userBio}>{profile.bio}</Text>
+        )}
       </View>
 
       {/* Menu Items */}
@@ -102,16 +138,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.text.hint,
+  profilePicture: {
     marginBottom: theme.spacing.lg,
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
   },
   
   userName: {
@@ -176,5 +206,40 @@ const styles = StyleSheet.create({
     color: theme.colors.text.hint,
     textAlign: 'center',
     marginBottom: theme.spacing.xs,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+
+  loadingText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.md,
+  },
+
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+
+  errorText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.error,
+    textAlign: 'center',
+    marginTop: theme.spacing.md,
+  },
+
+  userBio: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+    fontStyle: 'italic',
   },
 });

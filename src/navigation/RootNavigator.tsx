@@ -14,10 +14,35 @@ import { FoodDetailScreen } from '../screens/food/FoodDetailScreen';
 import { IngredientScannerScreen } from '../screens/scanner/IngredientScannerScreen';
 import { SubmissionScreen } from '../screens/scanner/SubmissionScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { ProfilePicture } from '../components/common/ProfilePicture';
+import { useUser } from '../hooks/useUser';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 // Drawer removed – Aisle browsing lives as a regular stack screen
+
+// Profile Tab Icon Component
+function ProfileTabIcon({ color, size }: { color: string; size: number }) {
+  const { user, profile, loading } = useUser();
+  
+  if (loading) {
+    return <Ionicons name="person-outline" size={size} color={color} />;
+  }
+  
+  return (
+    <ProfilePicture
+      imageUrl={profile?.avatar_url}
+      fullName={profile?.full_name}
+      email={user?.email}
+      size="small"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+      }}
+    />
+  );
+}
 
 // Bottom Tab Navigator (Main App Navigation)
 function TabNavigator() {
@@ -87,7 +112,7 @@ function TabNavigator() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <ProfileTabIcon color={color} size={size} />
           ),
         }}
       />
