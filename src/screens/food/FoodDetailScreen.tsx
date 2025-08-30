@@ -273,129 +273,124 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Image */}
-        <View style={styles.imageContainer}>
+        {/* Hero Image Section */}
+        <View style={styles.heroContainer}>
           {food.image ? (
-            <Image source={{ uri: food.image }} style={styles.foodImage} />
+            <Image source={{ uri: food.image }} style={styles.heroImage} />
           ) : (
-            <View style={styles.placeholderImage}>
-              <Ionicons name="image-outline" size={64} color={theme.colors.text.hint} />
+            <View style={styles.heroPlaceholder}>
+              <Ionicons name="image-outline" size={80} color={theme.colors.text.hint} />
             </View>
           )}
           
           {/* Header Actions */}
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={styles.actionButton}
+              style={styles.headerActionButton}
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.background} />
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             
             <View style={styles.rightActions}>
               <TouchableOpacity
-                style={styles.actionButton}
+                style={styles.headerActionButton}
                 onPress={shareFood}
               >
-                <Ionicons name="share-outline" size={24} color={theme.colors.background} />
+                <Ionicons name="share-outline" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.actionButton, favoriteLoading && styles.actionButtonDisabled]}
+                style={[styles.headerActionButton, favoriteLoading && styles.actionButtonDisabled]}
                 onPress={toggleFavorite}
                 disabled={favoriteLoading}
               >
                 <Ionicons
                   name={isFavorite ? 'heart' : 'heart-outline'}
                   size={24}
-                  color={isFavorite ? theme.colors.error : theme.colors.background}
+                  color={isFavorite ? theme.colors.error : "#FFFFFF"}
                 />
               </TouchableOpacity>
             </View>
           </View>
+
         </View>
 
-        {/* Content */}
-        <View style={styles.contentContainer}>
-          {/* Title */}
-          <View style={styles.titleSection}>
-            <Text style={styles.foodName}>{food.name}</Text>
-          </View>
-          
-          {/* NOVA Badge - Full Width */}
-          {food.nova_group && (
-            <View style={styles.fullWidthNovaBadge}>
-              <NovaBadge novaGroup={food.nova_group} size="large" showLabel />
-            </View>
-          )}
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtonsContainer}>
-            {/* View Food Button (Primary) - Only show if URL exists */}
-            {food.url && (
-              <Button
-                title="View Food"
-                onPress={handleViewFood}
-                variant="primary"
-                style={styles.primaryActionButton}
-                leftIcon={<Ionicons name="storefront" size={20} color="white" />}
-              />
+        {/* Content Cards */}
+        <View style={styles.contentWrapper}>
+          {/* Main Info Card */}
+          <View style={styles.mainCard}>
+            <Text style={styles.heroTitle}>{food.name}</Text>
+            
+            {/* NOVA Badge */}
+            {food.nova_group && (
+              <View style={styles.novaBadgeContainer}>
+                <NovaBadge novaGroup={food.nova_group} size="large" showLabel />
+              </View>
             )}
-            
-            {/* Google Search Button (Secondary) */}
-            <Button
-              title="Search Google"
-              onPress={handleGoogleSearch}
-              variant="outline"
-              style={styles.secondaryActionButton}
-              leftIcon={<Ionicons name="search" size={20} color={theme.colors.primary} />}
-            />
+
+            {/* Action Buttons */}
+            <View style={styles.actionButtonsContainer}>
+              {food.url && (
+                <Button
+                  title="View Food"
+                  onPress={handleViewFood}
+                  variant="primary"
+                  style={styles.primaryActionButton}
+                  leftIcon={<Ionicons name="storefront" size={20} color="white" />}
+                />
+              )}
+              
+              <Button
+                title="Search Google"
+                onPress={handleGoogleSearch}
+                variant="outline"
+                style={styles.secondaryActionButton}
+                leftIcon={<Ionicons name="search" size={20} color={theme.colors.primary} />}
+              />
+            </View>
           </View>
 
-          {/* Supermarket & Rating Info */}
-          <View style={styles.infoSection}>
-            {/* Supermarket Info */}
-            <View style={styles.supermarketInfo}>
-              <Ionicons name="storefront" size={18} color={theme.colors.primary} />
-              <Text style={styles.supermarketText}>
-                {food.supermarket || 'Supermarket not specified'}
-              </Text>
+          {/* Quick Info Card */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Ionicons name="storefront" size={20} color={theme.colors.primary} />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Available at</Text>
+                <Text style={styles.infoValue}>
+                  {food.supermarket || 'Supermarket not specified'}
+                </Text>
+              </View>
             </View>
             
-            {/* Aisle Info */}
             {food.aisle?.name && (
               <TouchableOpacity 
-                style={styles.aisleInfo}
+                style={styles.infoRow}
                 onPress={() => {
                   if (food.aisle?.slug && food.aisle?.name) {
-                    console.log('Navigating to aisle:', food.aisle);
                     navigation.navigate('AisleDetail', {
                       slug: food.aisle.slug,
                       title: food.aisle.name
                     });
-                  } else {
-                    console.warn('Missing aisle data:', food.aisle);
-                    Alert.alert('Navigation Error', 'Unable to navigate to aisle. Missing data.');
                   }
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="apps" size={18} color={theme.colors.primary} />
-                <Text style={styles.aisleText}>
-                  {food.aisle.name}
-                </Text>
+                <Ionicons name="apps" size={20} color={theme.colors.primary} />
+                <View style={styles.infoTextContainer}>
+                  <Text style={styles.infoLabel}>Found in</Text>
+                  <Text style={styles.infoValue}>{food.aisle.name}</Text>
+                </View>
                 <Ionicons 
                   name="chevron-forward" 
-                  size={16} 
+                  size={18} 
                   color={theme.colors.text.hint} 
-                  style={styles.aisleChevron}
                 />
               </TouchableOpacity>
             )}
             
-            {/* Rating Info */}
             <TouchableOpacity 
-              style={styles.ratingInfo}
+              style={styles.infoRow}
               onPress={() => {
                 reviewSectionRef.current?.measureLayout(
                   scrollViewRef.current as any,
@@ -407,52 +402,40 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               }}
               activeOpacity={0.7}
             >
-              {food.average_rating && food.ratings_count && food.ratings_count > 0 ? (
-                <View style={styles.starRating}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Ionicons
-                      key={star}
-                      name={star <= Math.round(food.average_rating) ? "star" : "star-outline"}
-                      size={16}
-                      color={star <= Math.round(food.average_rating) ? theme.colors.warning : theme.colors.text.hint}
-                      style={styles.star}
-                    />
-                  ))}
-                  <Text style={styles.ratingText}>
+              <Ionicons name="star" size={20} color={theme.colors.warning} />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Rating</Text>
+                {food.average_rating && food.ratings_count && food.ratings_count > 0 ? (
+                  <Text style={styles.infoValue}>
                     {food.average_rating.toFixed(1)} ({food.ratings_count} review{food.ratings_count === 1 ? '' : 's'})
                   </Text>
-                  <Ionicons 
-                    name="chevron-down" 
-                    size={16} 
-                    color={theme.colors.text.secondary} 
-                    style={styles.chevron}
-                  />
-                </View>
-              ) : (
-                <View style={styles.starRating}>
-                  <Text style={styles.noRatingText}>No ratings yet</Text>
-                  <Ionicons 
-                    name="chevron-down" 
-                    size={16} 
-                    color={theme.colors.text.secondary} 
-                    style={styles.chevron}
-                  />
-                </View>
-              )}
+                ) : (
+                  <Text style={styles.infoValue}>No ratings yet</Text>
+                )}
+              </View>
+              <Ionicons 
+                name="chevron-forward" 
+                size={18} 
+                color={theme.colors.text.hint} 
+              />
             </TouchableOpacity>
           </View>
 
-          {/* Ingredients Section */}
-          <IngredientsList 
-            ingredients={food.ingredients} 
-            description={food.description} 
-          />
+          {/* Ingredients Card */}
+          <View style={styles.sectionCard}>
+            <IngredientsList 
+              ingredients={food.ingredients} 
+              description={food.description} 
+            />
+          </View>
 
-          {/* Nutrition Facts */}
-          <MinimalNutritionPanel nutrition={food.nutrition} />
+          {/* Nutrition Card */}
+          <View style={styles.sectionCard}>
+            <MinimalNutritionPanel nutrition={food.nutrition} />
+          </View>
 
-          {/* Ratings & Reviews */}
-          <View ref={reviewSectionRef}>
+          {/* Reviews Card */}
+          <View ref={reviewSectionRef} style={styles.sectionCard}>
             <RatingsSection 
               ratings={food.ratings}
               averageRating={food.average_rating}
@@ -466,8 +449,6 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               }
             />
           </View>
-
-
 
           {/* Report Button */}
           <TouchableOpacity style={styles.reportButton} onPress={reportFood}>
@@ -483,225 +464,224 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F8F9FA',
   },
   
   scrollView: {
     flex: 1,
   },
   
-  imageContainer: {
+  // Hero Section
+  heroContainer: {
     position: 'relative',
-    height: 250,
+    height: 400,
+    marginBottom: -40, // Creates overlap with content
   },
   
-  foodImage: {
+  heroImage: {
     width: screenWidth,
-    height: 250,
-    resizeMode: 'contain',
-    backgroundColor: theme.colors.background,
+    height: 400,
+    resizeMode: 'cover',
   },
   
-  placeholderImage: {
+  heroPlaceholder: {
     width: screenWidth,
-    height: 250,
+    height: 400,
     backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   
+  
+  // Header Actions
   headerActions: {
     position: 'absolute',
-    top: theme.spacing.lg,
+    top: 50,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 20,
+    zIndex: 10,
   },
   
   rightActions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: 12,
   },
   
-  actionButton: {
+  headerActionButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   
   actionButtonDisabled: {
     opacity: 0.5,
   },
   
-  contentContainer: {
-    padding: theme.spacing.lg,
+  // Content Wrapper
+  contentWrapper: {
+    paddingTop: 60, // Account for overlap with hero
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    gap: 20,
   },
   
-  titleSection: {
-    marginBottom: theme.spacing.lg,
+  // Main Content Card
+  mainCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   
-  foodName: {
-    fontSize: theme.typography.fontSize.xxxl,
+  heroTitle: {
+    fontSize: 32,
     fontWeight: '700',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.lg,
-    lineHeight: 36,
+    color: '#1A1A1A',
+    marginBottom: 16,
+    lineHeight: 38,
   },
   
-  fullWidthNovaBadge: {
-    width: '100%',
-    marginBottom: theme.spacing.xl,
+  novaBadgeContainer: {
+    marginBottom: 20,
     alignItems: 'flex-start',
   },
   
-  infoSection: {
-    marginBottom: theme.spacing.xl,
-    gap: theme.spacing.md,
-  },
-  
-  supermarketInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  
-  supermarketText: {
-    fontSize: theme.typography.fontSize.lg,
-    color: theme.colors.text.primary,
-    fontWeight: '500',
-  },
-  
-  aisleInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  
-  aisleText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.primary,
-    fontWeight: '500',
-    flex: 1,
-  },
-  
-  aisleChevron: {
-    marginLeft: theme.spacing.xs,
-  },
-  
-  ratingInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  
-  starRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  
-  star: {
-    marginRight: 2,
-  },
-  
-  ratingText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginLeft: theme.spacing.sm,
-  },
-  
-  noRatingText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    fontStyle: 'italic',
-  },
-  
-  chevron: {
-    marginLeft: theme.spacing.sm,
-  },
-
+  // Action Buttons
   actionButtonsContainer: {
-    marginVertical: theme.spacing.xl,
-    gap: theme.spacing.md,
+    gap: 12,
   },
 
   primaryActionButton: {
     backgroundColor: theme.colors.primary,
-    borderWidth: 0,
+    borderRadius: 16,
+    paddingVertical: 16,
+    shadowColor: theme.colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
   secondaryActionButton: {
+    backgroundColor: 'rgba(34, 139, 34, 0.08)',
     borderColor: theme.colors.primary,
-    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingVertical: 16,
   },
   
-  
-  ingredientsContainer: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.lg,
+  // Info Card
+  infoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 4,
   },
   
-  ingredientsText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    lineHeight: 24,
-  },
-  
-  
-  metaInfo: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.lg,
-  },
-  
-  metaItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.background,
-  },
-  
-  metaLabel: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-  },
-  
-  metaValue: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '500',
-    color: theme.colors.text.primary,
-  },
-  
-  reportButton: {
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  
+  infoTextContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  
+  infoLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
+    marginBottom: 2,
+  },
+  
+  infoValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  
+  // Section Cards
+  sectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  
+  // Report Button
+  reportButton: {
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
+    paddingVertical: 20,
+    marginTop: 20,
+    backgroundColor: 'rgba(255, 59, 48, 0.05)',
+    borderRadius: 16,
+    flexDirection: 'row',
   },
   
   reportText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginLeft: theme.spacing.sm,
+    fontSize: 14,
+    color: '#FF3B30',
+    marginLeft: 8,
+    fontWeight: '500',
   },
   
+  // Error States
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: 24,
+    backgroundColor: '#F8F9FA',
   },
   
   errorText: {
-    fontSize: theme.typography.fontSize.lg,
-    color: theme.colors.text.primary,
-    marginVertical: theme.spacing.lg,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginVertical: 20,
+    textAlign: 'center',
   },
 });
