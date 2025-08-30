@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
 
-type SubmissionMode = 'photo' | 'url' | 'manual';
+type SubmissionMode = 'photo' | 'url';
 
 interface ImageItem {
   uri: string;
@@ -224,49 +224,6 @@ export const SubmissionScreen: React.FC = () => {
     }
   };
 
-  const submitManualEntry = async () => {
-    if (!productName.trim()) {
-      Alert.alert('Missing Information', 'Please provide a product name');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert('Error', 'Please log in to submit');
-        return;
-      }
-
-      const { error } = await supabase
-        .from('foods')
-        .insert({
-          name: productName.trim(),
-          category: 'manual-submission',
-          description: notes.trim(),
-          status: 'pending',
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      Alert.alert(
-        'Success!', 
-        'Your manual submission has been sent for review.',
-        [{ text: 'OK', onPress: resetForm }]
-      );
-
-    } catch (error) {
-      console.error('Manual submission error:', error);
-      Alert.alert('Error', 'Failed to submit. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const resetForm = () => {
     setSelectedImages([]);
@@ -285,40 +242,42 @@ export const SubmissionScreen: React.FC = () => {
       case 'url':
         submitUrl();
         break;
-      case 'manual':
-        submitManualEntry();
-        break;
     }
   };
 
   const renderModeSelector = () => (
-    <View style={styles.modeSelector}>
-      {[
-        { key: 'photo', icon: 'camera-outline', label: 'Photo' },
-        { key: 'url', icon: 'link-outline', label: 'URL' },
-        { key: 'manual', icon: 'create-outline', label: 'Manual' },
-      ].map((item) => (
+    <View style={styles.tabContainer}>
+      <View style={styles.tabSelector}>
         <TouchableOpacity
-          key={item.key}
           style={[
-            styles.modeButton,
-            mode === item.key && styles.modeButtonActive,
+            styles.tabButton,
+            mode === 'photo' && styles.tabButtonActive,
           ]}
-          onPress={() => setMode(item.key as SubmissionMode)}
+          onPress={() => setMode('photo')}
         >
-          <Ionicons
-            name={item.icon as keyof typeof Ionicons.glyphMap}
-            size={24}
-            color={mode === item.key ? theme.colors.primary : theme.colors.text.secondary}
-          />
           <Text style={[
-            styles.modeLabel,
-            mode === item.key && styles.modeLabelActive,
+            styles.tabText,
+            mode === 'photo' && styles.tabTextActive,
           ]}>
-            {item.label}
+            Photo
           </Text>
         </TouchableOpacity>
-      ))}
+        
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            mode === 'url' && styles.tabButtonActive,
+          ]}
+          onPress={() => setMode('url')}
+        >
+          <Text style={[
+            styles.tabText,
+            mode === 'url' && styles.tabTextActive,
+          ]}>
+            URL
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -415,38 +374,6 @@ export const SubmissionScreen: React.FC = () => {
     </ScrollView>
   );
 
-  const renderManualMode = () => (
-    <ScrollView style={styles.formContainer}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Product Name *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={productName}
-          onChangeText={setProductName}
-          placeholder="Enter product name"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Description/Notes</Text>
-        <TextInput
-          style={[styles.textInput, styles.textArea]}
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Describe the product, ingredients, where you found it, etc."
-          multiline
-          numberOfLines={4}
-        />
-      </View>
-
-      <View style={styles.infoBox}>
-        <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-        <Text style={styles.infoText}>
-          Manual submissions are reviewed by our team. Please provide as much detail as possible to help us add the product accurately.
-        </Text>
-      </View>
-    </ScrollView>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -460,7 +387,6 @@ export const SubmissionScreen: React.FC = () => {
       <View style={styles.content}>
         {mode === 'photo' && renderPhotoMode()}
         {mode === 'url' && renderUrlMode()}
-        {mode === 'manual' && renderManualMode()}
       </View>
 
       <View style={styles.submitContainer}>
@@ -475,7 +401,7 @@ export const SubmissionScreen: React.FC = () => {
             <>
               <Ionicons name="send" size={20} color="white" style={{ marginRight: 8 }} />
               <Text style={styles.submitButtonText}>
-                Submit {mode === 'photo' ? 'Photos' : mode === 'url' ? 'URL' : 'Product'}
+                Submit {mode === 'photo' ? 'Photos' : 'URL'}
               </Text>
             </>
           )}
@@ -506,33 +432,45 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,
   },
-  modeSelector: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+  tabContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#E5E5EA',
   },
-  modeButton: {
+  tabSelector: {
+    backgroundColor: '#F2F2F7',
+    borderRadius: 8,
+    padding: 2,
+    flexDirection: 'row',
+  },
+  tabButton: {
     flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    marginHorizontal: theme.spacing.xs,
-    backgroundColor: theme.colors.surface,
   },
-  modeButtonActive: {
-    backgroundColor: `${theme.colors.primary}15`,
+  tabButtonActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  modeLabel: {
-    fontSize: theme.typography.fontSize.xs,
-    marginTop: theme.spacing.xs,
-    color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
+  tabText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#8E8E93',
   },
-  modeLabelActive: {
-    color: theme.colors.primary,
-    fontWeight: theme.typography.fontWeight.semibold,
+  tabTextActive: {
+    color: '#000000',
+    fontWeight: '600',
   },
   content: {
     flex: 1,
