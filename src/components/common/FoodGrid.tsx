@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View, FlatList, Dimensions, StyleSheet } from 'react-native';
 import { Food } from '../../types';
 import { GridFoodCard } from './GridFoodCard';
@@ -16,7 +16,7 @@ interface FoodGridProps {
   refreshing?: boolean;
 }
 
-export const FoodGrid: React.FC<FoodGridProps> = ({
+export const FoodGrid = forwardRef<FlatList, FoodGridProps>(({
   foods,
   onFoodPress,
   isFavorite,
@@ -26,7 +26,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
   ListEmptyComponent,
   onRefresh,
   refreshing,
-}) => {
+}, ref) => {
   const screenWidth = Dimensions.get('window').width;
   const cardSpacing = theme.spacing.lg;
   const cardWidth = (screenWidth - (cardSpacing * 3)) / 2; // 2 columns with spacing
@@ -44,6 +44,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
 
   return (
     <FlatList
+      ref={ref}
       data={foods}
       renderItem={renderFoodItem}
       keyExtractor={(item) => item.id}
@@ -57,7 +58,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
       refreshing={refreshing}
     />
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

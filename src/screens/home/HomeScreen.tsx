@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   
   const { isFavorite, toggleFavorite } = useFavorites();
+  const foodGridRef = useRef<FlatList>(null);
 
   useEffect(() => {
     fetchFoods();
@@ -72,6 +73,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const navigateToFoodDetail = (foodId: string) => {
     navigation.navigate('FoodDetail', { foodId });
+  };
+
+  const scrollToTop = () => {
+    foodGridRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
 
@@ -122,13 +127,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             >
               <Ionicons name="menu" size={24} color={theme.colors.text.primary} />
             </TouchableOpacity>
-            <View style={styles.logoContainer}>
+            <TouchableOpacity 
+              style={styles.logoContainer}
+              onPress={scrollToTop}
+              activeOpacity={0.7}
+            >
               <Image 
                 source={require('../../../assets/logo.png')} 
                 style={styles.logo} 
                 resizeMode="contain"
               />
-            </View>
+            </TouchableOpacity>
             <TouchableOpacity 
               onPress={() => setIsSearchActive(true)}
               style={styles.searchButton}
@@ -140,13 +149,57 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       </View>
 
       <FoodGrid
+        ref={foodGridRef}
         foods={filteredFoods}
         onFoodPress={navigateToFoodDetail}
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
         ListHeaderComponent={
-          <View style={styles.statsContainer}>
-            <Text style={styles.statsText}>{foods.length} foods available</Text>
+          <View>
+            {/* Scanner Promotion Section - Only show when not searching */}
+            {!searchQuery && (
+              <View style={styles.promoSection}>
+                <View style={styles.promoContent}>
+                  <View style={styles.promoIcon}>
+                    <Ionicons name="scan" size={32} color={theme.colors.primary} />
+                  </View>
+                  <View style={styles.promoText}>
+                    <Text style={styles.promoTitle}>Scan Any Ingredient List</Text>
+                    <Text style={styles.promoSubtitle}>
+                      Instantly discover if foods are ultra-processed or truly healthy
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={styles.promoButton}
+                  onPress={() => navigation.navigate('Scanner')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.promoButtonText}>Try Scanner</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={styles.promoBenefits}>
+                  <View style={styles.benefitItem}>
+                    <Ionicons name="flash" size={16} color={theme.colors.primary} />
+                    <Text style={styles.benefitText}>Instant results</Text>
+                  </View>
+                  <View style={styles.benefitItem}>
+                    <Ionicons name="camera" size={16} color={theme.colors.primary} />
+                    <Text style={styles.benefitText}>Just take a photo</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+            
+            {/* Stats Section */}
+            <View style={styles.statsContainer}>
+              <Text style={styles.statsText}>
+                {searchQuery 
+                  ? `${filteredFoods.length} results for "${searchQuery}"` 
+                  : `${foods.length} foods available`
+                }
+              </Text>
+            </View>
           </View>
         }
         ListEmptyComponent={
@@ -249,6 +302,85 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.primary,
     marginLeft: theme.spacing.sm,
+  },
+  
+  promoSection: {
+    backgroundColor: '#F8FBF8',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  
+  promoContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.md,
+  },
+  
+  promoIcon: {
+    width: 48,
+    height: 48,
+    backgroundColor: `${theme.colors.primary}15`,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.md,
+  },
+  
+  promoText: {
+    flex: 1,
+  },
+  
+  promoTitle: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  
+  promoSubtitle: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+  },
+  
+  promoButton: {
+    backgroundColor: theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  
+  promoButtonText: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginRight: theme.spacing.xs,
+  },
+  
+  promoBenefits: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  
+  benefitText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing.xs,
+    fontWeight: '500',
   },
   
   statsContainer: {
