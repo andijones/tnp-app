@@ -3,17 +3,26 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image, SafeAreaView } from 'react-native';
 
 import { AuthScreen } from '../screens/auth/AuthScreen';
 import { theme } from '../theme';
 
 // Simple placeholder screens
 const HomeScreen = () => (
-  <View style={styles.screen}>
-    <Text style={styles.screenText}>Home Screen</Text>
-    <Text style={styles.screenSubtext}>Browse healthy foods here</Text>
-  </View>
+  <SafeAreaView style={styles.homeContainer}>
+    <View style={styles.header}>
+      <Image 
+        source={require('../../assets/logo.png')} 
+        style={styles.logo} 
+        resizeMode="contain"
+      />
+    </View>
+    <View style={styles.content}>
+      <Text style={styles.screenText}>Home Screen</Text>
+      <Text style={styles.screenSubtext}>Browse healthy foods here</Text>
+    </View>
+  </SafeAreaView>
 );
 
 const ScannerScreen = () => (
@@ -117,6 +126,27 @@ export const AppNavigator = () => {
 };
 
 const styles = StyleSheet.create({
+  homeContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    height: 60,
+    width: 200,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
   screen: {
     flex: 1,
     justifyContent: 'center',

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -26,6 +27,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
+  const [isSearchActive, setIsSearchActive] = useState(false);
   
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -83,42 +85,58 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with hamburger menu */}
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('AisleMenu')} 
-          style={styles.menuButton}
-        >
-          <Ionicons name="menu" size={24} color={theme.colors.primary} />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>The Naked Pantry</Text>
-          <Text style={styles.headerSubtitle}>
-            Discover healthy, non-ultra processed foods
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={20} color={theme.colors.text.secondary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search foods..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor={theme.colors.text.hint}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
+        {isSearchActive ? (
+          // Search active header
+          <View style={styles.searchActiveHeader}>
+            <TouchableOpacity 
+              onPress={() => {
+                setIsSearchActive(false);
+                setSearchQuery('');
+              }}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
             </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsText}>{foods.length} foods available</Text>
+            <TextInput
+              style={styles.searchInputExpanded}
+              placeholder="Search foods..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme.colors.text.hint}
+              autoFocus={true}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          // Normal header
+          <View style={styles.headerTopRow}>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('AisleMenu')} 
+              style={styles.menuButton}
+            >
+              <Ionicons name="menu" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <View style={styles.logoContainer}>
+              <Image 
+                source={require('../../../assets/logo.png')} 
+                style={styles.logo} 
+                resizeMode="contain"
+              />
+            </View>
+            <TouchableOpacity 
+              onPress={() => setIsSearchActive(true)}
+              style={styles.searchButton}
+            >
+              <Ionicons name="search" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <FoodGrid
@@ -126,6 +144,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onFoodPress={navigateToFoodDetail}
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
+        ListHeaderComponent={
+          <View style={styles.statsContainer}>
+            <Text style={styles.statsText}>{foods.length} foods available</Text>
+          </View>
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={48} color={theme.colors.text.hint} />
@@ -147,19 +170,48 @@ const styles = StyleSheet.create({
   },
   
   header: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.background,
+  },
+  
+  searchActiveHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   
   menuButton: {
-    marginRight: theme.spacing.md,
     padding: 4,
+    width: 32,
   },
   
-  headerContent: {
+  searchButton: {
+    padding: 4,
+    width: 32,
+    alignItems: 'center',
+  },
+  
+  backButton: {
+    padding: 4,
+    marginRight: theme.spacing.sm,
+  },
+  
+  logoContainer: {
     flex: 1,
+    alignItems: 'center',
+  },
+  
+  logo: {
+    height: 50,
+    width: 180,
   },
   
   headerTitle: {
@@ -170,22 +222,26 @@ const styles = StyleSheet.create({
   },
   
   headerSubtitle: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-  },
-  
-  searchContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
+    fontSize: theme.typography.fontSize.sm,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    marginHorizontal: theme.spacing.xs,
+  },
+  
+  searchInputExpanded: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    marginRight: theme.spacing.sm,
   },
   
   searchInput: {
@@ -197,12 +253,14 @@ const styles = StyleSheet.create({
   
   statsContainer: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   
   statsText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    fontWeight: '600',
   },
   
   

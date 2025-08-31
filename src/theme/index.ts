@@ -1,7 +1,7 @@
 export const theme = {
     colors: {
       // Primary colors for The Naked Pantry
-      primary: '#4CAF50',      // Green for healthy foods
+      primary: '#02621C',      // Green for healthy foods
       secondary: '#FF9800',     // Orange for warnings/seed oils
       success: '#4CAF50',
       warning: '#FF9800',

@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -23,10 +24,17 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [navigationStack, setNavigationStack] = useState<AisleLevel[]>([]);
   const [currentLevel, setCurrentLevel] = useState<AisleLevel | null>(null);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredAisles, setFilteredAisles] = useState<Aisle[]>([]);
 
   useEffect(() => {
     loadAisles();
   }, []);
+
+  useEffect(() => {
+    filterAisles();
+  }, [searchQuery, currentLevel]);
 
   const loadAisles = async () => {
     try {
@@ -48,6 +56,18 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
       Alert.alert('Error', 'Failed to load aisles. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const filterAisles = () => {
+    const aisles = currentLevel?.aisles || [];
+    if (searchQuery.trim() === '') {
+      setFilteredAisles(aisles);
+    } else {
+      const filtered = aisles.filter(aisle =>
+        aisle.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredAisles(filtered);
     }
   };
 
@@ -120,26 +140,58 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with hamburger menu or back button */}
+      {/* Header */}
       <View style={styles.header}>
-        {navigationStack.length > 1 ? (
-          <TouchableOpacity onPress={navigateBack} style={styles.navButton}>
-            <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
+        {isSearchActive ? (
+          // Search active header
+          <View style={styles.searchActiveHeader}>
+            <TouchableOpacity 
+              onPress={() => {
+                setIsSearchActive(false);
+                setSearchQuery('');
+              }}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.searchInputExpanded}
+              placeholder="Search aisles..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme.colors.text.hint}
+              autoFocus={true}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
+              </TouchableOpacity>
+            )}
+          </View>
         ) : (
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navButton}>
-            <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
+          // Normal header
+          <View style={styles.headerTopRow}>
+            <TouchableOpacity 
+              onPress={navigationStack.length > 1 ? navigateBack : () => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {currentLevel?.title || 'Browse Aisles'}
+            </Text>
+            <TouchableOpacity 
+              onPress={() => setIsSearchActive(true)}
+              style={styles.searchButton}
+            >
+              <Ionicons name="search" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+          </View>
         )}
-        <Text style={styles.headerTitle}>
-          {currentLevel?.title || 'Browse Aisles'}
-        </Text>
       </View>
 
       <FlatList
-        data={currentLevel?.aisles || []}
+        data={filteredAisles}
         renderItem={renderAisleItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.aisleList}
@@ -194,24 +246,33 @@ const styles = StyleSheet.create({
   },
   
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surface,
+    borderBottomColor: theme.colors.border,
   },
   
-  navButton: {
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: theme.spacing.md,
-    padding: 4,
   },
   
-  backText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.primary,
-    marginLeft: 4,
+  searchActiveHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  backButton: {
+    padding: 4,
+    marginRight: theme.spacing.sm,
+  },
+  
+  searchButton: {
+    padding: 4,
+    width: 32,
+    alignItems: 'center',
   },
   
   headerTitle: {
@@ -219,6 +280,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.primary,
     flex: 1,
+    textAlign: 'center',
+  },
+  
+  searchInputExpanded: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    marginRight: theme.spacing.sm,
   },
   
   aisleList: {
