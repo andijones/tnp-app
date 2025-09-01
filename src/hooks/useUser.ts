@@ -49,18 +49,26 @@ export const useUser = () => {
 
         if (mounted) {
           // Create profile object combining user metadata and profile data
+          // Prioritize profile table data, but fall back to user metadata
           const profile: UserProfile = {
             id: user.id,
             full_name: profileData?.full_name || user.user_metadata?.full_name || null,
             avatar_url: profileData?.avatar_url || user.user_metadata?.avatar_url || null,
-            bio: profileData?.bio || null,
+            bio: profileData?.bio || user.user_metadata?.bio || null,
+            username: profileData?.username || user.user_metadata?.username || null,
+            instagram: profileData?.instagram || user.user_metadata?.instagram || null,
           };
+
+          // Only show profile error if it's not a "not found" or RLS error
+          const shouldShowError = profileError && 
+            profileError.code !== 'PGRST116' && // "not found"
+            !profileError.message.includes('row-level security');
 
           setUserData({
             user,
             profile,
             loading: false,
-            error: profileError && profileError.code !== 'PGRST116' ? profileError.message : null, // PGRST116 is "not found"
+            error: shouldShowError ? profileError.message : null,
           });
         }
       } catch (error) {
@@ -102,23 +110,89 @@ export const useUser = () => {
       throw new Error('No user logged in');
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userData.user.id,
-        ...updates,
-        updated_at: new Date().toISOString(),
-      });
+    console.log('Updating profile for user:', userData.user.id, 'with updates:', updates);
+    
+    try {
+      // First, try to update existing profile
+      let { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userData.user.id)
+        .select();
 
-    if (error) {
-      throw error;
+      console.log('Update response:', { data, error });
+
+      // If no rows were updated (profile doesn't exist), try to insert
+      if (!error && (!data || data.length === 0)) {
+        console.log('No existing profile found, attempting insert...');
+        const insertResult = await supabase
+          .from('profiles')
+          .insert({
+            id: userData.user.id,
+            ...updates,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select();
+        
+        data = insertResult.data;
+        error = insertResult.error;
+        console.log('Insert response:', { data, error });
+      }
+
+      if (error) {
+        console.error('Supabase error:', error);
+        
+        // If it's an RLS error, try alternative approach using auth metadata
+        if (error.message.includes('row-level security') || error.message.includes('RLS')) {
+          console.log('RLS error detected, trying auth metadata update...');
+          
+          // Update user metadata as fallback
+          const { data: authData, error: authError } = await supabase.auth.updateUser({
+            data: {
+              ...userData.user.user_metadata,
+              ...updates,
+            }
+          });
+          
+          if (authError) {
+            throw new Error(`Authentication error: ${authError.message}`);
+          }
+          
+          console.log('Updated via auth metadata:', authData);
+          
+          // Update local state with auth metadata
+          setUserData(prev => ({
+            ...prev,
+            profile: prev.profile ? { ...prev.profile, ...updates } : {
+              id: userData.user.id,
+              ...updates
+            },
+          }));
+          
+          return;
+        }
+        
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      // Update local state
+      setUserData(prev => ({
+        ...prev,
+        profile: prev.profile ? { ...prev.profile, ...updates } : {
+          id: userData.user.id,
+          ...updates
+        },
+      }));
+      
+      console.log('Profile updated successfully');
+    } catch (err) {
+      console.error('Profile update failed:', err);
+      throw err;
     }
-
-    // Update local state
-    setUserData(prev => ({
-      ...prev,
-      profile: prev.profile ? { ...prev.profile, ...updates } : null,
-    }));
   };
 
   return {

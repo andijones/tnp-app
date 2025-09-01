@@ -45,6 +45,8 @@ export interface Food {
     full_name?: string;
     avatar_url?: string;
     bio?: string;
+    username?: string;
+    instagram?: string;
   }
   
   export interface Favorite {
