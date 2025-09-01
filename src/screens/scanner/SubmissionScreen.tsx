@@ -120,25 +120,55 @@ export const SubmissionScreen: React.FC = () => {
       
       for (let i = 0; i < selectedImages.length; i++) {
         const image = selectedImages[i];
-        const fileName = `photo-submission-${Date.now()}-${i}.jpg`;
+        const fileName = `photo-submission-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}.jpg`;
         
+        console.log('Uploading image:', fileName, 'URI:', image.uri);
+        
+        // Convert image URI to ArrayBuffer for better React Native compatibility
         const response = await fetch(image.uri);
-        const blob = await response.blob();
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.status}`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        console.log('ArrayBuffer size:', arrayBuffer.byteLength);
+        
+        // Verify ArrayBuffer has content
+        if (arrayBuffer.byteLength === 0) {
+          throw new Error('Image ArrayBuffer is empty - image may be corrupted');
+        }
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('food-images')
-          .upload(`submissions/${fileName}`, blob, {
+          .upload(`submissions/${fileName}`, arrayBuffer, {
             contentType: 'image/jpeg',
+            upsert: false
           });
 
         if (uploadError) {
+          console.error('Upload error:', uploadError);
           throw uploadError;
         }
+
+        console.log('Upload successful:', uploadData);
 
         const { data: { publicUrl } } = supabase.storage
           .from('food-images')
           .getPublicUrl(`submissions/${fileName}`);
 
+        console.log('Public URL:', publicUrl);
+        
+        // Verify the uploaded image is accessible
+        try {
+          const urlTest = await fetch(publicUrl);
+          console.log('URL accessibility test:', urlTest.status);
+          if (!urlTest.ok) {
+            console.warn('Warning: Uploaded image may not be accessible');
+          }
+        } catch (urlTestError) {
+          console.warn('Warning: Could not verify image accessibility:', urlTestError);
+        }
+        
         uploadedImages.push(publicUrl);
       }
 
@@ -176,7 +206,20 @@ export const SubmissionScreen: React.FC = () => {
 
     } catch (error) {
       console.error('Photo submission error:', error);
-      Alert.alert('Error', 'Failed to submit photos. Please try again.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to submit photos. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch image')) {
+          errorMessage = 'Could not access the selected image. Please try selecting a different image.';
+        } else if (error.message.includes('storage')) {
+          errorMessage = 'Image upload failed. Please check your internet connection and try again.';
+        } else if (error.message.includes('policies')) {
+          errorMessage = 'Storage permission error. Please contact support.';
+        }
+      }
+      
+      Alert.alert('Upload Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -376,7 +419,7 @@ export const SubmissionScreen: React.FC = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.title}>Submit Food</Text>
         <Text style={styles.subtitle}>Help grow The Naked Pantry database</Text>
@@ -384,43 +427,51 @@ export const SubmissionScreen: React.FC = () => {
 
       {renderModeSelector()}
 
-      <View style={styles.content}>
-        {mode === 'photo' && renderPhotoMode()}
-        {mode === 'url' && renderUrlMode()}
-      </View>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          {mode === 'photo' && renderPhotoMode()}
+          {mode === 'url' && renderUrlMode()}
+        </View>
 
-      <View style={styles.submitContainer}>
-        <TouchableOpacity
-          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <>
-              <Ionicons name="send" size={20} color="white" style={{ marginRight: 8 }} />
-              <Text style={styles.submitButtonText}>
-                Submit {mode === 'photo' ? 'Photos' : 'URL'}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <View style={styles.submitContainer}>
+          <TouchableOpacity
+            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <>
+                <Ionicons name="send" size={20} color="white" style={{ marginRight: 8 }} />
+                <Text style={styles.submitButtonText}>
+                  Submit {mode === 'photo' ? 'Photos' : 'URL'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
   },
   header: {
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0', // Using fallback since border not in theme yet
+    backgroundColor: '#FFFFFF',
   },
   title: {
     fontSize: theme.typography.fontSize.xxl,
@@ -502,7 +553,15 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   removeImageButton: {
     position: 'absolute',
@@ -548,7 +607,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     fontSize: theme.typography.fontSize.md,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     color: theme.colors.text.primary,
   },
   textArea: {
@@ -574,7 +641,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
   },
   submitButton: {
     backgroundColor: theme.colors.primary,

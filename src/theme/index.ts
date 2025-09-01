@@ -9,7 +9,7 @@ export const theme = {
       border: '#E0E0E0',  // Add this line
       
       // Neutral colors
-      background: '#FFFFFF',
+      background: '#F7F6F0',
       surface: '#F5F5F5',
       text: {
         primary: '#212121',
@@ -36,9 +36,9 @@ export const theme = {
     },
     
     borderRadius: {
-      sm: 4,
+      sm: 8,
       md: 8,
-      lg: 16,
+      lg: 8,
       full: 9999,
     },
     

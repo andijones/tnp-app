@@ -297,12 +297,20 @@ const styles = StyleSheet.create({
   },
 
   writeReviewButton: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     gap: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.primary,
@@ -316,9 +324,17 @@ const styles = StyleSheet.create({
   },
 
   existingReviewCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   existingReviewText: {
@@ -347,10 +363,18 @@ const styles = StyleSheet.create({
   },
 
   reviewForm: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
     gap: theme.spacing.lg,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   ratingSection: {

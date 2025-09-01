@@ -79,7 +79,7 @@ function TabNavigator() {
         options={{
           title: 'All Foods',
           tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
+            <Ionicons name={focused ? "nutrition" : "nutrition-outline"} size={size} color={color} />
           ),
         }}
       />

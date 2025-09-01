@@ -142,10 +142,18 @@ const styles = StyleSheet.create({
   },
 
   noDataContainer: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.xl,
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   noDataTitle: {
@@ -164,11 +172,17 @@ const styles = StyleSheet.create({
   },
 
   nutritionCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   nutritionHeader: {

@@ -122,13 +122,21 @@ const styles = StyleSheet.create({
   },
 
   noDataContainer: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   noDataText: {
@@ -141,11 +149,17 @@ const styles = StyleSheet.create({
   },
 
   supermarketCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.background,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   unavailableCard: {

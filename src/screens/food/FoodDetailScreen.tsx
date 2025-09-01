@@ -472,7 +472,7 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F7F6F0',
   },
   
   safeArea: {
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   
   scrollContent: {
     paddingBottom: 40,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F7F6F0',
   },
   
   // Hero Section
@@ -518,7 +518,15 @@ const styles = StyleSheet.create({
   heroPlaceholder: {
     width: screenWidth,
     height: 300,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },

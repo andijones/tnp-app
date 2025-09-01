@@ -132,14 +132,14 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <LoadingSpinner message="Loading aisles..." />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         {isSearchActive ? (
@@ -190,7 +190,8 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
         )}
       </View>
 
-      <FlatList
+      <View style={styles.container}>
+        <FlatList
         data={filteredAisles}
         renderItem={renderAisleItem}
         keyExtractor={(item) => item.id}
@@ -234,15 +235,21 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
           ) : null
         )}
         showsVerticalScrollIndicator={false}
-      />
+        />
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
   },
   
   header: {
@@ -295,7 +302,7 @@ const styles = StyleSheet.create({
   },
   
   aisleItem: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
     borderRadius: theme.borderRadius.md,
     marginVertical: 4,
     borderWidth: 1,
@@ -316,7 +323,15 @@ const styles = StyleSheet.create({
   },
   
   shopAllItem: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     marginBottom: theme.spacing.md,
   },
   
@@ -326,7 +341,15 @@ const styles = StyleSheet.create({
   },
   
   viewAllItem: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xl,
   },

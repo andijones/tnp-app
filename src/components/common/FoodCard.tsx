@@ -86,12 +86,18 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 const styles = StyleSheet.create({
   foodCard: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.surface,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   
   foodInfo: {

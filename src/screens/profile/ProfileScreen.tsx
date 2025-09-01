@@ -124,7 +124,7 @@ export const ProfileScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading profile...</Text>
@@ -135,7 +135,7 @@ export const ProfileScreen: React.FC = () => {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
           <Text style={styles.errorText}>{error}</Text>
@@ -145,10 +145,11 @@ export const ProfileScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <View style={styles.profileSection}>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.header}>
+            <View style={styles.profileSection}>
             <View style={styles.profilePictureContainer}>
               <ProfilePicture
                 imageUrl={editing && formData.avatar_url ? formData.avatar_url : profile?.avatar_url}
@@ -315,16 +316,22 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.appInfo}>
           <Text style={styles.appInfoText}>The Naked Pantry v1.0</Text>
           <Text style={styles.appInfoText}>Made with care for healthy eating</Text>
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
   },
   
   scrollView: {
@@ -332,7 +339,7 @@ const styles = StyleSheet.create({
   },
   
   header: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
     paddingTop: theme.spacing.xl,
     paddingHorizontal: theme.spacing.xl,
     paddingBottom: theme.spacing.lg,
@@ -478,9 +485,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     marginTop: theme.spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   
   savingText: {
@@ -495,10 +510,18 @@ const styles = StyleSheet.create({
   },
   
   bioSection: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xl,
     marginBottom: theme.spacing.lg,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   
   bioText: {
@@ -516,12 +539,17 @@ const styles = StyleSheet.create({
   detailCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     shadowRadius: 4,
     elevation: 1,
   },

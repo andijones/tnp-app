@@ -82,14 +82,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <LoadingSpinner message="Loading foods..." />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         {isSearchActive ? (
@@ -148,12 +148,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         )}
       </View>
 
-      <FoodGrid
-        ref={foodGridRef}
-        foods={filteredFoods}
-        onFoodPress={navigateToFoodDetail}
-        isFavorite={isFavorite}
-        onToggleFavorite={toggleFavorite}
+      <View style={styles.container}>
+        <FoodGrid
+          ref={foodGridRef}
+          foods={filteredFoods}
+          onFoodPress={navigateToFoodDetail}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
         ListHeaderComponent={
           <View>
             {/* Scanner Promotion Section - Only show when not searching */}
@@ -211,15 +212,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </Text>
           </View>
         }
-      />
+        />
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
   },
   
   header: {

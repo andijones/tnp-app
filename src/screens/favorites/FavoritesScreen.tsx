@@ -102,14 +102,14 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <LoadingSpinner message="Loading favorites..." />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       {/* Header with hamburger menu */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -126,7 +126,8 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         </View>
       </View>
 
-      <FoodGrid
+      <View style={styles.container}>
+        <FoodGrid
         foods={favoritesFoods}
         onFoodPress={navigateToFoodDetail}
         isFavorite={isFavorite}
@@ -140,22 +141,28 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
             </Text>
           </View>
         }
-      />
+        />
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
   },
   
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: theme.spacing.lg,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surface,
   },

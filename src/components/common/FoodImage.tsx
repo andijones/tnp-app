@@ -47,7 +47,15 @@ export const FoodImage: React.FC<FoodImageProps> = ({
     
     // If it's a storage path, construct the full URL
     const supabaseUrl = 'https://uacihrlnwlqhpbobzajs.supabase.co';
-    return `${supabaseUrl}/storage/v1/object/public/${url}`;
+    
+    // Handle both bucket paths and direct paths
+    if (url.startsWith('food-images/')) {
+      // Already includes bucket name
+      return `${supabaseUrl}/storage/v1/object/public/${url}`;
+    } else {
+      // Assume it's just the file path without bucket name
+      return `${supabaseUrl}/storage/v1/object/public/food-images/${url}`;
+    }
   };
 
   const getNovaColor = (novaGroup?: number) => {

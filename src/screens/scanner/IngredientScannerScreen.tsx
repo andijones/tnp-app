@@ -192,19 +192,52 @@ export const IngredientScannerScreen: React.FC = () => {
       }
 
       // Upload front image to storage
-      const frontFileName = `scanner-submission-${Date.now()}-front.jpg`;
-      const frontResponse = await fetch(scanResult.frontImage);
-      const frontBlob = await frontResponse.blob();
+      const frontFileName = `scanner-submission-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-front.jpg`;
+      console.log('Uploading scanner image:', frontFileName, 'URI:', scanResult.frontImage);
       
-      const { error: frontUploadError } = await supabase.storage
+      const frontResponse = await fetch(scanResult.frontImage);
+      if (!frontResponse.ok) {
+        throw new Error(`Failed to fetch front image: ${frontResponse.status}`);
+      }
+      
+      const frontArrayBuffer = await frontResponse.arrayBuffer();
+      console.log('Front ArrayBuffer size:', frontArrayBuffer.byteLength);
+      
+      // Verify ArrayBuffer has content
+      if (frontArrayBuffer.byteLength === 0) {
+        throw new Error('Front image ArrayBuffer is empty - image may be corrupted');
+      }
+      
+      const { data: uploadData, error: frontUploadError } = await supabase.storage
         .from('food-images')
-        .upload(`submissions/${frontFileName}`, frontBlob);
+        .upload(`submissions/${frontFileName}`, frontArrayBuffer, {
+          contentType: 'image/jpeg',
+          upsert: false
+        });
 
-      if (frontUploadError) throw frontUploadError;
+      if (frontUploadError) {
+        console.error('Scanner upload error:', frontUploadError);
+        throw frontUploadError;
+      }
+
+      console.log('Scanner upload successful:', uploadData);
 
       const { data: { publicUrl } } = supabase.storage
         .from('food-images')
         .getPublicUrl(`submissions/${frontFileName}`);
+
+      console.log('Scanner public URL:', publicUrl);
+      
+      // Verify the uploaded image is accessible
+      try {
+        const urlTest = await fetch(publicUrl);
+        console.log('Scanner URL accessibility test:', urlTest.status);
+        if (!urlTest.ok) {
+          console.warn('Warning: Uploaded scanner image may not be accessible');
+        }
+      } catch (urlTestError) {
+        console.warn('Warning: Could not verify scanner image accessibility:', urlTestError);
+      }
 
       // Create detailed description
       const description = `Scanned ingredients: ${scanResult.extractedText}\n\nNOVA Analysis: ${scanResult.novaClassification.explanation}\n\nFound indicators: ${scanResult.novaClassification.nova_details.foundIndicators.join(', ') || 'None'}\n\nSeed oils detected: ${scanResult.novaClassification.contains_seed_oils ? 'Yes' : 'No'}`;
@@ -236,7 +269,20 @@ export const IngredientScannerScreen: React.FC = () => {
 
     } catch (error) {
       console.error('Save error:', error);
-      Alert.alert('Error', 'Failed to save results. Please try again.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to save results. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Could not access the captured image. Please try scanning again.';
+        } else if (error.message.includes('storage')) {
+          errorMessage = 'Image upload failed. Please check your internet connection and try again.';
+        } else if (error.message.includes('policies')) {
+          errorMessage = 'Storage permission error. Please contact support.';
+        }
+      }
+      
+      Alert.alert('Save Error', errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -519,7 +565,7 @@ export const IngredientScannerScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       {currentStep === 'intro' && renderIntro()}
       {(currentStep === 'ingredients' || currentStep === 'front') && renderCamera()}
       {currentStep === 'processing' && renderProcessing()}
@@ -529,9 +575,14 @@ export const IngredientScannerScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F7F6F0',
   },
   loadingContainer: {
     flex: 1,
@@ -742,7 +793,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   novaCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     padding: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 2,
@@ -798,7 +857,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   ingredientsBox: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
