@@ -37,7 +37,7 @@ const SupermarketCard: React.FC<SupermarketCardProps> = ({ foodSupermarket }) =>
             />
           ) : (
             <View style={styles.logoPlaceholder}>
-              <Ionicons name="storefront" size={24} color={theme.colors.text.hint} />
+              <Ionicons name="storefront" size={24} color={theme.colors.text.tertiary} />
             </View>
           )}
           <View style={styles.supermarketDetails}>
@@ -79,7 +79,7 @@ export const SupermarketAvailability: React.FC<SupermarketAvailabilityProps> = (
           icon="storefront-outline"
         />
         <View style={styles.noDataContainer}>
-          <Ionicons name="storefront-outline" size={32} color={theme.colors.text.hint} />
+          <Ionicons name="storefront-outline" size={32} color={theme.colors.text.tertiary} />
           <Text style={styles.noDataText}>Store availability not tracked</Text>
         </View>
       </View>

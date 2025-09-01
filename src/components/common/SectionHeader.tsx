@@ -76,13 +76,12 @@ const styles = StyleSheet.create({
   },
   
   title: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
+    ...theme.typography.title,
     color: theme.colors.text.primary,
   },
   
   subtitle: {
-    fontSize: theme.typography.fontSize.sm,
+    ...theme.typography.subtext,
     color: theme.colors.text.secondary,
     marginTop: 2,
   },
@@ -93,9 +92,8 @@ const styles = StyleSheet.create({
   },
   
   actionText: {
-    fontSize: theme.typography.fontSize.sm,
+    ...theme.typography.subtextMedium,
     color: theme.colors.primary,
-    fontWeight: '500',
     marginRight: theme.spacing.xs,
   },
 });

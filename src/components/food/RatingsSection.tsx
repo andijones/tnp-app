@@ -28,7 +28,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, size = 16, showNumber =
         key={i}
         name={i <= roundedRating ? "star" : "star-outline"}
         size={size}
-        color={i <= roundedRating ? theme.colors.warning : theme.colors.text.hint}
+        color={i <= roundedRating ? theme.colors.warning : theme.colors.text.tertiary}
         style={{ marginRight: 2 }}
       />
     );
@@ -68,7 +68,7 @@ const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
             <Image source={{ uri: rating.avatar_url }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={16} color={theme.colors.text.hint} />
+              <Ionicons name="person" size={16} color={theme.colors.text.tertiary} />
             </View>
           )}
           <View style={styles.userDetails}>
@@ -105,7 +105,7 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({
         />
         {reviewSubmission}
         <View style={styles.noRatingsContainer}>
-          <Ionicons name="star-outline" size={32} color={theme.colors.text.hint} />
+          <Ionicons name="star-outline" size={32} color={theme.colors.text.tertiary} />
           <Text style={styles.noRatingsText}>No reviews yet</Text>
           <Text style={styles.noRatingsSubtext}>Be the first to review this product</Text>
         </View>

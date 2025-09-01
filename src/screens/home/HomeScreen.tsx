@@ -109,7 +109,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               placeholder="Search foods..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor={theme.colors.text.hint}
+              placeholderTextColor={theme.colors.text.tertiary}
               autoFocus={true}
             />
             {searchQuery.length > 0 && (
@@ -205,7 +205,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={48} color={theme.colors.text.hint} />
+            <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
             <Text style={styles.emptyText}>No foods found</Text>
             <Text style={styles.emptySubtext}>
               Try adjusting your search

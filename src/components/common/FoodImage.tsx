@@ -69,7 +69,7 @@ export const FoodImage: React.FC<FoodImageProps> = ({
       case 4:
         return theme.colors.nova.group4;
       default:
-        return theme.colors.text.hint;
+        return theme.colors.text.tertiary;
     }
   };
 
@@ -123,7 +123,7 @@ export const FoodImage: React.FC<FoodImageProps> = ({
         <Ionicons 
           name="image-outline" 
           size={config.iconSize} 
-          color={theme.colors.text.hint} 
+          color={theme.colors.text.tertiary} 
         />
       )}
       

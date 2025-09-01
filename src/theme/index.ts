@@ -1,28 +1,33 @@
 export const theme = {
     colors: {
-      // Primary colors for The Naked Pantry
-      primary: '#02621C',      // Green for healthy foods
-      secondary: '#FF9800',     // Orange for warnings/seed oils
-      success: '#4CAF50',
-      warning: '#FF9800',
-      error: '#F44336',
-      border: '#E0E0E0',  // Add this line
+      // Primary brand color
+      primary: '#02621C',      // Brand green
       
-      // Neutral colors
-      background: '#F7F6F0',
-      surface: '#F5F5F5',
+      // System colors - minimal set
+      success: '#22c55e',      // Clean green for success states
+      error: '#ef4444',        // Clean red for error states  
+      warning: '#f59e0b',      // Clean orange for warning states
+      
+      // Neutral colors - simplified
+      background: '#F7F6F0',   // Warm background
+      surface: '#FFFFFF',      // Clean white for cards
+      border: '#e5e5e5',       // Subtle borders
+      divider: '#f3f4f6',      // Very light dividers
+      
+      // Text hierarchy - streamlined
       text: {
-        primary: '#212121',
-        secondary: '#757575',
-        hint: '#BDBDBD',
+        primary: '#1f2937',    // Dark gray for primary text
+        secondary: '#6b7280',  // Medium gray for secondary text
+        tertiary: '#9ca3af',   // Light gray for tertiary text
+        inverse: '#ffffff',    // White text on dark backgrounds
       },
       
-      // NOVA classification colors
+      // NOVA classification colors - using system colors
       nova: {
-        group1: '#4CAF50',  // Unprocessed - Green
-        group2: '#8BC34A',  // Processed culinary - Light Green  
-        group3: '#FF9800',  // Processed foods - Orange
-        group4: '#F44336',  // Ultra-processed - Red
+        group1: '#22c55e',     // Unprocessed - Success green
+        group2: '#84cc16',     // Processed culinary - Light green  
+        group3: '#f59e0b',     // Processed foods - Warning orange
+        group4: '#ef4444',     // Ultra-processed - Error red
       }
     },
     
@@ -43,6 +48,87 @@ export const theme = {
     },
     
     typography: {
+      // Display text for hero sections and main headlines
+      display: {
+        fontSize: 32,
+        fontWeight: '700' as const,
+        lineHeight: 36,
+        letterSpacing: -0.5,
+      },
+      
+      // Title text for section headers
+      title: {
+        fontSize: 22,
+        fontWeight: '700' as const,
+        lineHeight: 26,
+        letterSpacing: -0.3,
+      },
+      
+      // Headline for card titles and important content
+      headline: {
+        fontSize: 18,
+        fontWeight: '600' as const,
+        lineHeight: 22,
+        letterSpacing: -0.2,
+      },
+      
+      // Body text in multiple weights
+      body: {
+        fontSize: 16,
+        fontWeight: '400' as const,
+        lineHeight: 22,
+        letterSpacing: 0,
+      },
+      bodyMedium: {
+        fontSize: 16,
+        fontWeight: '500' as const,
+        lineHeight: 22,
+        letterSpacing: 0,
+      },
+      bodySemibold: {
+        fontSize: 16,
+        fontWeight: '600' as const,
+        lineHeight: 22,
+        letterSpacing: 0,
+      },
+      
+      // Subtext for descriptions and secondary content  
+      subtext: {
+        fontSize: 14,
+        fontWeight: '400' as const,
+        lineHeight: 20,
+        letterSpacing: 0,
+      },
+      subtextMedium: {
+        fontSize: 14,
+        fontWeight: '500' as const,
+        lineHeight: 20,
+        letterSpacing: 0,
+      },
+      
+      // Caption for metadata and small labels
+      caption: {
+        fontSize: 12,
+        fontWeight: '400' as const,
+        lineHeight: 16,
+        letterSpacing: 0,
+      },
+      captionMedium: {
+        fontSize: 12,
+        fontWeight: '500' as const,
+        lineHeight: 16,
+        letterSpacing: 0,
+      },
+      
+      // Labels for UI elements
+      label: {
+        fontSize: 14,
+        fontWeight: '600' as const,
+        lineHeight: 18,
+        letterSpacing: 0.1,
+      },
+      
+      // Legacy fontSize values for gradual migration
       fontSize: {
         xs: 12,
         sm: 14,
@@ -52,7 +138,6 @@ export const theme = {
         xxl: 24,
         xxxl: 32,
       },
-      // Fixed fontWeight - using proper React Native values
       fontWeight: {
         normal: '400' as const,
         medium: '500' as const,

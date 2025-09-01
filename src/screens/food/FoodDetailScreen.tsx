@@ -318,7 +318,7 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
             <Image source={{ uri: food.image }} style={styles.heroImage} />
           ) : (
             <View style={styles.heroPlaceholder}>
-              <Ionicons name="image-outline" size={80} color={theme.colors.text.hint} />
+              <Ionicons name="image-outline" size={80} color={theme.colors.text.tertiary} />
             </View>
           )}
         </View>
@@ -351,7 +351,7 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               <Button
                 title="Search Google"
                 onPress={handleGoogleSearch}
-                variant="outline"
+                variant="text"
                 style={styles.secondaryActionButton}
                 leftIcon={<Ionicons name="search" size={20} color={theme.colors.primary} />}
               />
@@ -391,7 +391,7 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
                 <Ionicons 
                   name="chevron-forward" 
                   size={18} 
-                  color={theme.colors.text.hint} 
+                  color={theme.colors.text.tertiary} 
                 />
               </TouchableOpacity>
             )}
@@ -423,7 +423,7 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               <Ionicons 
                 name="chevron-forward" 
                 size={18} 
-                color={theme.colors.text.hint} 
+                color={theme.colors.text.tertiary} 
               />
             </TouchableOpacity>
           </View>

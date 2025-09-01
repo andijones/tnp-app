@@ -31,7 +31,7 @@ export const Input: React.FC<InputProps> = ({
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         multiline={multiline}
-        placeholderTextColor={theme.colors.text.hint}
+        placeholderTextColor={theme.colors.text.tertiary}
       />
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
@@ -40,23 +40,24 @@ export const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   label: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '500', // Direct value instead of theme reference
+    ...theme.typography.label,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.text.hint,
+    borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.fontSize.md,
-    backgroundColor: theme.colors.background,
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: theme.typography.body.fontWeight,
+    backgroundColor: theme.colors.surface,
     color: theme.colors.text.primary,
+    minHeight: 48,
   },
   multilineInput: {
     minHeight: 80,
@@ -64,9 +65,10 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: theme.colors.error,
+    backgroundColor: '#fef2f2',
   },
   error: {
-    fontSize: theme.typography.fontSize.sm,
+    ...theme.typography.caption,
     color: theme.colors.error,
     marginTop: theme.spacing.xs,
   },

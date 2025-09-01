@@ -228,7 +228,7 @@ export const ScannerScreen: React.FC = () => {
 
       {/* Camera Note */}
       <View style={styles.cameraNote}>
-        <Ionicons name="camera-outline" size={24} color={theme.colors.text.hint} />
+        <Ionicons name="camera-outline" size={24} color={theme.colors.text.tertiary} />
         <Text style={styles.cameraNoteText}>
           Camera scanning will be added in a future update
         </Text>
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   
   cameraNoteText: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.hint,
+    color: theme.colors.text.tertiary,
     marginLeft: theme.spacing.sm,
     fontStyle: 'italic',
   },

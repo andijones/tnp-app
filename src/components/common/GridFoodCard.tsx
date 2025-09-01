@@ -5,6 +5,7 @@ import { theme } from '../../theme';
 import { Food } from '../../types';
 import { FoodImage } from './FoodImage';
 import { FavoriteButton } from './FavoriteButton';
+import { getIngredientCount } from '../../utils/foodUtils';
 
 interface GridFoodCardProps {
   food: Food;
@@ -40,18 +41,6 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
     }
     prevIsFavorite.current = isFavorite;
   }, [isFavorite, bounceAnim]);
-  const getIngredientCount = (ingredientsText?: string, description?: string): number => {
-    const text = ingredientsText || description || '';
-    if (!text) return 0;
-    
-    const ingredients = text
-      .split(/[,;]/)
-      .map(item => item.trim())
-      .filter(item => item.length > 0)
-      .filter(item => item.length < 100);
-      
-    return ingredients.length;
-  };
 
   const ingredientCount = getIngredientCount(food.ingredients, food.description);
 
@@ -81,7 +70,7 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
       case 4:
         return theme.colors.nova?.group4 || '#ef4444';
       default:
-        return theme.colors.text.hint;
+        return theme.colors.text.tertiary;
     }
   };
 
@@ -156,17 +145,17 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
 const styles = StyleSheet.create({
   gridCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.md,
     overflow: 'hidden',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 3,
+    elevation: 2,
     flex: 1,
   },
   
@@ -214,12 +203,9 @@ const styles = StyleSheet.create({
   },
   
   foodName: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '700',
+    ...theme.typography.headline,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
-    lineHeight: 22,
-    letterSpacing: -0.2,
   },
   
   metaContainer: {
@@ -227,16 +213,14 @@ const styles = StyleSheet.create({
   },
   
   supermarketText: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '500',
+    ...theme.typography.bodyMedium,
     color: theme.colors.text.secondary,
     marginBottom: 2,
   },
   
   ingredientText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.hint,
-    fontWeight: '400',
+    ...theme.typography.caption,
+    color: theme.colors.text.tertiary,
   },
   
   novaBadge: {

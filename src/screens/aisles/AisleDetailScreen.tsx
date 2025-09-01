@@ -148,7 +148,7 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
               placeholder={`Search in ${title}...`}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor={theme.colors.text.hint}
+              placeholderTextColor={theme.colors.text.tertiary}
               autoFocus={true}
             />
             {searchQuery.length > 0 && (
@@ -213,7 +213,7 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
         ListEmptyComponent={() => (
           searchQuery ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={48} color={theme.colors.text.hint} />
+              <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
               <Text style={styles.emptyText}>No foods found</Text>
               <Text style={styles.emptySubtext}>
                 Try adjusting your search terms
@@ -221,7 +221,7 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
             </View>
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="storefront-outline" size={48} color={theme.colors.text.hint} />
+              <Ionicons name="storefront-outline" size={48} color={theme.colors.text.tertiary} />
               <Text style={styles.emptyText}>No foods in this aisle yet</Text>
               <Text style={styles.emptySubtext}>
                 Check back later or explore other aisles

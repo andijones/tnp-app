@@ -106,7 +106,7 @@ const getProcessingColor = (novaGroup?: number): string => {
     case 4:
       return theme.colors.error;
     default:
-      return theme.colors.text.hint;
+      return theme.colors.text.tertiary;
   }
 };
 

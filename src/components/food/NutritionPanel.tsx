@@ -46,7 +46,7 @@ export const NutritionPanel: React.FC<NutritionPanelProps> = ({ nutrition }) => 
           subtitle={nutrition?.servingSize ? `Per ${nutrition.servingSize}` : "Per serving"}
         />
         <View style={styles.noDataContainer}>
-          <Ionicons name="analytics-outline" size={48} color={theme.colors.text.hint} />
+          <Ionicons name="analytics-outline" size={48} color={theme.colors.text.tertiary} />
           <Text style={styles.noDataTitle}>No nutrition data available</Text>
           <Text style={styles.noDataSubtitle}>
             This information may be added in future updates
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
 
   noData: {
     fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.hint,
+    color: theme.colors.text.tertiary,
     fontStyle: 'italic',
   },
 

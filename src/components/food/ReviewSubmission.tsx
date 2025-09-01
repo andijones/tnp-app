@@ -44,7 +44,7 @@ const StarRatingPicker: React.FC<StarRatingPickerProps> = ({
           <Ionicons
             name={star <= rating ? "star" : "star-outline"}
             size={size}
-            color={star <= rating ? theme.colors.warning : theme.colors.text.hint}
+            color={star <= rating ? theme.colors.warning : theme.colors.text.tertiary}
           />
         </TouchableOpacity>
       ))}
@@ -245,7 +245,7 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
           <TextInput
             style={styles.textInput}
             placeholder="Share your thoughts about this product..."
-            placeholderTextColor={theme.colors.text.hint}
+            placeholderTextColor={theme.colors.text.tertiary}
             multiline
             numberOfLines={4}
             value={reviewText}
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
 
   characterCount: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.hint,
+    color: theme.colors.text.tertiary,
     textAlign: 'right',
   },
 
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
 
   submitButtonDisabled: {
-    backgroundColor: theme.colors.text.hint,
+    backgroundColor: theme.colors.text.tertiary,
     opacity: 0.6,
   },
 

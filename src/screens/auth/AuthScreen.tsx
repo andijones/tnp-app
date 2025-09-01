@@ -189,7 +189,7 @@ export const AuthScreen: React.FC = () => {
               <Button
                 title={isLogin ? 'Sign Up' : 'Sign In'}
                 onPress={toggleMode}
-                variant="outline"
+                variant="text"
                 size="sm"
                 style={styles.toggleButton}
               />

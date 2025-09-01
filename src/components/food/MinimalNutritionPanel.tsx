@@ -28,7 +28,7 @@ const NutrientChip: React.FC<NutrientChipProps> = ({ label, value, unit, color }
 };
 
 const getNutrientColor = (nutrient: string, value?: number): string => {
-  if (value === undefined) return theme.colors.text.hint;
+  if (value === undefined) return theme.colors.text.tertiary;
   
   switch (nutrient) {
     case 'protein':
@@ -57,7 +57,7 @@ export const MinimalNutritionPanel: React.FC<MinimalNutritionPanelProps> = ({ nu
           icon="fitness-outline"
         />
         <View style={styles.noDataContainer}>
-          <Ionicons name="nutrition-outline" size={32} color={theme.colors.text.hint} />
+          <Ionicons name="nutrition-outline" size={32} color={theme.colors.text.tertiary} />
           <Text style={styles.noDataText}>Nutrition data not available</Text>
         </View>
       </View>

@@ -134,7 +134,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         onToggleFavorite={handleToggleFavorite}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="heart-outline" size={48} color={theme.colors.text.hint} />
+            <Ionicons name="heart-outline" size={48} color={theme.colors.text.tertiary} />
             <Text style={styles.emptyText}>No favorites yet</Text>
             <Text style={styles.emptySubtext}>
               Start adding foods to your favorites by tapping the heart icon

@@ -159,7 +159,7 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
               placeholder="Search aisles..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor={theme.colors.text.hint}
+              placeholderTextColor={theme.colors.text.tertiary}
               autoFocus={true}
             />
             {searchQuery.length > 0 && (

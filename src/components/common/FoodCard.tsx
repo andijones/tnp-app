@@ -5,6 +5,7 @@ import { theme } from '../../theme';
 import { Food } from '../../types';
 import { FoodImage } from './FoodImage';
 import { FavoriteButton } from './FavoriteButton';
+import { getIngredientCount } from '../../utils/foodUtils';
 
 interface FoodCardProps {
   food: Food;
@@ -19,20 +20,6 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   isFavorite,
   onToggleFavorite,
 }) => {
-  const getIngredientCount = (ingredientsText?: string, description?: string): number => {
-    const text = ingredientsText || description || '';
-    if (!text) return 0;
-    
-    // Split by common delimiters and clean up
-    const ingredients = text
-      .split(/[,;]/)
-      .map(item => item.trim())
-      .filter(item => item.length > 0)
-      .filter(item => item.length < 100); // Remove suspiciously long strings
-      
-    return ingredients.length;
-  };
-
   const ingredientCount = getIngredientCount(food.ingredients, food.description);
 
   return (
@@ -108,8 +95,7 @@ const styles = StyleSheet.create({
   },
   
   foodName: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '600',
+    ...theme.typography.headline,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
     paddingHorizontal: theme.spacing.xs,
@@ -129,7 +115,7 @@ const styles = StyleSheet.create({
   },
   
   metaText: {
-    fontSize: theme.typography.fontSize.xs,
+    ...theme.typography.caption,
     color: theme.colors.text.secondary,
   },
 });

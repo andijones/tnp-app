@@ -5,7 +5,7 @@ import { theme } from '../../theme';
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'text';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   style?: ViewStyle;
@@ -40,11 +40,11 @@ export const Button: React.FC<ButtonProps> = ({
       {hasIcons ? (
         <View style={styles.content}>
           {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-          <Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Text>
+          <Text style={[styles.buttonText, styles[`${variant}Text`]]}>{title}</Text>
           {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
         </View>
       ) : (
-        <Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Text>
+        <Text style={[styles.buttonText, styles[`${variant}Text`]]}>{title}</Text>
       )}
     </TouchableOpacity>
   );
@@ -55,25 +55,32 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
   },
   
   // Variants
   primary: {
     backgroundColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   secondary: {
-    backgroundColor: theme.colors.secondary,
-  },
-  outline: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: theme.colors.primary,
+    borderColor: theme.colors.border,
+  },
+  text: {
+    backgroundColor: 'transparent',
   },
   
   // Sizes
   sm: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
+    minHeight: 40,
   },
   md: {
     paddingHorizontal: theme.spacing.lg,
@@ -82,24 +89,26 @@ const styles = StyleSheet.create({
   lg: {
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.lg,
+    minHeight: 56,
   },
   
   disabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   
-  // Text styles - using direct font weight values
-  text: {
+  // Text styles
+  buttonText: {
     fontSize: theme.typography.fontSize.md,
-    fontWeight: '600', // Direct value instead of theme reference
+    fontWeight: theme.typography.fontWeight.semibold,
+    textAlign: 'center',
   },
   primaryText: {
     color: '#FFFFFF',
   },
   secondaryText: {
-    color: '#FFFFFF',
+    color: theme.colors.text.primary,
   },
-  outlineText: {
+  textText: {
     color: theme.colors.primary,
   },
   
