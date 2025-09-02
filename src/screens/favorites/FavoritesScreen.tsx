@@ -7,6 +7,7 @@ import {
   FlatList,
   Alert,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,9 @@ interface FavoritesScreenProps {
 export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
   const [favoritesFoods, setFavoritesFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
+  const [isSearchActive, setIsSearchActive] = useState(false);
   
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -38,11 +42,12 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         return;
       }
 
-      // Get favorite food IDs
+      // Get favorite food IDs with created_at for sorting
       const { data: favoritesData, error: favError } = await supabase
         .from('favorites')
-        .select('food_id')
-        .eq('user_id', user.id);
+        .select('food_id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (favError) {
         console.error('Error fetching favorite IDs:', favError);
@@ -71,7 +76,9 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         Alert.alert('Error', 'Failed to load favorite foods');
       } else {
         console.log('Direct fetch: Got', foodsData?.length || 0, 'foods for', favoriteIds.length, 'favorites');
-        setFavoritesFoods(foodsData || []);
+        // Sort foods to match the favorites order (newest first)
+        const orderedFoods = favoriteIds.map(id => foodsData?.find(food => food.id === id)).filter(Boolean) as Food[];
+        setFavoritesFoods(orderedFoods);
       }
     } catch (error) {
       console.error('Error fetching favorites:', error);
@@ -88,6 +95,19 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
       fetchFavoritesFoods();
     }, [])
   );
+
+  // Filter foods based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredFoods(favoritesFoods);
+    } else {
+      const filtered = favoritesFoods.filter(food =>
+        food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        food.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredFoods(filtered);
+    }
+  }, [searchQuery, favoritesFoods]);
 
   const navigateToFoodDetail = (foodId: string) => {
     navigation.navigate('FoodDetail', { foodId });
@@ -110,36 +130,88 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header with hamburger menu */}
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('AisleMenu')} 
-          style={styles.menuButton}
-        >
-          <Ionicons name="menu" size={24} color={theme.colors.primary} />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>My Favorites</Text>
-          <Text style={styles.headerSubtitle}>
-            {favoritesFoods.length} saved food{favoritesFoods.length !== 1 ? 's' : ''}
-          </Text>
-        </View>
+        {isSearchActive ? (
+          // Search active header
+          <View style={styles.searchActiveHeader}>
+            <TouchableOpacity 
+              onPress={() => {
+                setIsSearchActive(false);
+                setSearchQuery('');
+              }}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.searchInputExpanded}
+              placeholder="Search favorites..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme.colors.text.tertiary}
+              autoFocus={true}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          // Normal header
+          <View style={styles.headerTopRow}>
+            <View style={styles.spacer} />
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>My Favorites</Text>
+            </View>
+            <TouchableOpacity 
+              onPress={() => setIsSearchActive(true)}
+              style={styles.searchButton}
+            >
+              <Ionicons name="search" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <View style={styles.container}>
         <FoodGrid
-        foods={favoritesFoods}
+        foods={filteredFoods}
         onFoodPress={navigateToFoodDetail}
         isFavorite={isFavorite}
         onToggleFavorite={handleToggleFavorite}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="heart-outline" size={48} color={theme.colors.text.tertiary} />
-            <Text style={styles.emptyText}>No favorites yet</Text>
-            <Text style={styles.emptySubtext}>
-              Start adding foods to your favorites by tapping the heart icon
-            </Text>
+        ListHeaderComponent={() => (
+          <View>
+            {searchQuery ? (
+              <Text style={styles.resultsText}>
+                {filteredFoods.length} result{filteredFoods.length !== 1 ? 's' : ''} for "{searchQuery}"
+              </Text>
+            ) : (
+              <Text style={styles.foodCountText}>
+                {favoritesFoods.length} saved food{favoritesFoods.length !== 1 ? 's' : ''}
+              </Text>
+            )}
           </View>
+        )}
+        ListEmptyComponent={
+          searchQuery ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
+              <Text style={styles.emptyText}>No favorites found</Text>
+              <Text style={styles.emptySubtext}>
+                Try adjusting your search terms
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="heart-outline" size={48} color={theme.colors.text.tertiary} />
+              <Text style={styles.emptyText}>No favorites yet</Text>
+              <Text style={styles.emptySubtext}>
+                Start adding foods to your favorites by tapping the heart icon
+              </Text>
+            </View>
+          )
         }
         />
       </View>
@@ -159,35 +231,71 @@ const styles = StyleSheet.create({
   },
   
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
     backgroundColor: '#FFFFFF',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surface,
+    borderBottomColor: theme.colors.border,
   },
   
-  menuButton: {
-    marginRight: theme.spacing.md,
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  searchActiveHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  backButton: {
     padding: 4,
+    marginRight: theme.spacing.sm,
+  },
+  
+  
+  searchButton: {
+    padding: 4,
+    width: 32,
+    alignItems: 'center',
   },
   
   headerContent: {
     flex: 1,
+    alignItems: 'center',
   },
   
   headerTitle: {
     fontSize: theme.typography.fontSize.xxl,
     fontWeight: '700',
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
   },
   
-  headerSubtitle: {
+  spacer: {
+    width: 32,
+  },
+  
+  searchInputExpanded: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    marginRight: theme.spacing.sm,
+  },
+  
+  resultsText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  
+  foodCountText: {
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
-  
   
   emptyContainer: {
     alignItems: 'center',

@@ -157,36 +157,60 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           onToggleFavorite={toggleFavorite}
         ListHeaderComponent={
           <View>
-            {/* Scanner Promotion Section - Only show when not searching */}
+            {/* Scanner Feature Section - Only show when not searching */}
             {!searchQuery && (
-              <View style={styles.promoSection}>
-                <View style={styles.promoContent}>
-                  <View style={styles.promoIcon}>
-                    <Ionicons name="scan" size={32} color={theme.colors.primary} />
-                  </View>
-                  <View style={styles.promoText}>
-                    <Text style={styles.promoTitle}>Scan Any Ingredient List</Text>
-                    <Text style={styles.promoSubtitle}>
-                      Instantly discover if foods are ultra-processed or truly healthy
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity 
-                  style={styles.promoButton}
-                  onPress={() => navigation.navigate('Scanner')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.promoButtonText}>Try Scanner</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-                </TouchableOpacity>
-                <View style={styles.promoBenefits}>
-                  <View style={styles.benefitItem}>
-                    <Ionicons name="flash" size={16} color={theme.colors.primary} />
-                    <Text style={styles.benefitText}>Instant results</Text>
-                  </View>
-                  <View style={styles.benefitItem}>
-                    <Ionicons name="camera" size={16} color={theme.colors.primary} />
-                    <Text style={styles.benefitText}>Just take a photo</Text>
+              <View style={styles.featureSection}>
+                <View style={styles.gradientBackground}>
+                  <View style={styles.featureContent}>
+                    {/* Hero Content */}
+                    <View style={styles.heroContent}>
+                      <View style={styles.iconContainer}>
+                        <View style={styles.iconBackground}>
+                          <Ionicons name="scan" size={40} color="#FFFFFF" />
+                        </View>
+                      </View>
+                      <View style={styles.heroText}>
+                        <Text style={styles.heroTitle}>Scan Any Ingredient List</Text>
+                        <Text style={styles.heroSubtitle}>
+                          Instantly discover if foods are ultra-processed or truly healthy with our AI-powered scanner
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Features Grid */}
+                    <View style={styles.featuresGrid}>
+                      <View style={styles.featureItem}>
+                        <View style={styles.featureIconWrapper}>
+                          <Ionicons name="flash" size={20} color={theme.colors.primary} />
+                        </View>
+                        <Text style={styles.featureText}>Instant AI Analysis</Text>
+                      </View>
+                      <View style={styles.featureItem}>
+                        <View style={styles.featureIconWrapper}>
+                          <Ionicons name="camera" size={20} color={theme.colors.primary} />
+                        </View>
+                        <Text style={styles.featureText}>Just Take a Photo</Text>
+                      </View>
+                      <View style={styles.featureItem}>
+                        <View style={styles.featureIconWrapper}>
+                          <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
+                        </View>
+                        <Text style={styles.featureText}>Health Score</Text>
+                      </View>
+                    </View>
+
+                    {/* Call to Action */}
+                    <TouchableOpacity 
+                      style={styles.ctaButton}
+                      onPress={() => navigation.navigate('Scanner')}
+                      activeOpacity={0.9}
+                    >
+                      <View style={styles.ctaContent}>
+                        <Ionicons name="scan" size={20} color="#FFFFFF" />
+                        <Text style={styles.ctaText}>Try Scanner Now</Text>
+                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                      </View>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -311,88 +335,119 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   
-  promoSection: {
-    backgroundColor: '#F8FBF8',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
+  featureSection: {
     marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   
-  promoContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
+  gradientBackground: {
+    backgroundColor: '#4F7942',
   },
   
-  promoIcon: {
-    width: 48,
-    height: 48,
-    backgroundColor: `${theme.colors.primary}15`,
-    borderRadius: 24,
+  featureContent: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.xxl,
+  },
+  
+  heroContent: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  
+  iconContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  
+  iconBackground: {
+    width: 80,
+    height: 80,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   
-  promoText: {
+  heroText: {
+    alignItems: 'center',
+  },
+  
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+    letterSpacing: -0.5,
+  },
+  
+  heroSubtitle: {
+    fontSize: theme.typography.fontSize.lg,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  
+  featuresGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  
+  featureItem: {
+    alignItems: 'center',
     flex: 1,
+    paddingHorizontal: theme.spacing.xs,
   },
   
-  promoTitle: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  
-  promoSubtitle: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-  },
-  
-  promoButton: {
-    backgroundColor: theme.colors.primary,
-    flexDirection: 'row',
+  featureIconWrapper: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     ...theme.shadows.sm,
   },
   
-  promoButtonText: {
-    fontSize: theme.typography.fontSize.md,
+  featureText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginRight: theme.spacing.xs,
+    lineHeight: 16,
   },
   
-  promoBenefits: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  ctaButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadows.md,
   },
   
-  benefitItem: {
+  ctaContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
   },
   
-  benefitText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginLeft: theme.spacing.xs,
-    fontWeight: '500',
+  ctaText: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: '700',
+    color: theme.colors.primary,
+    marginHorizontal: theme.spacing.sm,
+    letterSpacing: -0.3,
   },
   
   statsContainer: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
   },
   

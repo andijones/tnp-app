@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -123,12 +124,12 @@ export const AuthScreen: React.FC = () => {
           {/* App Logo/Header */}
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              <Ionicons name="nutrition" size={64} color={theme.colors.primary} />
+              <Image 
+                source={require('../../../assets/logo.png')} 
+                style={styles.logo} 
+                resizeMode="contain"
+              />
             </View>
-            <Text style={styles.appTitle}>The Naked Pantry</Text>
-            <Text style={styles.appSubtitle}>
-              Discover healthy, non-ultra processed foods
-            </Text>
           </View>
 
           {/* Auth Form */}
@@ -258,30 +259,14 @@ const styles = StyleSheet.create({
   },
   
   logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
   },
   
-  appTitle: {
-    fontSize: theme.typography.fontSize.xxxl,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  
-  appSubtitle: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
+  logo: {
+    height: 80,
+    width: 240,
   },
   
   formContainer: {
