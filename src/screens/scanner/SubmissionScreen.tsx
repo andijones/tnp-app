@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   tabSelector: {
     backgroundColor: '#F2F2F7',
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.full,
     padding: 2,
     flexDirection: 'row',
   },
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: theme.borderRadius.full,
     alignItems: 'center',
   },
   tabButtonActive: {
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.full,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',

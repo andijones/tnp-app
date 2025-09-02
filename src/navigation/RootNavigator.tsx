@@ -54,7 +54,7 @@ function TabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: '#1F5932',
           borderTopWidth: 1,
           borderTopColor: '#E5E5EA',
           height: 84,
@@ -69,8 +69,8 @@ function TabNavigator() {
           shadowRadius: 4,
           elevation: 8,
         },
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: '#44DB6D',
+        tabBarInactiveTintColor: '#FFFFFF',
       }}
     >
       <Tab.Screen

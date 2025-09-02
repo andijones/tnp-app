@@ -11,6 +11,8 @@ import {
   Dimensions,
   Linking,
   StatusBar,
+  Share,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -26,22 +28,22 @@ import { IngredientsList } from '../../components/food/IngredientsList';
 import { MinimalNutritionPanel } from '../../components/food/MinimalNutritionPanel';
 import { RatingsSection } from '../../components/food/RatingsSection';
 import { ReviewSubmission } from '../../components/food/ReviewSubmission';
+import { useFavorites } from '../../hooks/useFavorites';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
   const { foodId } = route.params;
   const [food, setFood] = useState<Food | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [hasUserReview, setHasUserReview] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const reviewSectionRef = useRef<View>(null);
+  const { isFavorite, toggleFavorite: toggleFavoriteHook } = useFavorites();
 
   useEffect(() => {
     fetchFoodDetails();
-    checkIfFavorite();
   }, [foodId]);
 
   const fetchFoodDetails = async () => {
@@ -142,64 +144,43 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
     }
   };
 
-  const checkIfFavorite = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('favorites')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('food_id', foodId)
-        .single();
-
-      setIsFavorite(!!data);
-    } catch (error) {
-      setIsFavorite(false);
-    }
-  };
-
-  const toggleFavorite = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      Alert.alert('Error', 'You must be logged in to save favorites');
-      return;
-    }
-
+  const handleToggleFavorite = async () => {
     setFavoriteLoading(true);
-
     try {
-      if (isFavorite) {
-        const { error } = await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('food_id', foodId);
-
-        if (error) throw error;
-        setIsFavorite(false);
-      } else {
-        const { error } = await supabase
-          .from('favorites')
-          .insert({
-            user_id: user.id,
-            food_id: foodId,
-          });
-
-        if (error) throw error;
-        setIsFavorite(true);
-      }
+      await toggleFavoriteHook(foodId);
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      Alert.alert('Error', 'Failed to update favorites');
     } finally {
       setFavoriteLoading(false);
     }
   };
 
-  const shareFood = () => {
-    Alert.alert('Share', 'Share functionality coming soon!');
+  const shareFood = async () => {
+    if (!food) return;
+    
+    try {
+      const shareOptions = {
+        message: `Check out ${food.name} on TNP - The Naked Pantry!`,
+        url: food.url || undefined,
+        title: food.name,
+      };
+
+      if (Platform.OS === 'ios') {
+        await Share.share({
+          message: shareOptions.url ? `${shareOptions.message}\n${shareOptions.url}` : shareOptions.message,
+          url: shareOptions.url,
+          title: shareOptions.title,
+        });
+      } else {
+        await Share.share({
+          message: shareOptions.url ? `${shareOptions.message}\n${shareOptions.url}` : shareOptions.message,
+          title: shareOptions.title,
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing food:', error);
+      Alert.alert('Error', 'Failed to share this food item');
+    }
   };
 
   const reportFood = () => {
@@ -294,13 +275,13 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
           
           <TouchableOpacity
             style={[styles.headerActionButton, favoriteLoading && styles.actionButtonDisabled]}
-            onPress={toggleFavorite}
+            onPress={handleToggleFavorite}
             disabled={favoriteLoading}
           >
             <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
+              name={isFavorite(foodId) ? 'heart' : 'heart-outline'}
               size={24}
-              color={isFavorite ? theme.colors.error : "#1A1A1A"}
+              color={isFavorite(foodId) ? theme.colors.error : "#1A1A1A"}
             />
           </TouchableOpacity>
         </View>
@@ -541,18 +522,8 @@ const styles = StyleSheet.create({
   headerActionButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   
   actionButtonDisabled: {
@@ -601,7 +572,6 @@ const styles = StyleSheet.create({
 
   primaryActionButton: {
     backgroundColor: theme.colors.primary,
-    borderRadius: 4,
     paddingVertical: 16,
     shadowColor: theme.colors.primary,
     shadowOffset: {
@@ -617,7 +587,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(34, 139, 34, 0.08)',
     borderColor: theme.colors.primary,
     borderWidth: 1.5,
-    borderRadius: 4,
     paddingVertical: 16,
   },
   
@@ -684,7 +653,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     marginTop: 20,
     backgroundColor: 'rgba(255, 59, 48, 0.05)',
-    borderRadius: 4,
+    borderRadius: theme.borderRadius.full,
     flexDirection: 'row',
   },
   

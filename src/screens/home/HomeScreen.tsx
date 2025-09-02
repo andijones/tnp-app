@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   
   ctaButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.full,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     alignItems: 'center',

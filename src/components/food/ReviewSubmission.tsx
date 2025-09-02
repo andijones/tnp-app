@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
 
   writeReviewButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.full,
     padding: theme.spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: theme.borderRadius.full,
     borderWidth: 1,
     borderColor: theme.colors.error,
     gap: theme.spacing.sm,
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: theme.borderRadius.full,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: theme.borderRadius.full,
     minWidth: 120,
     alignItems: 'center',
   },
