@@ -55,6 +55,15 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
     try {
       setLoading(true);
       
+      // Handle special "all-foods" case
+      if (slug === 'all-foods') {
+        const allFoods = await aisleService.getAllFoods();
+        setFoods(allFoods);
+        setChildAisles([]);
+        setAisle(null);
+        return;
+      }
+      
       // Get aisle by slug
       const aisleData = await aisleService.getAisleBySlug(slug);
       if (!aisleData) {

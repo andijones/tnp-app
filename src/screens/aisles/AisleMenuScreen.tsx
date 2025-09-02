@@ -8,12 +8,16 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Aisle, AisleLevel } from '../../types/aisle';
 import { aisleService } from '../../services/aisleService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { CategoryCard } from '../../components/aisles/CategoryCard';
+import { QuickActionCard } from '../../components/aisles/QuickActionCard';
+import { SectionHeader } from '../../components/aisles/SectionHeader';
 
 interface AisleMenuViewProps {
   navigation: any;
@@ -105,30 +109,35 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
   };
 
   const navigateToAllFoods = () => {
-    navigation.navigate('Home');
+    // Create a special aisle detail view for all foods
+    navigation.navigate('AisleDetail', { 
+      slug: 'all-foods', 
+      title: 'All Foods' 
+    });
   };
 
-  const renderAisleItem = ({ item }: { item: Aisle }) => {
-    const hasChildren = item.children && item.children.length > 0;
-    
+  const renderAisleItem = ({ item, index }: { item: Aisle; index: number }) => {
     return (
-      <TouchableOpacity
-        style={styles.aisleItem}
-        onPress={() => navigateToLevel(item)}
-      >
-        <View style={styles.aisleContent}>
-          <Text style={styles.aisleName}>{item.name}</Text>
-          {hasChildren && (
-            <Ionicons 
-              name="chevron-forward" 
-              size={20} 
-              color={theme.colors.text.secondary} 
-            />
-          )}
-        </View>
-      </TouchableOpacity>
+      <CategoryCard
+        aisle={item}
+        onPress={navigateToLevel}
+      />
     );
   };
+
+  const createViewAllAisle = () => ({
+    id: 'view-all-foods',
+    name: 'View All Foods',
+    slug: 'all-foods',
+    children: [],
+  });
+
+  const createShopAllAisle = () => ({
+    id: 'shop-all',
+    name: `Shop all in ${currentLevel?.title}`,
+    slug: currentLevel?.parentSlug || '',
+    children: [],
+  });
 
   if (loading) {
     return (
@@ -190,53 +199,46 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
         )}
       </View>
 
-      <View style={styles.container}>
-        <FlatList
-        data={filteredAisles}
-        renderItem={renderAisleItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.aisleList}
-        ListHeaderComponent={() => (
-          currentLevel?.parentSlug ? (
-            <TouchableOpacity
-              style={[styles.aisleItem, styles.shopAllItem]}
-              onPress={navigateToShopAll}
-            >
-              <View style={styles.aisleContent}>
-                <Text style={[styles.aisleName, styles.shopAllText]}>
-                  Shop all in {currentLevel.title}
-                </Text>
-                <Ionicons 
-                  name="storefront" 
-                  size={20} 
-                  color={theme.colors.primary} 
-                />
-              </View>
-            </TouchableOpacity>
-          ) : null
-        )}
-        ListFooterComponent={() => (
-          navigationStack.length === 1 ? (
-            <TouchableOpacity
-              style={[styles.aisleItem, styles.viewAllItem]}
-              onPress={navigateToAllFoods}
-            >
-              <View style={styles.aisleContent}>
-                <Text style={[styles.aisleName, styles.viewAllText]}>
-                  View All Foods
-                </Text>
-                <Ionicons 
-                  name="grid" 
-                  size={20} 
-                  color={theme.colors.primary} 
-                />
-              </View>
-            </TouchableOpacity>
-          ) : null
-        )}
+      <ScrollView 
+        style={styles.container}
         showsVerticalScrollIndicator={false}
-        />
-      </View>
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Categories List */}
+        <View style={styles.categoriesContainer}>
+          {/* View All Foods or Shop All - show as first item */}
+          {navigationStack.length === 1 && (
+            <CategoryCard
+              aisle={createViewAllAisle()}
+              onPress={() => navigateToAllFoods()}
+            />
+          )}
+          
+          {currentLevel?.parentSlug && (
+            <CategoryCard
+              aisle={createShopAllAisle()}
+              onPress={() => navigateToShopAll()}
+            />
+          )}
+
+          {/* Regular aisles */}
+          {filteredAisles.map((item, index) => (
+            <View key={item.id}>
+              {renderAisleItem({ item, index })}
+            </View>
+          ))}
+          
+          {filteredAisles.length === 0 && searchQuery && (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
+              <Text style={styles.emptyText}>No categories found</Text>
+              <Text style={styles.emptySubtext}>
+                Try adjusting your search terms
+              </Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -251,6 +253,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F6F0',
   },
+
+  scrollContent: {
+    paddingBottom: theme.spacing.xl,
+  },
   
   header: {
     backgroundColor: '#FFFFFF',
@@ -259,6 +265,14 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
   },
   
   headerTopRow: {
@@ -284,7 +298,7 @@ const styles = StyleSheet.create({
   
   headerTitle: {
     fontSize: theme.typography.fontSize.xl,
-    fontWeight: '600',
+    fontWeight: '700',
     color: theme.colors.text.primary,
     flex: 1,
     textAlign: 'center',
@@ -296,66 +310,32 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginRight: theme.spacing.sm,
   },
+
   
-  aisleList: {
+  categoriesContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+  },
+
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
     paddingHorizontal: theme.spacing.lg,
   },
-  
-  aisleItem: {
-    backgroundColor: '#F7F6F0',
-    borderRadius: theme.borderRadius.md,
-    marginVertical: 4,
-    borderWidth: 1,
-    borderColor: theme.colors.surface,
-  },
-  
-  aisleContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: theme.spacing.md,
-  },
-  
-  aisleName: {
-    fontSize: theme.typography.fontSize.md,
+
+  emptyText: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: '600',
     color: theme.colors.text.primary,
-    flex: 1,
-  },
-  
-  shopAllItem: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: theme.spacing.md,
-  },
-  
-  shopAllText: {
-    color: theme.colors.primary,
-    fontWeight: '500',
-  },
-  
-  viewAllItem: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
     marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
+    textAlign: 'center',
   },
-  
-  viewAllText: {
-    color: theme.colors.primary,
-    fontWeight: '500',
+
+  emptySubtext: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+    lineHeight: 20,
   },
 });

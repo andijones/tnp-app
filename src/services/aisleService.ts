@@ -169,6 +169,27 @@ class AisleService {
     }
   }
 
+  // Get all foods (for "View All Foods" functionality)
+  async getAllFoods(): Promise<Food[]> {
+    try {
+      const { data: foods, error } = await supabase
+        .from('foods')
+        .select('*')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching all foods:', error);
+        return [];
+      }
+
+      return foods || [];
+    } catch (error) {
+      console.error('Error in getAllFoods:', error);
+      return [];
+    }
+  }
+
   // Search foods within a specific aisle
   async searchFoodsInAisle(query: string, aisleId: string): Promise<Food[]> {
     const foods = await this.getFoodsForAisle(aisleId);
