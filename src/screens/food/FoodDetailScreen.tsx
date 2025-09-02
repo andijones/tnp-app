@@ -29,6 +29,9 @@ import { MinimalNutritionPanel } from '../../components/food/MinimalNutritionPan
 import { RatingsSection } from '../../components/food/RatingsSection';
 import { ReviewSubmission } from '../../components/food/ReviewSubmission';
 import { useFavorites } from '../../hooks/useFavorites';
+import { NovaRatingBanner } from '../../components/food/NovaRatingBanner';
+import { ImprovedNutritionPanel } from '../../components/food/ImprovedNutritionPanel';
+import { ImprovedIngredientsList } from '../../components/food/ImprovedIngredientsList';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -304,18 +307,14 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
           )}
         </View>
 
+        {/* NOVA Rating Banner - Prominent under image */}
+        <NovaRatingBanner novaGroup={food.nova_group} />
+
         {/* Content Cards */}
         <View style={styles.contentWrapper}>
           {/* Main Info Card */}
           <View style={styles.mainCard}>
             <Text style={styles.heroTitle}>{food.name}</Text>
-            
-            {/* NOVA Badge */}
-            {food.nova_group && (
-              <View style={styles.novaBadgeContainer}>
-                <NovaBadge novaGroup={food.nova_group} size="large" showLabel />
-              </View>
-            )}
 
             {/* Action Buttons */}
             <View style={styles.actionButtonsContainer}>
@@ -409,18 +408,14 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Ingredients Card */}
-          <View style={styles.sectionCard}>
-            <IngredientsList 
-              ingredients={food.ingredients} 
-              description={food.description} 
-            />
-          </View>
+          {/* Improved Ingredients Section */}
+          <ImprovedIngredientsList 
+            ingredients={food.ingredients} 
+            description={food.description} 
+          />
 
-          {/* Nutrition Card */}
-          <View style={styles.sectionCard}>
-            <MinimalNutritionPanel nutrition={food.nutrition} />
-          </View>
+          {/* Improved Nutrition Section */}
+          <ImprovedNutritionPanel nutrition={food.nutrition} />
 
           {/* Reviews Card */}
           <View ref={reviewSectionRef} style={styles.sectionCard}>
@@ -485,20 +480,20 @@ const styles = StyleSheet.create({
   
   // Hero Section
   heroContainer: {
-    height: 300,
-    marginBottom: -30, // Creates overlap with content
+    height: 320, // Slightly taller for better proportions
+    marginBottom: 0, // No overlap needed - NOVA banner handles this
     backgroundColor: '#FFFFFF',
   },
   
   heroImage: {
     width: screenWidth,
-    height: 300,
+    height: 320, // Match container height
     resizeMode: 'contain',
   },
   
   heroPlaceholder: {
     width: screenWidth,
-    height: 300,
+    height: 320, // Match container height
     backgroundColor: '#FFFFFF',
     shadowColor: '#000000',
     shadowOffset: {
@@ -532,9 +527,9 @@ const styles = StyleSheet.create({
   
   // Content Wrapper
   contentWrapper: {
-    paddingTop: 50, // Account for overlap with hero
+    paddingTop: 20, // Reduced since NOVA banner provides spacing
     paddingHorizontal: 20,
-    gap: 20,
+    gap: 12, // Tighter spacing for iOS feel
   },
   
   // Main Content Card
@@ -553,16 +548,11 @@ const styles = StyleSheet.create({
   },
   
   heroTitle: {
-    fontSize: 32,
+    fontSize: 28, // Slightly smaller for better iOS proportions
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 16,
-    lineHeight: 38,
-  },
-  
-  novaBadgeContainer: {
-    marginBottom: 20,
-    alignItems: 'flex-start',
+    marginBottom: 20, // Increased since NOVA badge is removed
+    lineHeight: 34,
   },
   
   // Action Buttons
