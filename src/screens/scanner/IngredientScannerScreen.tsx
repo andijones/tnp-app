@@ -126,11 +126,17 @@ export const IngredientScannerScreen: React.FC = () => {
 
       if (currentStep === 'ingredients') {
         setIngredientsImage(optimizedUri);
-        setCurrentStep('front');
+        // Brief pause to show success state before transitioning
+        setTimeout(() => {
+          setCurrentStep('front');
+        }, 800);
       } else if (currentStep === 'front') {
         setFrontImage(optimizedUri);
-        setCurrentStep('processing');
-        await processImages(ingredientsImage!, optimizedUri);
+        // Brief pause to show success state before processing
+        setTimeout(async () => {
+          setCurrentStep('processing');
+          await processImages(ingredientsImage!, optimizedUri);
+        }, 800);
       }
       
     } catch (error) {
@@ -191,9 +197,44 @@ export const IngredientScannerScreen: React.FC = () => {
         return;
       }
 
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).slice(2, 11);
+
+      // Upload ingredients image to storage
+      const ingredientsFileName = `scanner-submission-${timestamp}-${randomId}-ingredients.jpg`;
+      console.log('Uploading ingredients image:', ingredientsFileName, 'URI:', scanResult.ingredientsImage);
+      
+      const ingredientsResponse = await fetch(scanResult.ingredientsImage);
+      if (!ingredientsResponse.ok) {
+        throw new Error(`Failed to fetch ingredients image: ${ingredientsResponse.status}`);
+      }
+      
+      const ingredientsArrayBuffer = await ingredientsResponse.arrayBuffer();
+      console.log('Ingredients ArrayBuffer size:', ingredientsArrayBuffer.byteLength);
+      
+      if (ingredientsArrayBuffer.byteLength === 0) {
+        throw new Error('Ingredients image ArrayBuffer is empty - image may be corrupted');
+      }
+      
+      const { data: ingredientsUploadData, error: ingredientsUploadError } = await supabase.storage
+        .from('food-images')
+        .upload(`submissions/${ingredientsFileName}`, ingredientsArrayBuffer, {
+          contentType: 'image/jpeg',
+          upsert: false
+        });
+
+      if (ingredientsUploadError) {
+        console.error('Ingredients upload error:', ingredientsUploadError);
+        throw ingredientsUploadError;
+      }
+
+      const { data: { publicUrl: ingredientsPublicUrl } } = supabase.storage
+        .from('food-images')
+        .getPublicUrl(`submissions/${ingredientsFileName}`);
+
       // Upload front image to storage
-      const frontFileName = `scanner-submission-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-front.jpg`;
-      console.log('Uploading scanner image:', frontFileName, 'URI:', scanResult.frontImage);
+      const frontFileName = `scanner-submission-${timestamp}-${randomId}-front.jpg`;
+      console.log('Uploading front image:', frontFileName, 'URI:', scanResult.frontImage);
       
       const frontResponse = await fetch(scanResult.frontImage);
       if (!frontResponse.ok) {
@@ -203,12 +244,11 @@ export const IngredientScannerScreen: React.FC = () => {
       const frontArrayBuffer = await frontResponse.arrayBuffer();
       console.log('Front ArrayBuffer size:', frontArrayBuffer.byteLength);
       
-      // Verify ArrayBuffer has content
       if (frontArrayBuffer.byteLength === 0) {
         throw new Error('Front image ArrayBuffer is empty - image may be corrupted');
       }
       
-      const { data: uploadData, error: frontUploadError } = await supabase.storage
+      const { data: frontUploadData, error: frontUploadError } = await supabase.storage
         .from('food-images')
         .upload(`submissions/${frontFileName}`, frontArrayBuffer, {
           contentType: 'image/jpeg',
@@ -216,40 +256,45 @@ export const IngredientScannerScreen: React.FC = () => {
         });
 
       if (frontUploadError) {
-        console.error('Scanner upload error:', frontUploadError);
+        console.error('Front upload error:', frontUploadError);
         throw frontUploadError;
       }
 
-      console.log('Scanner upload successful:', uploadData);
-
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl: frontPublicUrl } } = supabase.storage
         .from('food-images')
         .getPublicUrl(`submissions/${frontFileName}`);
 
-      console.log('Scanner public URL:', publicUrl);
+      console.log('Ingredients upload successful:', ingredientsUploadData);
+      console.log('Front upload successful:', frontUploadData);
+      console.log('Ingredients public URL:', ingredientsPublicUrl);
+      console.log('Front public URL:', frontPublicUrl);
       
-      // Verify the uploaded image is accessible
+      // Verify both uploaded images are accessible
       try {
-        const urlTest = await fetch(publicUrl);
-        console.log('Scanner URL accessibility test:', urlTest.status);
-        if (!urlTest.ok) {
-          console.warn('Warning: Uploaded scanner image may not be accessible');
+        const [ingredientsUrlTest, frontUrlTest] = await Promise.all([
+          fetch(ingredientsPublicUrl),
+          fetch(frontPublicUrl)
+        ]);
+        console.log('Ingredients URL accessibility test:', ingredientsUrlTest.status);
+        console.log('Front URL accessibility test:', frontUrlTest.status);
+        if (!ingredientsUrlTest.ok || !frontUrlTest.ok) {
+          console.warn('Warning: Some uploaded images may not be accessible');
         }
       } catch (urlTestError) {
-        console.warn('Warning: Could not verify scanner image accessibility:', urlTestError);
+        console.warn('Warning: Could not verify image accessibility:', urlTestError);
       }
 
-      // Create detailed description
-      const description = `Scanned ingredients: ${scanResult.extractedText}\n\nNOVA Analysis: ${scanResult.novaClassification.explanation}\n\nFound indicators: ${scanResult.novaClassification.nova_details.foundIndicators.join(', ') || 'None'}\n\nSeed oils detected: ${scanResult.novaClassification.contains_seed_oils ? 'Yes' : 'No'}`;
+      // Create detailed description including both image URLs for admin reference
+      const description = `Scanned ingredients: ${scanResult.extractedText}\n\nNOVA Analysis: ${scanResult.novaClassification.explanation}\n\nFound indicators: ${scanResult.novaClassification.nova_details.foundIndicators.join(', ') || 'None'}\n\nSeed oils detected: ${scanResult.novaClassification.contains_seed_oils ? 'Yes' : 'No'}\n\nIngredients image: ${ingredientsPublicUrl}`;
 
-      // Insert into foods table with AI-generated data
+      // Insert into foods table with AI-generated data and both images
       const { error: insertError } = await supabase
         .from('foods')
         .insert({
           name: scanResult.productName,
           category: 'scanner-submission',
           description,
-          image: publicUrl,
+          image: frontPublicUrl, // Primary image (front of product)
           nova_group: scanResult.novaClassification.nova_group,
           nova_explanation: scanResult.novaClassification.explanation,
           nova_details: scanResult.novaClassification.nova_details,
@@ -263,7 +308,7 @@ export const IngredientScannerScreen: React.FC = () => {
 
       Alert.alert(
         'Success!',
-        'Your scanned product has been saved and sent for review. Thank you for contributing!',
+        'Your scanned product has been saved and sent for review. Both ingredient and product photos have been uploaded. Thank you for contributing!',
         [{ text: 'OK', onPress: resetScanner }]
       );
 
@@ -274,7 +319,7 @@ export const IngredientScannerScreen: React.FC = () => {
       let errorMessage = 'Failed to save results. Please try again.';
       if (error instanceof Error) {
         if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'Could not access the captured image. Please try scanning again.';
+          errorMessage = 'Could not access the captured images. Please try scanning again.';
         } else if (error.message.includes('storage')) {
           errorMessage = 'Image upload failed. Please check your internet connection and try again.';
         } else if (error.message.includes('policies')) {
@@ -385,6 +430,7 @@ export const IngredientScannerScreen: React.FC = () => {
     }
 
     const isIngredientsStep = currentStep === 'ingredients';
+    const isFrontStep = currentStep === 'front';
 
     return (
       <View style={styles.cameraContainer}>
@@ -395,20 +441,85 @@ export const IngredientScannerScreen: React.FC = () => {
           flash={flash}
         />
         
-        <View style={styles.cameraOverlay}>
-          <View style={styles.instructionContainer}>
-            <Text style={styles.instructionText}>
+        {/* Enhanced Progress Header */}
+        <View style={styles.progressHeader}>
+          <View style={styles.progressIndicators}>
+            {/* Step 1 - Ingredients */}
+            <View style={[
+              styles.progressStep,
+              ingredientsImage ? styles.progressStepCompleted : 
+              isIngredientsStep ? styles.progressStepActive : styles.progressStepInactive
+            ]}>
+              {ingredientsImage ? (
+                <Ionicons name="checkmark" size={16} color="white" />
+              ) : (
+                <Text style={styles.progressStepNumber}>1</Text>
+              )}
+            </View>
+            
+            <View style={[
+              styles.progressLine,
+              ingredientsImage ? styles.progressLineCompleted : styles.progressLineInactive
+            ]} />
+            
+            {/* Step 2 - Front Photo */}
+            <View style={[
+              styles.progressStep,
+              frontImage ? styles.progressStepCompleted :
+              isFrontStep ? styles.progressStepActive : styles.progressStepInactive
+            ]}>
+              {frontImage ? (
+                <Ionicons name="checkmark" size={16} color="white" />
+              ) : (
+                <Text style={styles.progressStepNumber}>2</Text>
+              )}
+            </View>
+          </View>
+          
+          <Text style={styles.progressTitle}>
+            {isIngredientsStep ? 'Scan Ingredients List' : 'Scan Product Front'}
+          </Text>
+        </View>
+
+        {/* Enhanced Instruction Overlay */}
+        <View style={styles.instructionOverlay}>
+          <View style={[
+            styles.instructionCard,
+            isIngredientsStep ? styles.instructionCardIngredients : styles.instructionCardFront
+          ]}>
+            <Ionicons 
+              name={isIngredientsStep ? 'list-outline' : 'image-outline'} 
+              size={24} 
+              color="white" 
+            />
+            <Text style={styles.instructionTitle}>
+              {isIngredientsStep ? 'Ingredients List' : 'Product Front'}
+            </Text>
+            <Text style={styles.instructionDescription}>
               {isIngredientsStep 
-                ? 'Position the ingredients list in the frame' 
-                : 'Take a photo of the product front'
+                ? 'Position the ingredients list clearly in the frame. Ensure good lighting and focus.' 
+                : 'Capture the front of the product package for identification.'
               }
             </Text>
-            <Text style={styles.stepIndicator}>
-              Step {isIngredientsStep ? '1' : '2'} of 2
-            </Text>
+            
+            {/* Show completed step preview */}
+            {ingredientsImage && isIngredientsStep && (
+              <View style={styles.completedStepPreview}>
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
+                <Text style={styles.completedStepText}>Ingredients captured! Now scan the front.</Text>
+              </View>
+            )}
+            
+            {frontImage && isFrontStep && (
+              <View style={styles.completedStepPreview}>
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
+                <Text style={styles.completedStepText}>Front photo captured! Processing...</Text>
+              </View>
+            )}
           </View>
         </View>
 
+        {/* Enhanced Controls */}
         <View style={styles.cameraControls}>
           <TouchableOpacity
             style={styles.controlButton}
@@ -422,10 +533,22 @@ export const IngredientScannerScreen: React.FC = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.captureButton}
+            style={[
+              styles.captureButton,
+              ingredientsImage && isIngredientsStep ? styles.captureButtonSuccess : {},
+              frontImage && isFrontStep ? styles.captureButtonSuccess : {}
+            ]}
             onPress={takePicture}
           >
-            <View style={styles.captureButtonInner} />
+            <View style={[
+              styles.captureButtonInner,
+              ingredientsImage && isIngredientsStep ? styles.captureButtonInnerSuccess : {},
+              frontImage && isFrontStep ? styles.captureButtonInnerSuccess : {}
+            ]}>
+              {((ingredientsImage && isIngredientsStep) || (frontImage && isFrontStep)) && (
+                <Ionicons name="checkmark" size={30} color="white" />
+              )}
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -435,6 +558,16 @@ export const IngredientScannerScreen: React.FC = () => {
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
         </View>
+
+        {/* Show preview of captured image */}
+        {ingredientsImage && isFrontStep && (
+          <View style={styles.capturedPreview}>
+            <Image source={{ uri: ingredientsImage }} style={styles.previewImage} />
+            <View style={styles.previewBadge}>
+              <Ionicons name="checkmark" size={12} color="white" />
+            </View>
+          </View>
+        )}
       </View>
     );
   };
@@ -680,29 +813,133 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  cameraOverlay: {
+  
+  // Enhanced Progress Header
+  progressHeader: {
     position: 'absolute',
     top: 60,
+    left: 0,
+    right: 0,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    zIndex: 10,
+  },
+  
+  progressIndicators: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  
+  progressStep: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  
+  progressStepActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  
+  progressStepCompleted: {
+    backgroundColor: theme.colors.success,
+    borderColor: theme.colors.success,
+  },
+  
+  progressStepInactive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  
+  progressStepNumber: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  progressLine: {
+    width: 40,
+    height: 2,
+    marginHorizontal: theme.spacing.sm,
+  },
+  
+  progressLineCompleted: {
+    backgroundColor: theme.colors.success,
+  },
+  
+  progressLineInactive: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  
+  progressTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  
+  // Enhanced Instruction Overlay
+  instructionOverlay: {
+    position: 'absolute',
+    top: 160,
     left: theme.spacing.md,
     right: theme.spacing.md,
+    zIndex: 5,
   },
-  instructionContainer: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+  
+  instructionCard: {
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
+    borderWidth: 2,
   },
-  instructionText: {
+  
+  instructionCardIngredients: {
+    borderColor: theme.colors.primary,
+  },
+  
+  instructionCardFront: {
+    borderColor: theme.colors.warning,
+  },
+  
+  instructionTitle: {
     color: 'white',
-    fontSize: theme.typography.fontSize.md,
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
     textAlign: 'center',
-    fontWeight: theme.typography.fontWeight.medium,
-    marginBottom: 4,
   },
-  stepIndicator: {
-    color: 'white',
-    fontSize: theme.typography.fontSize.sm,
-    opacity: 0.8,
+  
+  instructionDescription: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  
+  completedStepPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.sm,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    borderRadius: theme.borderRadius.md,
+    gap: theme.spacing.sm,
+  },
+  
+  completedStepText: {
+    color: theme.colors.success,
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
   },
   cameraControls: {
     position: 'absolute',
@@ -730,11 +967,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  captureButtonSuccess: {
+    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+  },
   captureButtonInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
     backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureButtonInnerSuccess: {
+    backgroundColor: theme.colors.success,
+  },
+  
+  // Captured Image Preview
+  capturedPreview: {
+    position: 'absolute',
+    bottom: 140,
+    left: 20,
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  
+  previewBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: theme.colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   processingContainer: {
     flex: 1,

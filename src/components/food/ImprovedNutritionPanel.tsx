@@ -90,8 +90,19 @@ const getHealthIndicator = (nutrient: string, value?: number): 'good' | 'moderat
       return value >= 600 ? 'high' : value >= 300 ? 'moderate' : 'good';
     case 'saturatedFat':
       return value >= 5 ? 'high' : value >= 2 ? 'moderate' : 'good';
+    case 'calories':
+      return 'neutral'; // Calories are context-dependent
     default:
       return 'neutral';
+  }
+};
+
+const getIndicatorColor = (indicator: 'good' | 'moderate' | 'high' | 'neutral'): string => {
+  switch (indicator) {
+    case 'good': return theme.colors.success;
+    case 'moderate': return theme.colors.warning;
+    case 'high': return theme.colors.error;
+    default: return theme.colors.text.tertiary;
   }
 };
 
@@ -118,12 +129,8 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
   if (!hasNutritionData) {
     return (
       <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Ionicons name="fitness-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.sectionTitle}>Nutrition Facts</Text>
-        </View>
         <View style={styles.noDataContainer}>
-          <Ionicons name="nutrition-outline" size={48} color="#C7C7CC" />
+          <Ionicons name="nutrition-outline" size={48} color={theme.colors.text.tertiary} />
           <Text style={styles.noDataTitle}>No Nutrition Data</Text>
           <Text style={styles.noDataSubtitle}>
             Nutrition information is not available for this product
@@ -133,19 +140,51 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
     );
   }
 
+  // Get key nutrients that are available
+  const keyNutrients = [
+    { key: 'calories', label: 'Calories', value: nutrition.calories, unit: '', isCalories: true },
+    { key: 'protein', label: 'Protein', value: nutrition.protein, unit: 'g' },
+    { key: 'fiber', label: 'Fiber', value: nutrition.fiber, unit: 'g' },
+    { key: 'sugar', label: 'Sugar', value: nutrition.sugar, unit: 'g' },
+    { key: 'sodium', label: 'Sodium', value: nutrition.sodium, unit: 'mg' },
+  ].filter(nutrient => nutrient.value !== undefined);
+
+  const hasBasicInfo = keyNutrients.length > 0;
+
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Ionicons name="fitness-outline" size={24} color={theme.colors.primary} />
-        <View style={styles.titleContainer}>
-          <Text style={styles.sectionTitle}>Nutrition Facts</Text>
-          {nutrition?.servingSize && (
-            <Text style={styles.servingSize}>Per {nutrition.servingSize}</Text>
-          )}
+      {/* Quick Nutrition Overview */}
+      {hasBasicInfo && (
+        <View style={styles.quickStatsRow}>
+          {keyNutrients.slice(0, 4).map((nutrient, index) => (
+            <View key={nutrient.key} style={styles.quickStat}>
+              <Text style={[
+                styles.quickStatValue, 
+                nutrient.isCalories && styles.caloriesValue
+              ]}>
+                {nutrient.value}{nutrient.unit}
+              </Text>
+              <Text style={styles.quickStatLabel}>{nutrient.label}</Text>
+              {getHealthIndicator(nutrient.key, nutrient.value) !== 'neutral' && (
+                <View style={[
+                  styles.quickStatIndicator,
+                  { backgroundColor: getIndicatorColor(getHealthIndicator(nutrient.key, nutrient.value)) }
+                ]} />
+              )}
+            </View>
+          ))}
         </View>
-      </View>
+      )}
       
+      {/* Detailed Nutrition Facts */}
       <View style={styles.nutritionCard}>
+        {nutrition.servingSize && (
+          <View style={styles.servingSizeContainer}>
+            <Text style={styles.servingSizeLabel}>Per serving</Text>
+            <Text style={styles.servingSizeValue}>{nutrition.servingSize}</Text>
+          </View>
+        )}
+        
         {/* Calories - Always first and prominent */}
         <NutrientRow
           label="Calories"
@@ -165,13 +204,6 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
           healthIndicator={getHealthIndicator('fat', nutrition.fat)}
         />
         
-        <NutrientRow
-          label="Saturated Fat"
-          value={nutrition.saturatedFat}
-          unit="g"
-          dailyValue={calculateDailyValue('saturatedFat', nutrition.saturatedFat)}
-          healthIndicator={getHealthIndicator('saturatedFat', nutrition.saturatedFat)}
-        />
         
         <NutrientRow
           label="Sodium"
@@ -215,7 +247,7 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
       
       <View style={styles.footnoteContainer}>
         <Text style={styles.footnoteText}>
-          * Percent Daily Values are based on a 2,000 calorie diet
+          * Percent Daily Values based on 2,000 calorie diet. Color coding indicates health impact.
         </Text>
       </View>
     </View>
@@ -224,60 +256,93 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    gap: theme.spacing.md,
   },
 
-  headerContainer: {
+  // Quick Stats Overview
+  quickStatsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.sm,
   },
 
-  titleContainer: {
-    marginLeft: 12,
+  quickStat: {
     flex: 1,
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    position: 'relative',
   },
 
-  sectionTitle: {
-    fontSize: 20,
+  quickStatValue: {
+    ...theme.typography.headline,
     fontWeight: '700',
     color: theme.colors.text.primary,
   },
 
-  servingSize: {
-    fontSize: 15,
-    color: '#6D6D70',
-    marginTop: 1,
+  caloriesValue: {
+    ...theme.typography.display,
+    fontSize: 24,
   },
 
+  quickStatLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+
+  quickStatIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+
+  // Detailed Nutrition Card
   nutritionCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+
+  servingSizeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
+    marginBottom: theme.spacing.xs,
+  },
+
+  servingSizeLabel: {
+    ...theme.typography.subtextMedium,
+    color: theme.colors.text.secondary,
+  },
+
+  servingSizeValue: {
+    ...theme.typography.bodySemibold,
+    color: theme.colors.text.primary,
   },
 
   nutrientRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 44, // iOS standard touch target
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    minHeight: 44,
   },
 
   caloriesRow: {
-    paddingVertical: 16,
+    paddingVertical: theme.spacing.md,
     borderBottomWidth: 2,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: theme.colors.border,
   },
 
   nutrientInfo: {
@@ -288,38 +353,31 @@ const styles = StyleSheet.create({
   },
 
   nutrientLabel: {
-    fontSize: 17,
+    ...theme.typography.body,
     color: theme.colors.text.primary,
-    fontWeight: '400',
   },
 
   caloriesLabel: {
-    fontSize: 20,
+    ...theme.typography.headline,
     fontWeight: '600',
   },
 
   dailyValueText: {
-    fontSize: 15,
-    color: '#6D6D70',
-    marginLeft: 8,
+    ...theme.typography.subtext,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing.sm,
   },
 
   nutrientValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 16,
+    marginLeft: theme.spacing.md,
   },
 
   nutrientValue: {
-    fontSize: 17,
-    fontWeight: '600',
+    ...theme.typography.bodySemibold,
     color: theme.colors.text.primary,
     textAlign: 'right',
-  },
-
-  caloriesValue: {
-    fontSize: 28,
-    fontWeight: '700',
   },
 
   indicatorContainer: {
@@ -328,52 +386,44 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: theme.spacing.sm,
   },
 
   separator: {
     height: 1,
-    backgroundColor: '#E5E5EA',
-    marginHorizontal: 16,
+    backgroundColor: theme.colors.border,
+    marginHorizontal: theme.spacing.md,
   },
 
   footnoteContainer: {
-    marginTop: 12,
-    paddingHorizontal: 4,
+    paddingHorizontal: theme.spacing.xs,
   },
 
   footnoteText: {
-    fontSize: 13,
-    color: '#6D6D70',
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
 
   noDataContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 32,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...theme.shadows.sm,
   },
 
   noDataTitle: {
-    fontSize: 17,
-    fontWeight: '600',
+    ...theme.typography.headline,
     color: theme.colors.text.primary,
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
 
   noDataSubtitle: {
-    fontSize: 15,
-    color: '#6D6D70',
+    ...theme.typography.subtext,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
   },

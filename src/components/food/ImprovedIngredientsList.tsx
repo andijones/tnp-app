@@ -139,10 +139,6 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
   if (ingredientsList.length < 2) {
     return (
       <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Ionicons name="list-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.sectionTitle}>Ingredients</Text>
-        </View>
         <View style={styles.textCard}>
           <Text style={styles.fullText}>{ingredientsText}</Text>
         </View>
@@ -168,47 +164,49 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Ionicons name="list-outline" size={24} color={theme.colors.primary} />
-        <View style={styles.titleContainer}>
-          <Text style={styles.sectionTitle}>Ingredients</Text>
-          <Text style={styles.ingredientCount}>
-            {ingredientsList.length} ingredient{ingredientsList.length !== 1 ? 's' : ''} listed
-          </Text>
+      {/* Quick Summary Stats */}
+      <View style={styles.summaryRow}>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{ingredientsList.length}</Text>
+          <Text style={styles.statLabel}>Ingredients</Text>
         </View>
-      </View>
-
-      {/* Analysis Summary */}
-      {(concernCounts.additives > 0 || concernCounts.allergens > 0 || concernCounts.natural > 0) && (
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            {concernCounts.natural > 0 && (
-              <View style={styles.summaryItem}>
-                <Ionicons name="checkmark-circle" size={16} color="#34C759" />
-                <Text style={[styles.summaryText, { color: '#34C759' }]}>
-                  {concernCounts.natural} natural
-                </Text>
-              </View>
-            )}
-            {concernCounts.allergens > 0 && (
-              <View style={styles.summaryItem}>
-                <Ionicons name="warning" size={16} color="#FF9F0A" />
-                <Text style={[styles.summaryText, { color: '#FF9F0A' }]}>
-                  {concernCounts.allergens} allergen{concernCounts.allergens !== 1 ? 's' : ''}
-                </Text>
-              </View>
-            )}
-            {concernCounts.additives > 0 && (
-              <View style={styles.summaryItem}>
-                <Ionicons name="alert-circle" size={16} color="#FF3B30" />
-                <Text style={[styles.summaryText, { color: '#FF3B30' }]}>
-                  {concernCounts.additives} additive{concernCounts.additives !== 1 ? 's' : ''}
-                </Text>
-              </View>
-            )}
+        
+        {concernCounts.natural > 0 && (
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="checkmark-circle" size={16} color={theme.colors.success} />
+              <Text style={[styles.statNumber, { color: theme.colors.success }]}>
+                {concernCounts.natural}
+              </Text>
+            </View>
+            <Text style={styles.statLabel}>Natural</Text>
           </View>
-        </View>
-      )}
+        )}
+        
+        {concernCounts.allergens > 0 && (
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="warning" size={16} color={theme.colors.warning} />
+              <Text style={[styles.statNumber, { color: theme.colors.warning }]}>
+                {concernCounts.allergens}
+              </Text>
+            </View>
+            <Text style={styles.statLabel}>Allergen{concernCounts.allergens !== 1 ? 's' : ''}</Text>
+          </View>
+        )}
+        
+        {concernCounts.additives > 0 && (
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="alert-circle" size={16} color={theme.colors.error} />
+              <Text style={[styles.statNumber, { color: theme.colors.error }]}>
+                {concernCounts.additives}
+              </Text>
+            </View>
+            <Text style={styles.statLabel}>Additive{concernCounts.additives !== 1 ? 's' : ''}</Text>
+          </View>
+        )}
+      </View>
 
       {/* Ingredients Grid */}
       <View style={styles.ingredientsCard}>
@@ -238,7 +236,7 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
             <Ionicons 
               name={showAll ? 'chevron-up' : 'chevron-down'} 
               size={16} 
-              color="#007AFF" 
+              color={theme.colors.primary} 
             />
           </TouchableOpacity>
         )}
@@ -247,7 +245,7 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
       {/* Educational Note */}
       <View style={styles.noteContainer}>
         <Text style={styles.noteText}>
-          Ingredients are listed by weight, from most to least. Main ingredients appear first.
+          Listed by weight, highest to lowest. Color coding indicates potential health concerns.
         </Text>
       </View>
     </View>
@@ -256,142 +254,106 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    gap: theme.spacing.md,
   },
 
-  headerContainer: {
+  // Stats Summary Row
+  summaryRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.sm,
+  },
+
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+
+  statIconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    gap: theme.spacing.xs,
   },
 
-  titleContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-
-  sectionTitle: {
-    fontSize: 20,
+  statNumber: {
+    ...theme.typography.headline,
     fontWeight: '700',
     color: theme.colors.text.primary,
   },
 
-  ingredientCount: {
-    fontSize: 15,
-    color: '#6D6D70',
-    marginTop: 1,
+  statLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
   },
 
-  summaryCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-
-  summaryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-
-  summaryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-
-  summaryText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
+  // Ingredients Grid
   ingredientsCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    ...theme.shadows.sm,
   },
 
   ingredientsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: theme.spacing.sm,
   },
 
   ingredientChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 4,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1.5,
+    marginBottom: theme.spacing.xs,
   },
 
   chipText: {
-    fontSize: 15,
-    fontWeight: '500',
+    ...theme.typography.subtextMedium,
   },
 
   showMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
-    paddingVertical: 8,
-    gap: 4,
+    marginTop: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
 
   showMoreText: {
-    fontSize: 17,
-    color: '#007AFF',
-    fontWeight: '600',
+    ...theme.typography.bodySemibold,
+    color: theme.colors.primary,
   },
 
+  // Fallback Text Display
   textCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    ...theme.shadows.sm,
   },
 
   fullText: {
-    fontSize: 15,
+    ...theme.typography.body,
     color: theme.colors.text.primary,
     lineHeight: 22,
   },
 
+  // Educational Note
   noteContainer: {
-    marginTop: 12,
-    paddingHorizontal: 4,
+    paddingHorizontal: theme.spacing.xs,
   },
 
   noteText: {
-    fontSize: 13,
-    color: '#6D6D70',
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
     fontStyle: 'italic',
-    lineHeight: 16,
+    textAlign: 'center',
   },
 });
