@@ -32,6 +32,7 @@ import { useFavorites } from '../../hooks/useFavorites';
 import { NovaRatingBanner } from '../../components/food/NovaRatingBanner';
 import { ImprovedNutritionPanel } from '../../components/food/ImprovedNutritionPanel';
 import { ImprovedIngredientsList } from '../../components/food/ImprovedIngredientsList';
+import { RelatedFoodsSection } from '../../components/food/RelatedFoodsSection';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -430,6 +431,12 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
                 }
               />
             </View>
+
+            {/* Related Foods Section */}
+            <RelatedFoodsSection 
+              currentFood={food}
+              onFoodPress={(foodId) => navigation.push('FoodDetail', { foodId })}
+            />
           </View>
 
           {/* Footer Actions */}
