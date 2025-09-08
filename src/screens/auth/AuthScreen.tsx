@@ -297,8 +297,10 @@ const styles = StyleSheet.create({
   
   forgotPasswordText: {
     color: '#4CAF50',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: theme.typography.subtitle.fontSize,
+    fontFamily: theme.typography.subtitle.fontFamily,
+    lineHeight: theme.typography.subtitle.lineHeight,
+    letterSpacing: theme.typography.subtitle.letterSpacing,
     textDecorationLine: 'underline',
   },
   
@@ -316,6 +318,9 @@ const styles = StyleSheet.create({
   
   backToLoginText: {
     color: '#666',
-    fontSize: 16,
+    fontSize: theme.typography.subtitle.fontSize,
+    fontFamily: theme.typography.subtitle.fontFamily,
+    lineHeight: theme.typography.subtitle.lineHeight,
+    letterSpacing: theme.typography.subtitle.letterSpacing,
   },
 });

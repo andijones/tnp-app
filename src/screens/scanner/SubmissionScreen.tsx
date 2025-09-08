@@ -656,7 +656,9 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: 'white',
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontSize: theme.typography.subtitle.fontSize,
+    fontFamily: theme.typography.subtitle.fontFamily,
+    lineHeight: theme.typography.subtitle.lineHeight,
+    letterSpacing: theme.typography.subtitle.letterSpacing,
   },
 });

@@ -1,19 +1,23 @@
 import * as Font from 'expo-font';
 
 export const loadFonts = async () => {
-  await Font.loadAsync({
-    'BricolageGrotesque-Light': require('../../assets/fonts/BricolageGrotesque-Light.ttf'),
-    'BricolageGrotesque-Regular': require('../../assets/fonts/BricolageGrotesque-Regular.ttf'),
-    'BricolageGrotesque-Medium': require('../../assets/fonts/BricolageGrotesque-Medium.ttf'),
-    'BricolageGrotesque-SemiBold': require('../../assets/fonts/BricolageGrotesque-SemiBold.ttf'),
-    'BricolageGrotesque-Bold': require('../../assets/fonts/BricolageGrotesque-Bold.ttf'),
-  });
+  console.log('Loading Bricolage Grotesque variable font...');
+  
+  try {
+    await Font.loadAsync({
+      'BricolageGrotesque': require('../../assets/fonts/BricolageGrotesque-VariableFont_opsz,wdth,wght.ttf'),
+    });
+    console.log('✅ Bricolage Grotesque variable font loaded successfully');
+  } catch (error) {
+    console.error('❌ Failed to load Bricolage Grotesque variable font:', error);
+    throw error;
+  }
 };
 
 export const fontFamilies = {
-  light: 'BricolageGrotesque-Light',
-  regular: 'BricolageGrotesque-Regular',
-  medium: 'BricolageGrotesque-Medium',
-  semibold: 'BricolageGrotesque-SemiBold',
-  bold: 'BricolageGrotesque-Bold',
+  light: 'BricolageGrotesque',
+  regular: 'BricolageGrotesque', 
+  medium: 'BricolageGrotesque',
+  semibold: 'BricolageGrotesque',
+  bold: 'BricolageGrotesque',
 } as const;

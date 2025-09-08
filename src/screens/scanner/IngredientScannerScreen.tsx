@@ -1207,8 +1207,10 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   actionButtonText: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontSize: theme.typography.subtitle.fontSize,
+    fontFamily: theme.typography.subtitle.fontFamily,
+    lineHeight: theme.typography.subtitle.lineHeight,
+    letterSpacing: theme.typography.subtitle.letterSpacing,
     color: 'white',
   },
   resultDisclaimer: {

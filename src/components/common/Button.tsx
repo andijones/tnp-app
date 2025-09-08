@@ -5,8 +5,7 @@ import { theme } from '../../theme';
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'text';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'text';
   disabled?: boolean;
   style?: ViewStyle;
   leftIcon?: React.ReactNode;
@@ -17,7 +16,6 @@ export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
   variant = 'primary',
-  size = 'md',
   disabled = false,
   style,
   leftIcon,
@@ -30,7 +28,6 @@ export const Button: React.FC<ButtonProps> = ({
       style={[
         styles.base,
         styles[variant],
-        styles[size],
         disabled && styles.disabled,
         style,
       ]}
@@ -52,45 +49,47 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.borderRadius.full,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    height: 48,
+    paddingHorizontal: 24,
   },
   
   // Variants
   primary: {
-    backgroundColor: theme.colors.primary,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    backgroundColor: '#44DB6D',
+    borderWidth: 1,
+    borderColor: '#3CC161',
+    shadowColor: '#9C9C9C',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 2,
   },
   secondary: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1F5932',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#144925',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    // Note: React Native doesn't support gradient backgrounds or inset shadows natively
+    // You may need to use react-native-linear-gradient for the gradient effect
+  },
+  tertiary: {
+    backgroundColor: '#FAFAFA',
+    borderWidth: 1,
+    borderColor: '#D4D4D4',
   },
   text: {
     backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#1F5932',
   },
   
-  // Sizes
-  sm: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    minHeight: 40,
-  },
-  md: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-  },
-  lg: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
-    minHeight: 56,
-  },
   
   disabled: {
     opacity: 0.4,
@@ -98,18 +97,24 @@ const styles = StyleSheet.create({
   
   // Text styles
   buttonText: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontSize: theme.typography.subtitle.fontSize,
+    fontFamily: theme.typography.subtitle.fontFamily,
+    fontWeight: theme.typography.subtitle.fontWeight,
+    lineHeight: theme.typography.subtitle.lineHeight,
+    letterSpacing: theme.typography.subtitle.letterSpacing,
     textAlign: 'center',
   },
   primaryText: {
     color: '#FFFFFF',
   },
   secondaryText: {
+    color: '#FFFFFF',
+  },
+  tertiaryText: {
     color: theme.colors.text.primary,
   },
   textText: {
-    color: theme.colors.primary,
+    color: '#1F5932',
   },
   
   content: {

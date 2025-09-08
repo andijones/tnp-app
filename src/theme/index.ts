@@ -130,6 +130,55 @@ export const theme = {
         letterSpacing: 0.1,
       },
       
+      // Card title style
+      cardTitle: {
+        fontSize: 16,
+        fontFamily: fontFamilies.bold,
+        lineHeight: Math.round(16 * 1.19712), // 19.154px rounded to 19
+        letterSpacing: -0.48,
+      },
+      
+      // Card meta style
+      cardMeta: {
+        fontSize: 12,
+        fontFamily: fontFamilies.regular,
+        lineHeight: 12, // normal line-height
+        letterSpacing: 0,
+      },
+      
+      // Label style (updated)
+      labelNew: {
+        fontSize: 12,
+        fontFamily: fontFamilies.semibold,
+        lineHeight: 12, // normal line-height
+        letterSpacing: 0,
+      },
+      
+      // Heading style
+      heading: {
+        fontSize: 24,
+        fontFamily: fontFamilies.bold,
+        lineHeight: Math.round(24 * 1.19712), // 28.731px rounded to 29
+        letterSpacing: -0.72,
+      },
+      
+      // Body style
+      bodyNew: {
+        fontSize: 15,
+        fontFamily: fontFamilies.regular,
+        lineHeight: 21, // 140%
+        letterSpacing: -0.15,
+      },
+      
+      // Subtitle style
+      subtitle: {
+        fontSize: 16,
+        fontFamily: fontFamilies.semibold,
+        fontWeight: '600' as const,
+        lineHeight: Math.round(16 * 1.19712), // 19.154px rounded to 19
+        letterSpacing: -0.48,
+      },
+      
       // Legacy fontSize values for gradual migration
       fontSize: {
         xs: 12,
