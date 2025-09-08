@@ -1,3 +1,5 @@
+import { fontFamilies } from '../utils/fonts';
+
 export const theme = {
     colors: {
       // Primary brand color
@@ -51,7 +53,7 @@ export const theme = {
       // Display text for hero sections and main headlines
       display: {
         fontSize: 32,
-        fontWeight: '700' as const,
+        fontFamily: fontFamilies.bold,
         lineHeight: 36,
         letterSpacing: -0.5,
       },
@@ -59,7 +61,7 @@ export const theme = {
       // Title text for section headers
       title: {
         fontSize: 22,
-        fontWeight: '700' as const,
+        fontFamily: fontFamilies.bold,
         lineHeight: 26,
         letterSpacing: -0.3,
       },
@@ -67,7 +69,7 @@ export const theme = {
       // Headline for card titles and important content
       headline: {
         fontSize: 18,
-        fontWeight: '600' as const,
+        fontFamily: fontFamilies.semibold,
         lineHeight: 22,
         letterSpacing: -0.2,
       },
@@ -75,19 +77,19 @@ export const theme = {
       // Body text in multiple weights
       body: {
         fontSize: 16,
-        fontWeight: '400' as const,
+        fontFamily: fontFamilies.regular,
         lineHeight: 22,
         letterSpacing: 0,
       },
       bodyMedium: {
         fontSize: 16,
-        fontWeight: '500' as const,
+        fontFamily: fontFamilies.medium,
         lineHeight: 22,
         letterSpacing: 0,
       },
       bodySemibold: {
         fontSize: 16,
-        fontWeight: '600' as const,
+        fontFamily: fontFamilies.semibold,
         lineHeight: 22,
         letterSpacing: 0,
       },
@@ -95,13 +97,13 @@ export const theme = {
       // Subtext for descriptions and secondary content  
       subtext: {
         fontSize: 14,
-        fontWeight: '400' as const,
+        fontFamily: fontFamilies.regular,
         lineHeight: 20,
         letterSpacing: 0,
       },
       subtextMedium: {
         fontSize: 14,
-        fontWeight: '500' as const,
+        fontFamily: fontFamilies.medium,
         lineHeight: 20,
         letterSpacing: 0,
       },
@@ -109,13 +111,13 @@ export const theme = {
       // Caption for metadata and small labels
       caption: {
         fontSize: 12,
-        fontWeight: '400' as const,
+        fontFamily: fontFamilies.regular,
         lineHeight: 16,
         letterSpacing: 0,
       },
       captionMedium: {
         fontSize: 12,
-        fontWeight: '500' as const,
+        fontFamily: fontFamilies.medium,
         lineHeight: 16,
         letterSpacing: 0,
       },
@@ -123,7 +125,7 @@ export const theme = {
       // Labels for UI elements
       label: {
         fontSize: 14,
-        fontWeight: '600' as const,
+        fontFamily: fontFamilies.semibold,
         lineHeight: 18,
         letterSpacing: 0.1,
       },
