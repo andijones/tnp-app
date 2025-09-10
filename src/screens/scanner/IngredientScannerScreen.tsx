@@ -14,6 +14,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
+import { Button } from '../../components/common/Button';
 import { supabase } from '../../services/supabase/config';
 import { classifyFoodByIngredients, type NovaClassificationResult } from '../../utils/enhancedNovaClassifier';
 
@@ -394,12 +395,12 @@ export const IngredientScannerScreen: React.FC = () => {
         </View>
       </View>
 
-      <TouchableOpacity 
-        style={styles.startButton}
+      <Button
+        title="Start Scanning"
+        variant="secondary"
         onPress={() => setCurrentStep('ingredients')}
-      >
-        <Text style={styles.startButtonText}>Start Scanning</Text>
-      </TouchableOpacity>
+        style={styles.startButton}
+      />
 
       <Text style={styles.disclaimer}>
         Uses OpenAI GPT-4 Vision for accurate ingredient extraction
@@ -787,18 +788,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   startButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.full,
-    minWidth: 200,
-    alignItems: 'center',
     marginBottom: theme.spacing.md,
-  },
-  startButtonText: {
-    color: 'white',
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
   },
   disclaimer: {
     fontSize: theme.typography.fontSize.xs,

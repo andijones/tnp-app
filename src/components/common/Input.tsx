@@ -43,39 +43,52 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   label: {
-    fontSize: 14,
+    ...theme.typography.label,
+    color: '#1F5932', // Green-950
+    fontSize: 16, // 12px Figma × 1.33
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    letterSpacing: 0.5,
+    lineHeight: 16, // normal line-height
+    marginBottom: 11, // 8px Figma × 1.33
   },
   input: {
-    borderWidth: 0,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    fontWeight: '400',
-    backgroundColor: '#ffffff',
-    color: '#333',
-    minHeight: 52,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    // Figma styles converted to our scale
+    padding: 21, // 16px Figma × 1.33
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    borderRadius: 11, // 8px Figma × 1.33
+    borderWidth: 1,
+    borderColor: '#E5E5E5', // Neutral-200
+    backgroundColor: '#FFFFFF',
+    
+    // Text styling
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: 'System', // System font supports light weights better
+    fontWeight: '400', // Regular weight
+    lineHeight: theme.typography.body.lineHeight,
+    letterSpacing: theme.typography.body.letterSpacing,
+    color: theme.colors.text.primary,
+    minHeight: 64, // 48px Figma × 1.33
+    
+    // Remove shadows for clean design
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   multilineInput: {
-    minHeight: 80,
+    minHeight: 107, // 80px Figma × 1.33
     textAlignVertical: 'top',
+    paddingTop: 21, // Maintain consistent padding
   },
   inputError: {
     borderColor: theme.colors.error,
     backgroundColor: '#fef2f2',
   },
   error: {
-    fontSize: 12,
+    ...theme.typography.caption,
     color: theme.colors.error,
-    marginTop: 4,
+    marginTop: 5, // 4px Figma × 1.33
   },
 });

@@ -281,12 +281,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
+    borderRadius: 11, // 8px Figma size × 1.33
   },
   
   retryButtonText: {
-    ...theme.typography.bodyMedium,
+    ...theme.typography.subtitle,
     color: '#FFFFFF',
-    fontWeight: '600',
   },
 });

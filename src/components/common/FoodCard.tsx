@@ -27,13 +27,25 @@ export const FoodCard: React.FC<FoodCardProps> = ({
       style={styles.foodCard} 
       onPress={onPress}
     >
-      {/* Food Image with NOVA tag */}
-      <FoodImage 
-        imageUrl={food.image}
-        size="medium"
-        novaGroup={food.nova_group}
-      />
+      {/* Header with Food Image and Favorite Button */}
+      <View style={styles.cardHeader}>
+        <FoodImage 
+          imageUrl={food.image}
+          size="medium"
+          novaGroup={food.nova_group}
+        />
+        
+        <FavoriteButton
+          foodId={food.id}
+          isFavorite={isFavorite}
+          onToggle={async (foodId: string) => {
+            onToggleFavorite(foodId);
+            return true;
+          }}
+        />
+      </View>
       
+      {/* Food Info */}
       <View style={styles.foodInfo}>
         <Text style={styles.foodName}>{food.name}</Text>
         
@@ -57,55 +69,55 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           </View>
         </View>
       </View>
-      
-      <FavoriteButton
-        foodId={food.id}
-        isFavorite={isFavorite}
-        onToggle={async (foodId: string) => {
-          onToggleFavorite(foodId);
-          return true;
-        }}
-      />
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   foodCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
+    // Figma design specifications exactly
+    padding: 11, // 8px Figma × 1.33
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    borderRadius: 11, // 8px Figma × 1.33 (var(--Spacing-8, 8px))
+    borderWidth: 1,
+    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
+    backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
     marginBottom: theme.spacing.md,
+    
+    // More visible shadow for React Native
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    alignSelf: 'stretch',
+    marginBottom: 11, // 8px Figma × 1.33 (gap between sections)
   },
   
   foodInfo: {
-    flex: 1,
-    marginLeft: theme.spacing.md,
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.xs,
+    alignSelf: 'stretch',
   },
   
   foodName: {
     ...theme.typography.headline,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.xs,
+    marginBottom: 11, // 8px Figma × 1.33 (gap between elements)
   },
   
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xs,
   },
   
   metaItem: {

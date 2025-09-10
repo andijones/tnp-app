@@ -26,7 +26,14 @@ const NutrientRow: React.FC<NutrientRowProps> = (props) => {
     healthIndicator = 'neutral',
     isCalories = false 
   } = props;
-  if (value === undefined) return null;
+  
+  // Early return with null if no value
+  if (value === undefined || value === null) return null;
+  
+  // Ensure all string values are properly defined
+  const safeLabel = String(label || '');
+  const safeUnit = String(unit || '');
+  const safeValue = value;
 
   const getIndicatorColor = () => {
     switch (healthIndicator) {
@@ -50,9 +57,9 @@ const NutrientRow: React.FC<NutrientRowProps> = (props) => {
     <View style={[styles.nutrientRow, isCalories && styles.caloriesRow]}>
       <View style={styles.nutrientInfo}>
         <Text style={[styles.nutrientLabel, isCalories && styles.caloriesLabel]}>
-          {label}
+          {safeLabel}
         </Text>
-        {dailyValue && (
+        {dailyValue !== undefined && dailyValue !== null && (
           <Text style={styles.dailyValueText}>
             {dailyValue}% DV
           </Text>
@@ -61,7 +68,7 @@ const NutrientRow: React.FC<NutrientRowProps> = (props) => {
       
       <View style={styles.nutrientValueContainer}>
         <Text style={[styles.nutrientValue, isCalories && styles.caloriesValue]}>
-          {value}{unit}
+          {safeValue}{safeUnit}
         </Text>
         {healthIndicator !== 'neutral' && (
           <View style={[styles.indicatorContainer, { backgroundColor: getIndicatorColor() }]}>
@@ -163,7 +170,7 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
                 styles.quickStatValue, 
                 nutrient.isCalories && styles.caloriesValue
               ]}>
-                {nutrient.value}{nutrient.unit}
+{nutrient.value !== undefined ? nutrient.value : 0}{nutrient.unit || ''}
               </Text>
               <Text style={styles.quickStatLabel}>{nutrient.label}</Text>
               {getHealthIndicator(nutrient.key, nutrient.value) !== 'neutral' && (

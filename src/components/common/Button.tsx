@@ -49,10 +49,10 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 8,
+    borderRadius: 11, // 8px Figma size × 1.33
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
+    height: 64, // 48px Figma size × 1.33
     paddingHorizontal: 24,
   },
   
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: '#1F5932', // Green-950
   },
   secondaryText: {
     color: '#FFFFFF',
@@ -125,9 +125,11 @@ const styles = StyleSheet.create({
   
   leftIcon: {
     marginRight: theme.spacing.sm,
+    opacity: 0.5,
   },
   
   rightIcon: {
     marginLeft: theme.spacing.sm,
+    opacity: 0.5,
   },
 });

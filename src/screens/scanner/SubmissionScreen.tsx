@@ -7,13 +7,14 @@ import {
   Alert,
   SafeAreaView,
   ScrollView,
-  TextInput,
   ActivityIndicator,
   Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
+import { Button } from '../../components/common/Button';
+import { Input } from '../../components/common/Input';
 import { supabase } from '../../services/supabase/config';
 
 type SubmissionMode = 'photo' | 'url';
@@ -291,35 +292,19 @@ export const SubmissionScreen: React.FC = () => {
   const renderModeSelector = () => (
     <View style={styles.tabContainer}>
       <View style={styles.tabSelector}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            mode === 'photo' && styles.tabButtonActive,
-          ]}
+        <Button
+          title="Photo"
           onPress={() => setMode('photo')}
-        >
-          <Text style={[
-            styles.tabText,
-            mode === 'photo' && styles.tabTextActive,
-          ]}>
-            Photo
-          </Text>
-        </TouchableOpacity>
+          variant={mode === 'photo' ? 'primary' : 'tertiary'}
+          style={styles.tabButton}
+        />
         
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            mode === 'url' && styles.tabButtonActive,
-          ]}
+        <Button
+          title="URL"
           onPress={() => setMode('url')}
-        >
-          <Text style={[
-            styles.tabText,
-            mode === 'url' && styles.tabTextActive,
-          ]}>
-            URL
-          </Text>
-        </TouchableOpacity>
+          variant={mode === 'url' ? 'primary' : 'tertiary'}
+          style={styles.tabButton}
+        />
       </View>
     </View>
   );
@@ -345,68 +330,59 @@ export const SubmissionScreen: React.FC = () => {
           
           {selectedImages.length < 3 && (
             <View style={styles.addImageContainer}>
-              <TouchableOpacity style={styles.addImageButton} onPress={takePhoto}>
-                <Ionicons name="camera" size={32} color={theme.colors.primary} />
-                <Text style={styles.addImageText}>Take Photo</Text>
-              </TouchableOpacity>
+              <Button
+                title="Take Photo"
+                onPress={takePhoto}
+                variant="secondary"
+                leftIcon={<Ionicons name="camera" size={20} color="white" />}
+                style={styles.addImageButton}
+              />
               
-              <TouchableOpacity style={styles.addImageButton} onPress={addImageFromGallery}>
-                <Ionicons name="images" size={32} color={theme.colors.primary} />
-                <Text style={styles.addImageText}>Gallery</Text>
-              </TouchableOpacity>
+              <Button
+                title="Gallery"
+                onPress={addImageFromGallery}
+                variant="secondary"
+                leftIcon={<Ionicons name="images" size={20} color="white" />}
+                style={styles.addImageButton}
+              />
             </View>
           )}
         </View>
       </View>
 
       {/* Form Fields */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Product Name *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={productName}
-          onChangeText={setProductName}
-          placeholder="Enter product name"
-        />
-      </View>
+      <Input
+        label="Product Name *"
+        value={productName}
+        onChangeText={setProductName}
+        placeholder="Enter product name"
+      />
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Supermarket</Text>
-        <TextInput
-          style={styles.textInput}
-          value={supermarket}
-          onChangeText={setSupermarket}
-          placeholder="e.g., Tesco, Sainsbury's"
-        />
-      </View>
+      <Input
+        label="Supermarket"
+        value={supermarket}
+        onChangeText={setSupermarket}
+        placeholder="e.g., Tesco, Sainsbury's"
+      />
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Notes (Optional)</Text>
-        <TextInput
-          style={[styles.textInput, styles.textArea]}
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Any additional information about this product"
-          multiline
-          numberOfLines={3}
-        />
-      </View>
+      <Input
+        label="Notes (Optional)"
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Any additional information about this product"
+        multiline
+      />
     </ScrollView>
   );
 
   const renderUrlMode = () => (
     <ScrollView style={styles.formContainer}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Product URL *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={productUrl}
-          onChangeText={setProductUrl}
-          placeholder="https://example.com/product"
-          autoCapitalize="none"
-          keyboardType="url"
-        />
-      </View>
+      <Input
+        label="Product URL *"
+        value={productUrl}
+        onChangeText={setProductUrl}
+        placeholder="https://example.com/product"
+      />
 
       <View style={styles.infoBox}>
         <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
@@ -434,22 +410,13 @@ export const SubmissionScreen: React.FC = () => {
         </View>
 
         <View style={styles.submitContainer}>
-          <TouchableOpacity
-            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          <Button
+            title={isSubmitting ? 'Submitting...' : `Submit ${mode === 'photo' ? 'Photos' : 'URL'}`}
             onPress={handleSubmit}
             disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <>
-                <Ionicons name="send" size={20} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.submitButtonText}>
-                  Submit {mode === 'photo' ? 'Photos' : 'URL'}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
+            variant="primary"
+            leftIcon={isSubmitting ? <ActivityIndicator color="white" size="small" /> : <Ionicons name="send" size={20} color="white" />}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -655,10 +622,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   submitButtonText: {
+    ...theme.typography.subtitle,
     color: 'white',
-    fontSize: theme.typography.subtitle.fontSize,
-    fontFamily: theme.typography.subtitle.fontFamily,
-    lineHeight: theme.typography.subtitle.lineHeight,
-    letterSpacing: theme.typography.subtitle.letterSpacing,
   },
 });

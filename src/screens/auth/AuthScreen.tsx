@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
@@ -133,11 +134,11 @@ export const AuthScreen: React.FC = () => {
         >
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>
-              <Text style={styles.logoTextThe}>the</Text>{'\n'}
-              <Text style={styles.logoTextNaked}>naked</Text>{'\n'}
-              <Text style={styles.logoTextPantry}>pantry</Text>
-            </Text>
+            <Image 
+              source={require('../../../assets/logo.png')} 
+              style={styles.logo} 
+              resizeMode="contain"
+            />
           </View>
 
           {/* Form Container */}
@@ -166,6 +167,7 @@ export const AuthScreen: React.FC = () => {
                   title={loading ? 'Signing In...' : 'Sign In'}
                   onPress={handleAuth}
                   disabled={loading}
+                  variant="primary"
                   style={styles.signInButton}
                 />
 
@@ -179,7 +181,7 @@ export const AuthScreen: React.FC = () => {
                 <Button
                   title="Create Account"
                   onPress={toggleMode}
-                  variant="secondary"
+                  variant="tertiary"
                   style={styles.createAccountButton}
                 />
               </>
@@ -215,6 +217,7 @@ export const AuthScreen: React.FC = () => {
                   title={loading ? 'Creating Account...' : 'Create Account'}
                   onPress={handleAuth}
                   disabled={loading}
+                  variant="primary"
                   style={styles.signInButton}
                 />
 
@@ -256,27 +259,9 @@ const styles = StyleSheet.create({
     marginBottom: 80,
   },
   
-  logoText: {
-    textAlign: 'center',
-    lineHeight: 48,
-  },
-  
-  logoTextThe: {
-    fontSize: 42,
-    fontWeight: '400',
-    color: '#2d4a1f',
-  },
-  
-  logoTextNaked: {
-    fontSize: 42,
-    fontWeight: '400',
-    color: '#4CAF50',
-  },
-  
-  logoTextPantry: {
-    fontSize: 42,
-    fontWeight: '700',
-    color: '#1f3d15',
+  logo: {
+    height: 80,
+    width: 240,
   },
   
   formContainer: {
@@ -286,8 +271,6 @@ const styles = StyleSheet.create({
   signInButton: {
     marginTop: 24,
     marginBottom: 32,
-    backgroundColor: '#4CAF50',
-    borderRadius: theme.borderRadius.full,
   },
   
   forgotPasswordContainer: {
@@ -305,10 +288,7 @@ const styles = StyleSheet.create({
   },
   
   createAccountButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#d0d0d0',
-    borderRadius: theme.borderRadius.full,
+    marginTop: 16,
   },
   
   backToLoginContainer: {

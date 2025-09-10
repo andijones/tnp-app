@@ -54,8 +54,8 @@ export const theme = {
       display: {
         fontSize: 32,
         fontFamily: fontFamilies.bold,
-        lineHeight: 36,
-        letterSpacing: -0.5,
+        lineHeight: Math.round(32 * 1.19712), // 38.31px rounded to 38
+        letterSpacing: -0.96,
       },
       
       // Title text for section headers
@@ -76,22 +76,25 @@ export const theme = {
       
       // Body text in multiple weights
       body: {
-        fontSize: 20, // 1.25rem (16px * 1.25 = 20px)
-        fontFamily: fontFamilies.regular,
-        lineHeight: 28, // 140% of 20px = 28px
-        letterSpacing: 0,
+        fontSize: 20, // 15px Figma size × 1.33
+        fontFamily: 'System',
+        fontWeight: '400' as const,
+        lineHeight: 28, // 21px Figma × 1.33 = 28px (140%)
+        letterSpacing: -0.2, // -0.15px Figma × 1.33
       },
       bodyMedium: {
-        fontSize: 20, // 1.25rem
-        fontFamily: fontFamilies.medium,
-        lineHeight: 28,
-        letterSpacing: 0,
+        fontSize: 20, // 15px Figma size × 1.33
+        fontFamily: 'System',
+        fontWeight: '400' as const,
+        lineHeight: 28, // 21px Figma × 1.33 = 28px (140%)
+        letterSpacing: -0.2, // -0.15px Figma × 1.33
       },
       bodySemibold: {
-        fontSize: 20, // 1.25rem
-        fontFamily: fontFamilies.semibold,
-        lineHeight: 28,
-        letterSpacing: 0,
+        fontSize: 20, // 15px Figma size × 1.33
+        fontFamily: 'System',
+        fontWeight: '400' as const,
+        lineHeight: 28, // 21px Figma × 1.33 = 28px (140%)
+        letterSpacing: -0.2, // -0.15px Figma × 1.33
       },
       
       // Subtext for descriptions and secondary content  
@@ -164,19 +167,20 @@ export const theme = {
       
       // Body style
       bodyNew: {
-        fontSize: 20, // 1.25rem
-        fontFamily: fontFamilies.regular,
-        lineHeight: 28, // 140% of 20px
-        letterSpacing: 0,
+        fontSize: 20, // 15px Figma size × 1.33
+        fontFamily: 'System',
+        fontWeight: '400' as const,
+        lineHeight: 28, // 21px Figma × 1.33 = 28px (140%)
+        letterSpacing: -0.2, // -0.15px Figma × 1.33
       },
       
       // Subtitle style
       subtitle: {
-        fontSize: 16,
+        fontSize: 21, // 16px Figma size × 1.33
         fontFamily: fontFamilies.semibold,
-        fontWeight: '600' as const,
-        lineHeight: Math.round(16 * 1.19712), // 19.154px rounded to 19
-        letterSpacing: -0.48,
+        fontWeight: '600' as const, // semibold
+        lineHeight: Math.round(21 * 1.19712), // 25.13px rounded to 25
+        letterSpacing: -0.63, // -0.48 × 1.31
       },
       
       // Legacy fontSize values for gradual migration

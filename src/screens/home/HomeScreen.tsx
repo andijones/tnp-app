@@ -362,10 +362,7 @@ const styles = StyleSheet.create({
   },
   
   scannerSubtitle: {
-    fontSize: theme.typography.body.fontSize,
-    fontFamily: theme.typography.body.fontFamily,
-    lineHeight: theme.typography.body.lineHeight,
-    letterSpacing: theme.typography.body.letterSpacing,
+    ...theme.typography.body,
     color: '#2D5F3F',
     textAlign: 'center',
     marginBottom: theme.spacing.xl,
@@ -377,7 +374,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1F5932',
     borderWidth: 1,
     borderColor: '#144925',
-    borderRadius: 8,
+    borderRadius: 11, // 8px Figma size × 1.33
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     alignSelf: 'stretch',
@@ -391,10 +388,13 @@ const styles = StyleSheet.create({
   },
   
   scanIngredientsButtonText: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
+    fontSize: theme.typography.subtitle.fontSize,
+    fontFamily: theme.typography.subtitle.fontFamily,
+    fontWeight: theme.typography.subtitle.fontWeight,
+    lineHeight: theme.typography.subtitle.lineHeight,
+    letterSpacing: theme.typography.subtitle.letterSpacing,
     color: '#FFFFFF',
-    letterSpacing: -0.2,
+    textAlign: 'center',
   },
   
   statsContainer: {
