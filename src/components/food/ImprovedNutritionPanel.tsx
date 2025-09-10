@@ -17,14 +17,15 @@ interface NutrientRowProps {
   isCalories?: boolean;
 }
 
-const NutrientRow: React.FC<NutrientRowProps> = ({ 
-  label, 
-  value, 
-  unit, 
-  dailyValue, 
-  healthIndicator = 'neutral',
-  isCalories = false 
-}) => {
+const NutrientRow: React.FC<NutrientRowProps> = (props) => {
+  const { 
+    label, 
+    value, 
+    unit, 
+    dailyValue, 
+    healthIndicator = 'neutral',
+    isCalories = false 
+  } = props;
   if (value === undefined) return null;
 
   const getIndicatorColor = () => {

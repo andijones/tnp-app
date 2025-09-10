@@ -5,7 +5,7 @@ export const loadFonts = async () => {
   
   try {
     await Font.loadAsync({
-      'BricolageGrotesque': require('../../assets/fonts/BricolageGrotesque-VariableFont_opsz,wdth,wght.ttf'),
+      'BricolageGrotesque': require('../../assets/fonts/BricolageGrotesque.ttf'),
     });
     console.log('✅ Bricolage Grotesque variable font loaded successfully');
   } catch (error) {

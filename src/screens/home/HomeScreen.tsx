@@ -160,58 +160,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             {/* Scanner Feature Section - Only show when not searching */}
             {!searchQuery && (
               <View style={styles.featureSection}>
-                <View style={styles.gradientBackground}>
-                  <View style={styles.featureContent}>
-                    {/* Hero Content */}
-                    <View style={styles.heroContent}>
-                      <View style={styles.iconContainer}>
-                        <View style={styles.iconBackground}>
-                          <Ionicons name="scan" size={40} color="#FFFFFF" />
-                        </View>
-                      </View>
-                      <View style={styles.heroText}>
-                        <Text style={styles.heroTitle}>Scan Any Ingredient List</Text>
-                        <Text style={styles.heroSubtitle}>
-                          Instantly discover if foods are ultra-processed or truly healthy with our AI-powered scanner
-                        </Text>
-                      </View>
+                <View style={styles.scannerCard}>
+                  {/* Barcode Icon */}
+                  <View style={styles.barcodeIconContainer}>
+                    <View style={styles.barcodeIcon}>
+                      <View style={styles.barcodeLine} />
+                      <View style={styles.barcodeLine} />
+                      <View style={styles.barcodeLine} />
+                      <View style={styles.barcodeLine} />
+                      <View style={styles.barcodeLine} />
                     </View>
-
-                    {/* Features Grid */}
-                    <View style={styles.featuresGrid}>
-                      <View style={styles.featureItem}>
-                        <View style={styles.featureIconWrapper}>
-                          <Ionicons name="flash" size={20} color={theme.colors.primary} />
-                        </View>
-                        <Text style={styles.featureText}>Instant AI Analysis</Text>
-                      </View>
-                      <View style={styles.featureItem}>
-                        <View style={styles.featureIconWrapper}>
-                          <Ionicons name="camera" size={20} color={theme.colors.primary} />
-                        </View>
-                        <Text style={styles.featureText}>Just Take a Photo</Text>
-                      </View>
-                      <View style={styles.featureItem}>
-                        <View style={styles.featureIconWrapper}>
-                          <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
-                        </View>
-                        <Text style={styles.featureText}>Health Score</Text>
-                      </View>
-                    </View>
-
-                    {/* Call to Action */}
-                    <TouchableOpacity 
-                      style={styles.ctaButton}
-                      onPress={() => navigation.navigate('Scanner')}
-                      activeOpacity={0.9}
-                    >
-                      <View style={styles.ctaContent}>
-                        <Ionicons name="scan" size={20} color="#FFFFFF" />
-                        <Text style={styles.ctaText}>Try Scanner Now</Text>
-                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-                      </View>
-                    </TouchableOpacity>
                   </View>
+
+                  {/* Main Title */}
+                  <Text style={styles.scannerTitle}>
+                    Scan any food to{'\n'}see if it's non-upf
+                  </Text>
+
+                  {/* Subtitle */}
+                  <Text style={styles.scannerSubtitle}>
+                    Simply snap, AI analyses and you get a{'\n'}health score
+                  </Text>
+
+                  {/* CTA Button */}
+                  <TouchableOpacity 
+                    style={styles.scanIngredientsButton}
+                    onPress={() => navigation.navigate('Scanner')}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={styles.scanIngredientsButtonText}>
+                      Scan Ingredients Now
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -338,111 +318,84 @@ const styles = StyleSheet.create({
   featureSection: {
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
   },
   
-  gradientBackground: {
-    backgroundColor: '#4F7942',
-  },
-  
-  featureContent: {
+  scannerCard: {
+    backgroundColor: '#44DB6D',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#35A756',
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.xxl,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.02,
+    shadowRadius: 3,
+    elevation: 2,
   },
   
-  heroContent: {
-    alignItems: 'center',
+  barcodeIconContainer: {
     marginBottom: theme.spacing.xl,
   },
   
-  iconContainer: {
-    marginBottom: theme.spacing.lg,
-  },
-  
-  iconBackground: {
+  barcodeIcon: {
     width: 80,
-    height: 80,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  
-  heroText: {
-    alignItems: 'center',
-  },
-  
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: theme.spacing.sm,
-    letterSpacing: -0.5,
-  },
-  
-  heroSubtitle: {
-    fontSize: theme.typography.fontSize.lg,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  
-  featuresGrid: {
+    height: 50,
+    backgroundColor: 'transparent',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    borderRadius: 6,
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  
-  featureItem: {
     alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: theme.spacing.xs,
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 8,
   },
   
-  featureIconWrapper: {
-    width: 36,
-    height: 36,
+  barcodeLine: {
+    width: 3,
+    height: 25,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
-    ...theme.shadows.sm,
   },
   
-  featureText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: 'rgba(255, 255, 255, 0.9)',
+  scannerTitle: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#2D5F3F',
     textAlign: 'center',
-    fontWeight: '600',
-    lineHeight: 16,
+    marginBottom: theme.spacing.lg,
+    letterSpacing: -0.5,
+    lineHeight: 42,
   },
   
-  ctaButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.full,
+  scannerSubtitle: {
+    fontSize: 20,
+    color: '#2D5F3F',
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+    lineHeight: 26,
+    opacity: 0.8,
+  },
+  
+  scanIngredientsButton: {
+    backgroundColor: '#2D5F3F',
+    borderRadius: 8,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
+    minWidth: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.md,
   },
   
-  ctaContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  
-  ctaText: {
+  scanIngredientsButtonText: {
     fontSize: theme.typography.fontSize.lg,
-    fontWeight: '700',
-    color: theme.colors.primary,
-    marginHorizontal: theme.spacing.sm,
-    letterSpacing: -0.3,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
   },
   
   statsContainer: {
