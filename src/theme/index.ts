@@ -76,21 +76,21 @@ export const theme = {
       
       // Body text in multiple weights
       body: {
-        fontSize: 16,
+        fontSize: 20, // 1.25rem (16px * 1.25 = 20px)
         fontFamily: fontFamilies.regular,
-        lineHeight: 22,
+        lineHeight: 28, // 140% of 20px = 28px
         letterSpacing: 0,
       },
       bodyMedium: {
-        fontSize: 16,
+        fontSize: 20, // 1.25rem
         fontFamily: fontFamilies.medium,
-        lineHeight: 22,
+        lineHeight: 28,
         letterSpacing: 0,
       },
       bodySemibold: {
-        fontSize: 16,
+        fontSize: 20, // 1.25rem
         fontFamily: fontFamilies.semibold,
-        lineHeight: 22,
+        lineHeight: 28,
         letterSpacing: 0,
       },
       
@@ -156,18 +156,18 @@ export const theme = {
       
       // Heading style
       heading: {
-        fontSize: 24,
+        fontSize: 32,
         fontFamily: fontFamilies.bold,
-        lineHeight: Math.round(24 * 1.19712), // 28.731px rounded to 29
-        letterSpacing: -0.72,
+        lineHeight: Math.round(32 * 1.19712), // 38.31px rounded to 38
+        letterSpacing: -0.96,
       },
       
       // Body style
       bodyNew: {
-        fontSize: 15,
+        fontSize: 20, // 1.25rem
         fontFamily: fontFamilies.regular,
-        lineHeight: 21, // 140%
-        letterSpacing: -0.15,
+        lineHeight: 28, // 140% of 20px
+        letterSpacing: 0,
       },
       
       // Subtitle style

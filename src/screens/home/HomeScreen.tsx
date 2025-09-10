@@ -161,17 +161,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             {!searchQuery && (
               <View style={styles.featureSection}>
                 <View style={styles.scannerCard}>
-                  {/* Barcode Icon */}
-                  <View style={styles.barcodeIconContainer}>
-                    <View style={styles.barcodeIcon}>
-                      <View style={styles.barcodeLine} />
-                      <View style={styles.barcodeLine} />
-                      <View style={styles.barcodeLine} />
-                      <View style={styles.barcodeLine} />
-                      <View style={styles.barcodeLine} />
-                    </View>
-                  </View>
-
                   {/* Main Title */}
                   <Text style={styles.scannerTitle}>
                     Scan any food to{'\n'}see if it's non-upf
@@ -318,7 +307,6 @@ const styles = StyleSheet.create({
   featureSection: {
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
   },
   
   scannerCard: {
@@ -326,9 +314,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#35A756',
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.xxl,
-    alignItems: 'center',
+    padding: 24,
+    alignItems: 'stretch',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -363,32 +350,44 @@ const styles = StyleSheet.create({
   },
   
   scannerTitle: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#2D5F3F',
+    color: '#1F5932',
     textAlign: 'center',
+    fontFamily: theme.typography.heading.fontFamily,
+    fontSize: theme.typography.heading.fontSize, // 32px (2rem)
+    fontWeight: '700',
+    lineHeight: theme.typography.heading.lineHeight, // 119.712% of 32px = 38px
+    letterSpacing: theme.typography.heading.letterSpacing, // -0.96px
     marginBottom: theme.spacing.lg,
-    letterSpacing: -0.5,
-    lineHeight: 42,
+    alignSelf: 'stretch',
   },
   
   scannerSubtitle: {
-    fontSize: 20,
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
+    lineHeight: theme.typography.body.lineHeight,
+    letterSpacing: theme.typography.body.letterSpacing,
     color: '#2D5F3F',
     textAlign: 'center',
     marginBottom: theme.spacing.xl,
-    lineHeight: 26,
     opacity: 0.8,
+    alignSelf: 'stretch',
   },
   
   scanIngredientsButton: {
-    backgroundColor: '#2D5F3F',
+    backgroundColor: '#1F5932',
+    borderWidth: 1,
+    borderColor: '#144925',
     borderRadius: 8,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
-    minWidth: 200,
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   
   scanIngredientsButtonText: {
