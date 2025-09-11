@@ -144,7 +144,7 @@ export const theme = {
       // Card meta style
       cardMeta: {
         fontSize: 12,
-        fontFamily: fontFamilies.regular,
+        fontFamily: 'System',
         lineHeight: 12, // normal line-height
         letterSpacing: 0,
       },

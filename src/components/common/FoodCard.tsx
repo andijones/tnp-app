@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
   
   metaText: {
-    ...theme.typography.caption,
+    ...theme.typography.cardMeta,
     color: theme.colors.text.secondary,
   },
 });

@@ -300,38 +300,31 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Hero Section with Clean Design */}
+          {/* Hero Section - Clean & Focused */}
           <View style={styles.heroSection}>
-            <View style={styles.heroImageContainer}>
+            {/* Product Image */}
+            <View style={styles.imageContainer}>
               {food.image ? (
-                <Image source={{ uri: food.image }} style={styles.heroImage} />
+                <Image source={{ uri: food.image }} style={styles.productImage} />
               ) : (
-                <View style={styles.heroPlaceholder}>
-                  <Ionicons name="image-outline" size={60} color={theme.colors.text.tertiary} />
-                  <Text style={styles.placeholderText}>No image available</Text>
+                <View style={styles.imagePlaceholder}>
+                  <Ionicons name="image-outline" size={48} color={theme.colors.text.tertiary} />
                 </View>
               )}
             </View>
 
-            {/* Product Title and Basic Info */}
-            <View style={styles.heroContent}>
-              <Text style={styles.productTitle}>{food.name}</Text>
+            {/* Product Header */}
+            <View style={styles.productHeader}>
+              <Text style={styles.productName}>{food.name}</Text>
               
-              {/* NOVA Badge - Prominent but not overwhelming */}
-              <NovaRatingBanner novaGroup={food.nova_group} />
-              
-              {/* Key Info Row */}
-              <View style={styles.keyInfoRow}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="storefront-outline" size={16} color={theme.colors.text.secondary} />
-                  <Text style={styles.infoText} numberOfLines={1}>
-                    {food.supermarket || 'Available at supermarkets'}
-                  </Text>
-                </View>
-                
+              {/* Supermarket & Aisle Info */}
+              <View style={styles.metaInfo}>
+                <Text style={styles.supermarketText}>
+                  {food.supermarket || 'Available at supermarkets'}
+                </Text>
                 {food.aisle?.name && (
                   <TouchableOpacity 
-                    style={styles.infoItem}
+                    style={styles.aisleLink}
                     onPress={() => {
                       if (food.aisle?.slug && food.aisle?.name) {
                         navigation.navigate('AisleDetail', {
@@ -342,61 +335,50 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
                     }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="apps-outline" size={16} color={theme.colors.text.secondary} />
-                    <Text style={styles.infoText} numberOfLines={1}>
-                      {food.aisle.name} aisle
-                    </Text>
-                    <Ionicons name="chevron-forward" size={14} color={theme.colors.text.tertiary} />
+                    <Text style={styles.aisleLinkText}>{food.aisle.name} aisle</Text>
+                    <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
                   </TouchableOpacity>
                 )}
               </View>
+            </View>
 
-              {/* Primary Action Buttons */}
-              <View style={styles.actionButtonsContainer}>
-                {food.url && (
-                  <Button
-                    title="View at Store"
-                    onPress={handleViewFood}
-                    variant="primary"
-                    style={styles.primaryAction}
-                    leftIcon={<Ionicons name="storefront" size={18} color="white" />}
-                  />
-                )}
-                
+            {/* NOVA Rating - Prominent */}
+            <View style={styles.novaSection}>
+              <NovaRatingBanner novaGroup={food.nova_group} />
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.actionSection}>
+              {food.url && (
                 <Button
-                  title="Search Online"
-                  onPress={handleGoogleSearch}
-                  variant="text"
-                  style={styles.secondaryAction}
-                  leftIcon={<Ionicons name="search" size={18} color={theme.colors.primary} />}
+                  title="View at Store"
+                  onPress={handleViewFood}
+                  variant="primary"
+                  style={styles.primaryButton}
                 />
-              </View>
+              )}
+              
+              <Button
+                title="Search Online"
+                onPress={handleGoogleSearch}
+                variant="tertiary"
+                style={styles.secondaryButton}
+              />
             </View>
           </View>
 
-          {/* Content Sections */}
-          <View style={styles.contentSections}>
-            {/* Nutrition Facts - Prioritized for scanning */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
-                  <Ionicons name="fitness" size={24} color={theme.colors.primary} />
-                  <Text style={styles.sectionTitle}>Nutrition Facts</Text>
-                </View>
-                <Text style={styles.sectionSubtitle}>Key nutritional information at a glance</Text>
-              </View>
+          {/* Content Sections - Clean Typography Hierarchy */}
+          <View style={styles.contentContainer}>
+            
+            {/* Nutrition Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Nutrition Facts</Text>
               <ImprovedNutritionPanel nutrition={food.nutrition} />
             </View>
 
-            {/* Ingredients - Enhanced for scanning */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
-                  <Ionicons name="list" size={24} color={theme.colors.primary} />
-                  <Text style={styles.sectionTitle}>Ingredients</Text>
-                </View>
-                <Text style={styles.sectionSubtitle}>Ingredient breakdown with health indicators</Text>
-              </View>
+            {/* Ingredients Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ingredients</Text>
               <ImprovedIngredientsList 
                 ingredients={food.ingredients} 
                 description={food.description} 
@@ -404,18 +386,15 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
             </View>
 
             {/* Reviews Section */}
-            <View style={styles.sectionContainer} ref={reviewSectionRef}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
-                  <Ionicons name="star" size={24} color={theme.colors.warning} />
-                  <Text style={styles.sectionTitle}>Reviews</Text>
-                </View>
+            <View style={styles.section} ref={reviewSectionRef}>
+              <View style={styles.reviewsHeader}>
+                <Text style={styles.sectionTitle}>Reviews</Text>
                 {food.average_rating && food.ratings_count && food.ratings_count > 0 ? (
-                  <Text style={styles.sectionSubtitle}>
-                    {food.average_rating.toFixed(1)} stars from {food.ratings_count} review{food.ratings_count === 1 ? '' : 's'}
+                  <Text style={styles.reviewsSummary}>
+                    {food.average_rating.toFixed(1)} stars • {food.ratings_count} review{food.ratings_count === 1 ? '' : 's'}
                   </Text>
                 ) : (
-                  <Text style={styles.sectionSubtitle}>Be the first to review this product</Text>
+                  <Text style={styles.reviewsSummary}>Be the first to review this product</Text>
                 )}
               </View>
               <RatingsSection 
@@ -433,18 +412,20 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
             </View>
 
             {/* Related Foods Section */}
-            <RelatedFoodsSection 
-              currentFood={food}
-              onFoodPress={(foodId) => navigation.push('FoodDetail', { foodId })}
-            />
-          </View>
-
-          {/* Footer Actions */}
-          <View style={styles.footerContainer}>
-            <TouchableOpacity style={styles.reportButton} onPress={reportFood}>
-              <Ionicons name="flag-outline" size={16} color={theme.colors.text.secondary} />
-              <Text style={styles.reportText}>Report incorrect information</Text>
-            </TouchableOpacity>
+            <View style={styles.section}>
+              <RelatedFoodsSection 
+                currentFood={food}
+                onFoodPress={(foodId) => navigation.push('FoodDetail', { foodId })}
+              />
+            </View>
+            
+            {/* Footer */}
+            <View style={styles.footer}>
+              <TouchableOpacity style={styles.reportLink} onPress={reportFood}>
+                <Ionicons name="flag-outline" size={16} color={theme.colors.text.tertiary} />
+                <Text style={styles.reportText}>Report incorrect information</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -500,137 +481,143 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xxl,
   },
   
-  // Hero Section - Clean and Focused
+  // Hero Section - Clean and Focused Design
   heroSection: {
     backgroundColor: theme.colors.surface,
-    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
   },
   
-  heroImageContainer: {
-    height: 280,
-    backgroundColor: theme.colors.surface,
-    marginBottom: theme.spacing.lg,
+  // Product Image
+  imageContainer: {
+    height: 240,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.xl,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   
-  heroImage: {
-    width: screenWidth,
-    height: 280,
+  productImage: {
+    width: '100%',
+    height: '100%',
     resizeMode: 'contain',
   },
   
-  heroPlaceholder: {
+  imagePlaceholder: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.background,
-    marginHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
   },
   
-  placeholderText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.tertiary,
-    marginTop: theme.spacing.sm,
-  },
-  
-  heroContent: {
-    paddingHorizontal: theme.spacing.lg,
-  },
-  
-  productTitle: {
-    ...theme.typography.display,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-    textAlign: 'left',
-  },
-  
-  keyInfoRow: {
-    flexDirection: 'column',
-    gap: theme.spacing.sm,
-    marginVertical: theme.spacing.md,
-  },
-  
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  
-  infoText: {
-    ...theme.typography.subtext,
-    color: theme.colors.text.secondary,
-    flex: 1,
-  },
-  
-  actionButtonsContainer: {
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.lg,
-  },
-  
-  primaryAction: {
-    ...theme.shadows.md,
-    shadowColor: theme.colors.primary,
-  },
-  
-  secondaryAction: {
-    backgroundColor: 'transparent',
-    borderColor: theme.colors.primary,
-    borderWidth: 1,
-  },
-  
-  // Content Sections - Improved Hierarchy
-  contentSections: {
-    backgroundColor: theme.colors.background,
-    paddingTop: theme.spacing.lg,
-  },
-  
-  sectionContainer: {
+  // Product Header - Clear Typography
+  productHeader: {
     marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.lg,
   },
   
-  sectionHeader: {
-    marginBottom: theme.spacing.md,
-  },
-  
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
-  },
-  
-  sectionTitle: {
-    ...theme.typography.title,
+  productName: {
+    ...theme.typography.heading,
     color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+    lineHeight: 38,
   },
   
-  sectionSubtitle: {
-    ...theme.typography.subtext,
+  metaInfo: {
+    gap: theme.spacing.sm,
+  },
+  
+  supermarketText: {
+    ...theme.typography.bodyNew,
     color: theme.colors.text.secondary,
-    lineHeight: 20,
   },
   
-  // Footer
-  footerContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    alignItems: 'center',
-  },
-  
-  reportButton: {
+  aisleLink: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+  },
+  
+  aisleLinkText: {
+    ...theme.typography.bodyNew,
+    color: theme.colors.primary,
+    fontWeight: '500',
+  },
+  
+  // NOVA Section
+  novaSection: {
+    marginBottom: theme.spacing.xl,
+  },
+  
+  // Action Buttons
+  actionSection: {
+    gap: theme.spacing.md,
+  },
+  
+  primaryButton: {
+    marginBottom: theme.spacing.sm,
+  },
+  
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+  },
+  
+  // Content Container - Clean Background Switch
+  contentContainer: {
+    backgroundColor: theme.colors.background,
+    paddingTop: theme.spacing.xxl,
+  },
+  
+  // Section Styling - Generous Spacing
+  section: {
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: 'rgba(255, 59, 48, 0.05)',
-    borderRadius: theme.borderRadius.full,
+    marginBottom: theme.spacing.xxl,
+  },
+  
+  sectionTitle: {
+    ...theme.typography.subtitle,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.lg,
+  },
+  
+  // Reviews Section Header
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: theme.spacing.lg,
+  },
+  
+  reviewsSummary: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+  },
+  
+  // Footer
+  footer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+    marginTop: theme.spacing.xl,
+  },
+  
+  reportLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
   },
   
   reportText: {
-    ...theme.typography.subtextMedium,
-    color: theme.colors.error,
+    ...theme.typography.caption,
+    color: theme.colors.text.tertiary,
   },
   
   // Error States
