@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
 import { SectionHeader } from '../common/SectionHeader';
+import { Button } from '../common/Button';
 
 interface ReviewSubmissionProps {
   foodId: string;
@@ -203,13 +204,12 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
   if (!isExpanded) {
     return (
       <View style={styles.container}>
-        <TouchableOpacity 
-          style={styles.writeReviewButton}
+        <Button
+          title="Write a review"
           onPress={checkAuthAndExpand}
-        >
-          <Ionicons name="star-outline" size={20} color={theme.colors.primary} />
-          <Text style={styles.writeReviewText}>Write a Review</Text>
-        </TouchableOpacity>
+          variant="text"
+          leftIcon={<Ionicons name="star-outline" size={20} color={theme.colors.green[950]} />}
+        />
       </View>
     );
   }
@@ -296,32 +296,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
 
-  writeReviewButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.full,
-    padding: theme.spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    gap: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    borderStyle: 'dashed',
-  },
-
-  writeReviewText: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
-    color: theme.colors.primary,
-  },
 
   existingReviewCard: {
     backgroundColor: '#FFFFFF',

@@ -24,48 +24,50 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
   return (
     <TouchableOpacity 
-      style={styles.foodCard} 
       onPress={onPress}
+      activeOpacity={0.8}
     >
-      {/* Header with Food Image and Favorite Button */}
-      <View style={styles.cardHeader}>
-        <FoodImage 
-          imageUrl={food.image}
-          size="medium"
-          novaGroup={food.nova_group}
-        />
+      <View style={styles.foodCard}>
+        {/* Header with Food Image and Favorite Button */}
+        <View style={styles.cardHeader}>
+          <FoodImage 
+            imageUrl={food.image}
+            size="medium"
+            novaGroup={food.nova_group}
+          />
+          
+          <FavoriteButton
+            foodId={food.id}
+            isFavorite={isFavorite}
+            onToggle={async (foodId: string) => {
+              onToggleFavorite(foodId);
+              return true;
+            }}
+          />
+        </View>
         
-        <FavoriteButton
-          foodId={food.id}
-          isFavorite={isFavorite}
-          onToggle={async (foodId: string) => {
-            onToggleFavorite(foodId);
-            return true;
-          }}
-        />
-      </View>
-      
-      {/* Food Info */}
-      <View style={styles.foodInfo}>
-        <Text style={styles.foodName}>{food.name}</Text>
-        
-        <View style={styles.metaRow}>
-          {/* Ingredient Count */}
-          {ingredientCount > 0 && (
+        {/* Food Info */}
+        <View style={styles.foodInfo}>
+          <Text style={styles.foodName}>{food.name}</Text>
+          
+          <View style={styles.metaRow}>
+            {/* Ingredient Count */}
+            {ingredientCount > 0 && (
+              <View style={styles.metaItem}>
+                <Ionicons name="list-outline" size={14} color={theme.colors.text.secondary} />
+                <Text style={styles.metaText}>
+                  {ingredientCount} ingredient{ingredientCount === 1 ? '' : 's'}
+                </Text>
+              </View>
+            )}
+            
+            {/* Supermarket */}
             <View style={styles.metaItem}>
-              <Ionicons name="list-outline" size={14} color={theme.colors.text.secondary} />
+              <Ionicons name="storefront-outline" size={14} color={theme.colors.text.secondary} />
               <Text style={styles.metaText}>
-                {ingredientCount} ingredient{ingredientCount === 1 ? '' : 's'}
+                {food.supermarket || 'Store not specified'}
               </Text>
             </View>
-          )}
-          
-          {/* Supermarket */}
-          <View style={styles.metaItem}>
-            <Ionicons name="storefront-outline" size={14} color={theme.colors.text.secondary} />
-            <Text style={styles.metaText}>
-              {food.supermarket || 'Store not specified'}
-            </Text>
           </View>
         </View>
       </View>
@@ -75,25 +77,25 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
 const styles = StyleSheet.create({
   foodCard: {
-    // Figma design specifications exactly
-    padding: 11, // 8px Figma × 1.33
+    padding: 11,
     flexDirection: 'column',
     alignItems: 'flex-start',
-    borderRadius: 11, // 8px Figma × 1.33 (var(--Spacing-8, 8px))
+    borderRadius: 8, // var(--Spacing-8, 8px)
     borderWidth: 1,
-    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
+    borderColor: '#000000', // Testing border visibility
     backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
     marginBottom: theme.spacing.md,
+    overflow: 'visible',
     
-    // More visible shadow for React Native
+    // Card Shadow - adjusted for React Native visibility
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 4,
   },
   
   cardHeader: {

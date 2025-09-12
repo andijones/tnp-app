@@ -59,18 +59,38 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
     }
   };
 
-  const getNovaColor = (novaGroup?: number) => {
+  const getNovaStyles = (novaGroup?: number) => {
     switch (novaGroup) {
       case 1:
-        return theme.colors.nova?.group1 || '#22c55e';
+        return {
+          backgroundColor: theme.colors.green[50], // var(--Green-50, #E0FFE7)
+          borderColor: theme.colors.green[300], // var(--Green-300, #84EDA0)
+          color: theme.colors.green[900], // var(--Green-900, #26733E)
+        };
       case 2:
-        return theme.colors.nova?.group2 || '#84cc16';
+        return {
+          backgroundColor: '#FFFDD2',
+          borderColor: '#E5E181',
+          color: '#928D1D',
+        };
       case 3:
-        return theme.colors.nova?.group3 || '#f97316';
+        return {
+          backgroundColor: '#FFF4E6',
+          borderColor: '#F9DEBC',
+          color: '#E6630B',
+        };
       case 4:
-        return theme.colors.nova?.group4 || '#ef4444';
+        return {
+          backgroundColor: theme.colors.nova?.group4 || '#ef4444',
+          borderColor: theme.colors.nova?.group4 || '#ef4444',
+          color: '#FFFFFF',
+        };
       default:
-        return theme.colors.text.tertiary;
+        return {
+          backgroundColor: theme.colors.text.tertiary,
+          borderColor: theme.colors.text.tertiary,
+          color: '#FFFFFF',
+        };
     }
   };
 
@@ -96,8 +116,8 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
         {/* NOVA Rating Overlay */}
         {food.nova_group && getNovaLabel(food.nova_group) && (
           <View style={styles.novaOverlay}>
-            <View style={[styles.novaBadge, { backgroundColor: getNovaColor(food.nova_group) }]}>
-              <Text style={styles.novaNumber}>{food.nova_group}</Text>
+            <View style={[styles.novaBadge, getNovaStyles(food.nova_group)]}>
+              <Text style={[styles.novaNumber, { color: getNovaStyles(food.nova_group).color }]}>{food.nova_group}</Text>
             </View>
           </View>
         )}
@@ -144,18 +164,21 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
 
 const styles = StyleSheet.create({
   gridCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.md,
+    backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
+    borderRadius: 8, // var(--Spacing-8, 8px)
+    borderWidth: 1,
+    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
     marginBottom: theme.spacing.md,
     overflow: 'hidden',
+    // Card Shadow from Figma
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 4,
     flex: 1,
   },
   
@@ -182,16 +205,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: theme.spacing.sm,
     right: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 22,
+    backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
+    borderRadius: 8, // var(--Spacing-8, 8px)
+    borderWidth: 1,
+    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
     padding: theme.spacing.xs,
-    shadowColor: '#000',
+    // Card Shadow from Figma
+    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
     elevation: 3,
   },
   
@@ -203,8 +229,8 @@ const styles = StyleSheet.create({
   },
   
   foodName: {
-    ...theme.typography.headline,
-    color: theme.colors.text.primary,
+    ...theme.typography.cardTitle,
+    color: theme.colors.green[950],
     marginBottom: theme.spacing.md,
   },
   
@@ -213,35 +239,37 @@ const styles = StyleSheet.create({
   },
   
   supermarketText: {
-    ...theme.typography.bodyMedium,
-    color: theme.colors.text.secondary,
+    ...theme.typography.cardMeta,
+    color: theme.colors.neutral[500],
     marginBottom: 2,
   },
   
   ingredientText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.tertiary,
+    ...theme.typography.cardMeta,
+    color: theme.colors.neutral[500],
   },
   
   novaBadge: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: 6,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.03,
     shadowRadius: 2,
-    elevation: 3,
+    elevation: 1,
   },
   
   novaNumber: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    fontFamily: 'Bricolage Grotesque',
   },
 });

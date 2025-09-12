@@ -12,7 +12,6 @@ interface NutrientRowProps {
   label: string;
   value?: number;
   unit: string;
-  dailyValue?: number;
   healthIndicator?: 'good' | 'moderate' | 'high' | 'neutral';
   isCalories?: boolean;
 }
@@ -22,7 +21,6 @@ const NutrientRow: React.FC<NutrientRowProps> = (props) => {
     label, 
     value, 
     unit, 
-    dailyValue, 
     healthIndicator = 'neutral',
     isCalories = false 
   } = props;
@@ -55,16 +53,9 @@ const NutrientRow: React.FC<NutrientRowProps> = (props) => {
 
   return (
     <View style={[styles.nutrientRow, isCalories && styles.caloriesRow]}>
-      <View style={styles.nutrientInfo}>
-        <Text style={[styles.nutrientLabel, isCalories && styles.caloriesLabel]}>
-          {safeLabel}
-        </Text>
-        {dailyValue !== undefined && dailyValue !== null && (
-          <Text style={styles.dailyValueText}>
-            {dailyValue}% DV
-          </Text>
-        )}
-      </View>
+      <Text style={[styles.nutrientLabel, isCalories && styles.caloriesLabel]}>
+        {safeLabel}
+      </Text>
       
       <View style={styles.nutrientValueContainer}>
         <Text style={[styles.nutrientValue, isCalories && styles.caloriesValue]}>
@@ -161,29 +152,6 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
 
   return (
     <View style={styles.container}>
-      {/* Quick Nutrition Overview */}
-      {hasBasicInfo && (
-        <View style={styles.quickStatsRow}>
-          {keyNutrients.slice(0, 4).map((nutrient, index) => (
-            <View key={nutrient.key} style={styles.quickStat}>
-              <Text style={[
-                styles.quickStatValue, 
-                nutrient.isCalories && styles.caloriesValue
-              ]}>
-{nutrient.value !== undefined ? nutrient.value : 0}{nutrient.unit || ''}
-              </Text>
-              <Text style={styles.quickStatLabel}>{nutrient.label}</Text>
-              {getHealthIndicator(nutrient.key, nutrient.value) !== 'neutral' && (
-                <View style={[
-                  styles.quickStatIndicator,
-                  { backgroundColor: getIndicatorColor(getHealthIndicator(nutrient.key, nutrient.value)) }
-                ]} />
-              )}
-            </View>
-          ))}
-        </View>
-      )}
-      
       {/* Detailed Nutrition Facts */}
       <View style={styles.nutritionCard}>
         {nutrition.servingSize && (
@@ -201,23 +169,18 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
           isCalories={true}
         />
         
-        {nutrition.calories && <View style={styles.separator} />}
-        
         {/* Macronutrients */}
         <NutrientRow
           label="Total Fat"
           value={nutrition.fat}
           unit="g"
-          dailyValue={calculateDailyValue('fat', nutrition.fat)}
           healthIndicator={getHealthIndicator('fat', nutrition.fat)}
         />
-        
         
         <NutrientRow
           label="Sodium"
           value={nutrition.sodium}
           unit="mg"
-          dailyValue={calculateDailyValue('sodium', nutrition.sodium)}
           healthIndicator={getHealthIndicator('sodium', nutrition.sodium)}
         />
         
@@ -225,7 +188,6 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
           label="Total Carbohydrate"
           value={nutrition.carbs}
           unit="g"
-          dailyValue={calculateDailyValue('carbs', nutrition.carbs)}
           healthIndicator={getHealthIndicator('carbs', nutrition.carbs)}
         />
         
@@ -233,7 +195,6 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
           label="Dietary Fiber"
           value={nutrition.fiber}
           unit="g"
-          dailyValue={calculateDailyValue('fiber', nutrition.fiber)}
           healthIndicator={getHealthIndicator('fiber', nutrition.fiber)}
         />
         
@@ -248,15 +209,8 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
           label="Protein"
           value={nutrition.protein}
           unit="g"
-          dailyValue={calculateDailyValue('protein', nutrition.protein)}
           healthIndicator={getHealthIndicator('protein', nutrition.protein)}
         />
-      </View>
-      
-      <View style={styles.footnoteContainer}>
-        <Text style={styles.footnoteText}>
-          * Percent Daily Values based on 2,000 calorie diet. Color coding indicates health impact.
-        </Text>
       </View>
     </View>
   );
@@ -267,55 +221,10 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
 
-  // Quick Stats Overview
-  quickStatsRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    ...theme.shadows.sm,
-  },
-
-  quickStat: {
-    flex: 1,
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    position: 'relative',
-  },
-
-  quickStatValue: {
-    ...theme.typography.headline,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-  },
-
-  caloriesValue: {
-    ...theme.typography.display,
-    fontSize: 24,
-  },
-
-  quickStatLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-  },
-
-  quickStatIndicator: {
-    position: 'absolute',
-    top: -2,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
 
   // Detailed Nutrition Card
   nutritionCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.sm,
-    ...theme.shadows.sm,
+    gap: theme.spacing.xs,
   },
 
   servingSizeContainer: {
@@ -329,13 +238,16 @@ const styles = StyleSheet.create({
   },
 
   servingSizeLabel: {
-    ...theme.typography.subtextMedium,
-    color: theme.colors.text.secondary,
+    fontSize: 14,
+    fontFamily: 'System',
+    color: theme.colors.neutral[600],
   },
 
   servingSizeValue: {
-    ...theme.typography.bodySemibold,
-    color: theme.colors.text.primary,
+    fontSize: 16,
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: theme.colors.neutral[900],
   },
 
   nutrientRow: {
@@ -349,8 +261,6 @@ const styles = StyleSheet.create({
 
   caloriesRow: {
     paddingVertical: theme.spacing.md,
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.border,
   },
 
   nutrientInfo: {
@@ -361,18 +271,22 @@ const styles = StyleSheet.create({
   },
 
   nutrientLabel: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
+    fontSize: 16,
+    fontFamily: 'System',
+    fontWeight: '400',
+    color: theme.colors.neutral[700],
   },
 
   caloriesLabel: {
-    ...theme.typography.headline,
-    fontWeight: '600',
+    fontSize: 18,
+    fontFamily: 'System',
+    fontWeight: '700',
+    color: theme.colors.neutral[900],
   },
 
   dailyValueText: {
-    ...theme.typography.subtext,
-    color: theme.colors.text.secondary,
+    fontSize: 12,
+    color: theme.colors.neutral[500],
     marginLeft: theme.spacing.sm,
   },
 
@@ -383,9 +297,18 @@ const styles = StyleSheet.create({
   },
 
   nutrientValue: {
-    ...theme.typography.bodySemibold,
-    color: theme.colors.text.primary,
+    fontSize: 16,
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: theme.colors.neutral[900],
     textAlign: 'right',
+  },
+
+  caloriesValue: {
+    fontSize: 20,
+    fontFamily: 'System',
+    fontWeight: '700',
+    color: theme.colors.neutral[900],
   },
 
   indicatorContainer: {
@@ -408,30 +331,30 @@ const styles = StyleSheet.create({
   },
 
   footnoteText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
+    fontSize: 12,
+    color: theme.colors.neutral[500],
     fontStyle: 'italic',
     textAlign: 'center',
   },
 
   noDataContainer: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
     padding: theme.spacing.xl,
     alignItems: 'center',
-    ...theme.shadows.sm,
   },
 
   noDataTitle: {
-    ...theme.typography.headline,
-    color: theme.colors.text.primary,
+    fontSize: 18,
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: theme.colors.neutral[700],
     marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.xs,
   },
 
   noDataSubtitle: {
-    ...theme.typography.subtext,
-    color: theme.colors.text.secondary,
+    fontSize: 14,
+    fontFamily: 'System',
+    color: theme.colors.neutral[500],
     textAlign: 'center',
     lineHeight: 20,
   },

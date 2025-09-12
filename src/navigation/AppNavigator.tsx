@@ -85,6 +85,9 @@ const TabNavigator = () => {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.text.secondary,
         headerShown: false,
+        tabBarStyle: {
+          borderTopWidth: 0,
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />

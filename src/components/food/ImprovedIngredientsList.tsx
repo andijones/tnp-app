@@ -8,96 +8,53 @@ interface ImprovedIngredientsListProps {
   description?: string;
 }
 
-interface IngredientChipProps {
+interface IngredientItemProps {
   ingredient: string;
   isMain: boolean;
-  concern?: 'additive' | 'allergen' | 'natural';
+  concern?: 'natural';
+  index: number;
 }
 
-const IngredientChip: React.FC<IngredientChipProps> = ({ ingredient, isMain, concern }) => {
-  const getChipStyle = () => {
-    if (concern === 'additive') {
-      return {
-        backgroundColor: '#FFE6E6',
-        borderColor: '#FF3B30',
-        textColor: '#FF3B30',
-      };
-    }
-    if (concern === 'allergen') {
-      return {
-        backgroundColor: '#FFF4E6',
-        borderColor: '#FF9F0A',
-        textColor: '#FF9F0A',
-      };
-    }
-    if (concern === 'natural') {
-      return {
-        backgroundColor: '#E8F5E8',
-        borderColor: '#34C759',
-        textColor: '#34C759',
-      };
-    }
-    if (isMain) {
-      return {
-        backgroundColor: '#E8F4FD',
-        borderColor: '#007AFF',
-        textColor: '#007AFF',
-      };
-    }
-    return {
-      backgroundColor: '#F2F2F7',
-      borderColor: '#C7C7CC',
-      textColor: '#6D6D70',
-    };
+const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, isMain, concern, index }) => {
+  const getIndicatorColor = () => {
+    if (concern === 'natural') return theme.colors.success;
+    if (isMain) return theme.colors.primary;
+    return theme.colors.neutral[400];
   };
 
-  const chipStyle = getChipStyle();
+  const getTextColor = () => {
+    if (isMain) return theme.colors.neutral[900];
+    return theme.colors.neutral[700];
+  };
 
   return (
-    <View style={[
-      styles.ingredientChip, 
-      { 
-        backgroundColor: chipStyle.backgroundColor,
-        borderColor: chipStyle.borderColor,
-      }
-    ]}>
-      <Text style={[styles.chipText, { color: chipStyle.textColor }]}>
-        {ingredient}
-      </Text>
+    <View style={styles.ingredientItem}>
+      <View style={styles.ingredientContent}>
+        <View style={[styles.indicator, { backgroundColor: getIndicatorColor() }]} />
+        <Text style={[styles.ingredientText, { color: getTextColor() }]}>
+          {ingredient}
+        </Text>
+      </View>
+      {isMain && (
+        <Text style={styles.mainLabel}>Main</Text>
+      )}
     </View>
   );
 };
 
-const analyzeIngredient = (ingredient: string, index: number): { concern?: 'additive' | 'allergen' | 'natural'; isMain: boolean } => {
+const analyzeIngredient = (ingredient: string, index: number): { concern?: 'natural'; isMain: boolean } => {
   const lowerIngredient = ingredient.toLowerCase();
   
-  // Common additives/preservatives
-  const additives = [
-    'sodium benzoate', 'potassium sorbate', 'calcium propionate',
-    'bht', 'bha', 'tbhq', 'sodium nitrite', 'monosodium glutamate',
-    'artificial color', 'artificial flavor', 'high fructose corn syrup',
-    'carrageenan', 'xanthan gum', 'guar gum', 'polysorbate',
-  ];
-  
-  // Common allergens
-  const allergens = [
-    'wheat', 'milk', 'egg', 'soy', 'peanut', 'tree nut', 'fish', 'shellfish',
-    'sesame', 'dairy', 'gluten',
-  ];
-  
-  // Natural/beneficial ingredients
+  // Natural/beneficial ingredients that indicate minimal processing
   const natural = [
     'organic', 'natural', 'vitamin', 'mineral', 'fiber', 'protein',
     'whole grain', 'real fruit', 'vegetable', 'herb', 'spice',
+    'sea salt', 'cane sugar', 'honey', 'maple syrup', 'olive oil',
   ];
 
-  let concern: 'additive' | 'allergen' | 'natural' | undefined;
+  let concern: 'natural' | undefined;
   
-  if (additives.some(additive => lowerIngredient.includes(additive))) {
-    concern = 'additive';
-  } else if (allergens.some(allergen => lowerIngredient.includes(allergen))) {
-    concern = 'allergen';
-  } else if (natural.some(nat => lowerIngredient.includes(nat))) {
+  if (natural.some(nat => lowerIngredient.includes(nat))) {
     concern = 'natural';
   }
   
@@ -150,75 +107,33 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
   const displayIngredients = ingredientsList.slice(0, displayCount);
   const hasMore = ingredientsList.length > 8;
 
-  // Analyze ingredients for concerns
+  // Analyze ingredients for natural ingredients
   const analysisData = ingredientsList.map((ingredient, index) => ({
     ingredient,
     ...analyzeIngredient(ingredient, index),
   }));
 
-  const concernCounts = {
-    additives: analysisData.filter(item => item.concern === 'additive').length,
-    allergens: analysisData.filter(item => item.concern === 'allergen').length,
-    natural: analysisData.filter(item => item.concern === 'natural').length,
-  };
-
   return (
     <View style={styles.container}>
-      {/* Quick Summary Stats */}
-      <View style={styles.summaryRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{ingredientsList.length}</Text>
-          <Text style={styles.statLabel}>Ingredients</Text>
-        </View>
-        
-        {concernCounts.natural > 0 && (
-          <View style={styles.statItem}>
-            <View style={styles.statIconContainer}>
-              <Ionicons name="checkmark-circle" size={16} color={theme.colors.success} />
-              <Text style={[styles.statNumber, { color: theme.colors.success }]}>
-                {concernCounts.natural}
-              </Text>
-            </View>
-            <Text style={styles.statLabel}>Natural</Text>
-          </View>
-        )}
-        
-        {concernCounts.allergens > 0 && (
-          <View style={styles.statItem}>
-            <View style={styles.statIconContainer}>
-              <Ionicons name="warning" size={16} color={theme.colors.warning} />
-              <Text style={[styles.statNumber, { color: theme.colors.warning }]}>
-                {concernCounts.allergens}
-              </Text>
-            </View>
-            <Text style={styles.statLabel}>Allergen{concernCounts.allergens !== 1 ? 's' : ''}</Text>
-          </View>
-        )}
-        
-        {concernCounts.additives > 0 && (
-          <View style={styles.statItem}>
-            <View style={styles.statIconContainer}>
-              <Ionicons name="alert-circle" size={16} color={theme.colors.error} />
-              <Text style={[styles.statNumber, { color: theme.colors.error }]}>
-                {concernCounts.additives}
-              </Text>
-            </View>
-            <Text style={styles.statLabel}>Additive{concernCounts.additives !== 1 ? 's' : ''}</Text>
-          </View>
-        )}
+      {/* Ingredient Count Header */}
+      <View style={styles.countHeader}>
+        <Text style={styles.countText}>
+          {ingredientsList.length} ingredient{ingredientsList.length !== 1 ? 's' : ''}
+        </Text>
       </View>
 
-      {/* Ingredients Grid */}
+      {/* Ingredients List */}
       <View style={styles.ingredientsCard}>
-        <View style={styles.ingredientsGrid}>
+        <View style={styles.ingredientsList}>
           {displayIngredients.map((ingredient, index) => {
             const analysis = analysisData[index];
             return (
-              <IngredientChip
+              <IngredientItem
                 key={index}
                 ingredient={ingredient}
                 isMain={analysis.isMain}
                 concern={analysis.concern}
+                index={index}
               />
             );
           })}
@@ -242,10 +157,22 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
         )}
       </View>
 
+      {/* Legend */}
+      <View style={styles.legendContainer}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: theme.colors.success }]} />
+          <Text style={styles.legendText}>Natural</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: theme.colors.primary }]} />
+          <Text style={styles.legendText}>Main ingredient</Text>
+        </View>
+      </View>
+      
       {/* Educational Note */}
       <View style={styles.noteContainer}>
         <Text style={styles.noteText}>
-          Listed by weight, highest to lowest. Color coding indicates potential health concerns.
+          Listed by weight, highest to lowest.
         </Text>
       </View>
     </View>
@@ -257,64 +184,60 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
 
-  // Stats Summary Row
-  summaryRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    ...theme.shadows.sm,
+  // Ingredient Count Header
+  countHeader: {
+    marginBottom: theme.spacing.md,
   },
 
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: theme.spacing.xs,
+  countText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.neutral[900],
   },
 
-  statIconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-
-  statNumber: {
-    ...theme.typography.headline,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-  },
-
-  statLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-  },
-
-  // Ingredients Grid
+  // Ingredients List
   ingredientsCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    ...theme.shadows.sm,
+    paddingTop: theme.spacing.sm,
   },
 
-  ingredientsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  ingredientsList: {
     gap: theme.spacing.sm,
   },
 
-  ingredientChip: {
-    paddingHorizontal: theme.spacing.sm,
+  ingredientItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    borderWidth: 1.5,
-    marginBottom: theme.spacing.xs,
   },
 
-  chipText: {
-    ...theme.typography.subtextMedium,
+  ingredientContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    flex: 1,
+  },
+
+  indicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  ingredientText: {
+    ...theme.typography.body,
+    fontSize: 16,
+    flex: 1,
+  },
+
+  mainLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    backgroundColor: theme.colors.primary + '15',
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
 
   showMoreButton: {
@@ -343,6 +266,33 @@ const styles = StyleSheet.create({
     ...theme.typography.body,
     color: theme.colors.text.primary,
     lineHeight: 22,
+  },
+
+  // Legend
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+  },
+
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+
+  legendDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  legendText: {
+    fontSize: 14,
+    fontFamily: 'System',
+    color: theme.colors.neutral[600],
+    fontWeight: '500',
   },
 
   // Educational Note

@@ -24,6 +24,40 @@ export const theme = {
         inverse: '#ffffff',    // White text on dark backgrounds
       },
       
+      // Neutral color palette
+      neutral: {
+        white: '#FFFFFF',
+        50: '#FAFAFA',
+        100: '#F5F5F5',
+        200: '#E5E5E5',
+        300: '#D4D4D4',
+        400: '#A3A3A3',
+        500: '#737373',
+        600: '#525252',
+        700: '#404040',
+        800: '#262626',
+        900: '#171717',
+        950: '#0A0A0A',
+        BG: '#F7F6F0',
+        BG2: '#EBEAE4',
+      },
+      
+      // Green color palette
+      green: {
+        25: '#F9FFFA',
+        50: '#E0FFE7', 
+        100: '#C1FFD0',
+        200: '#A3F6B8',
+        300: '#84EDA0',
+        400: '#65E488',
+        500: '#44DB6D',
+        600: '#3CC161',
+        700: '#35A756',
+        800: '#2D8D4A',
+        900: '#26733E',
+        950: '#1F5932',
+      },
+      
       // NOVA classification colors - using system colors
       nova: {
         group1: '#22c55e',     // Unprocessed - Success green
@@ -135,18 +169,19 @@ export const theme = {
       
       // Card title style
       cardTitle: {
-        fontSize: 16,
+        fontSize: 19,
         fontFamily: fontFamilies.bold,
-        lineHeight: Math.round(16 * 1.19712), // 19.154px rounded to 19
-        letterSpacing: -0.48,
+        lineHeight: Math.round(19 * 1.19712), // 22.75px rounded to 23
+        letterSpacing: -0.57,
       },
       
       // Card meta style
       cardMeta: {
-        fontSize: 12,
+        fontSize: 14,
         fontFamily: 'System',
-        lineHeight: 12, // normal line-height
-        letterSpacing: 0,
+        fontWeight: '500',
+        lineHeight: 16,
+        letterSpacing: -0.3,
       },
       
       // Label style (updated)
