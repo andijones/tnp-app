@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.neutral.BG,
+    backgroundColor: '#FFFFFF',
   },
   
   // Header Design
@@ -510,6 +510,7 @@ const styles = StyleSheet.create({
   
   scrollView: {
     flex: 1,
+    backgroundColor: theme.colors.neutral.BG,
   },
   
   scrollContent: {

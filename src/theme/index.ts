@@ -194,10 +194,10 @@ export const theme = {
       
       // Heading style
       heading: {
-        fontSize: 32,
+        fontSize: 30,
         fontFamily: fontFamilies.bold,
-        lineHeight: Math.round(32 * 1.19712), // 38.31px rounded to 38
-        letterSpacing: -0.96,
+        lineHeight: Math.round(30 * 1.19712), // 35.91px rounded to 36
+        letterSpacing: -0.90,
       },
       
       // Body style

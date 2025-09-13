@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
+import { SegmentedTabs } from '../../components/common/SegmentedTabs';
 import { supabase } from '../../services/supabase/config';
 
 type SubmissionMode = 'photo' | 'url';
@@ -28,6 +29,10 @@ export const SubmissionScreen: React.FC = () => {
   const [mode, setMode] = useState<SubmissionMode>('photo');
   const [selectedImages, setSelectedImages] = useState<ImageItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const tabOptions = ['Photo', 'URL'];
+  const getModeIndex = (mode: SubmissionMode) => mode === 'photo' ? 0 : 1;
+  const getIndexMode = (index: number): SubmissionMode => index === 0 ? 'photo' : 'url';
 
   // Form data
   const [productName, setProductName] = useState('');
@@ -291,21 +296,12 @@ export const SubmissionScreen: React.FC = () => {
 
   const renderModeSelector = () => (
     <View style={styles.tabContainer}>
-      <View style={styles.tabSelector}>
-        <Button
-          title="Photo"
-          onPress={() => setMode('photo')}
-          variant={mode === 'photo' ? 'primary' : 'tertiary'}
-          style={styles.tabButton}
-        />
-        
-        <Button
-          title="URL"
-          onPress={() => setMode('url')}
-          variant={mode === 'url' ? 'primary' : 'tertiary'}
-          style={styles.tabButton}
-        />
-      </View>
+      <SegmentedTabs
+        options={tabOptions}
+        selectedIndex={getModeIndex(mode)}
+        onSelectionChange={(index) => setMode(getIndexMode(index))}
+        style={styles.segmentedTabs}
+      />
     </View>
   );
 
@@ -398,7 +394,6 @@ export const SubmissionScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.title}>Submit Food</Text>
-        <Text style={styles.subtitle}>Help grow The Naked Pantry database</Text>
       </View>
 
       {renderModeSelector()}
@@ -441,14 +436,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   title: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-  },
-  subtitle: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
+    ...theme.typography.heading,
+    color: theme.colors.green[950],
+    textAlign: 'center',
   },
   tabContainer: {
     backgroundColor: '#FFFFFF',
@@ -457,38 +447,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
-  tabSelector: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: theme.borderRadius.full,
-    padding: 2,
-    flexDirection: 'row',
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: theme.borderRadius.full,
-    alignItems: 'center',
-  },
-  tabButtonActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#8E8E93',
-  },
-  tabTextActive: {
-    color: '#000000',
-    fontWeight: '600',
+  segmentedTabs: {
+    width: '100%',
   },
   content: {
     flex: 1,

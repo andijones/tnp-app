@@ -307,8 +307,7 @@ export const ProfileScreen: React.FC = () => {
           <Button
             title="Sign Out"
             onPress={handleSignOut}
-            variant="text"
-            style={styles.signOutButton}
+            variant="tertiary"
           />
         </View>
 
@@ -580,9 +579,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   
-  signOutButton: {
-    borderColor: theme.colors.error,
-  },
   
   appInfo: {
     alignItems: 'center',

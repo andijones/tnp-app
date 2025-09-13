@@ -297,9 +297,8 @@ const styles = StyleSheet.create({
   },
   
   headerTitle: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
+    ...theme.typography.heading,
+    color: theme.colors.green[950],
     flex: 1,
     textAlign: 'center',
   },

@@ -10,58 +10,17 @@ interface ImprovedIngredientsListProps {
 
 interface IngredientItemProps {
   ingredient: string;
-  isMain: boolean;
-  concern?: 'natural';
   index: number;
 }
 
-const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, isMain, concern, index }) => {
-  const getIndicatorColor = () => {
-    if (concern === 'natural') return theme.colors.success;
-    if (isMain) return theme.colors.primary;
-    return theme.colors.neutral[400];
-  };
-
-  const getTextColor = () => {
-    if (isMain) return theme.colors.neutral[900];
-    return theme.colors.neutral[700];
-  };
-
+const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, index }) => {
   return (
     <View style={styles.ingredientItem}>
-      <View style={styles.ingredientContent}>
-        <View style={[styles.indicator, { backgroundColor: getIndicatorColor() }]} />
-        <Text style={[styles.ingredientText, { color: getTextColor() }]}>
-          {ingredient}
-        </Text>
-      </View>
-      {isMain && (
-        <Text style={styles.mainLabel}>Main</Text>
-      )}
+      <Text style={styles.ingredientText}>
+        {ingredient}
+      </Text>
     </View>
   );
-};
-
-const analyzeIngredient = (ingredient: string, index: number): { concern?: 'natural'; isMain: boolean } => {
-  const lowerIngredient = ingredient.toLowerCase();
-  
-  // Natural/beneficial ingredients that indicate minimal processing
-  const natural = [
-    'organic', 'natural', 'vitamin', 'mineral', 'fiber', 'protein',
-    'whole grain', 'real fruit', 'vegetable', 'herb', 'spice',
-    'sea salt', 'cane sugar', 'honey', 'maple syrup', 'olive oil',
-  ];
-
-  let concern: 'natural' | undefined;
-  
-  if (natural.some(nat => lowerIngredient.includes(nat))) {
-    concern = 'natural';
-  }
-  
-  return {
-    concern,
-    isMain: index < 3, // First 3 ingredients are main ingredients
-  };
 };
 
 const parseIngredients = (ingredientsText: string): string[] => {
@@ -107,12 +66,6 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
   const displayIngredients = ingredientsList.slice(0, displayCount);
   const hasMore = ingredientsList.length > 8;
 
-  // Analyze ingredients for natural ingredients
-  const analysisData = ingredientsList.map((ingredient, index) => ({
-    ingredient,
-    ...analyzeIngredient(ingredient, index),
-  }));
-
   return (
     <View style={styles.container}>
       {/* Ingredient Count Header */}
@@ -125,18 +78,13 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
       {/* Ingredients List */}
       <View style={styles.ingredientsCard}>
         <View style={styles.ingredientsList}>
-          {displayIngredients.map((ingredient, index) => {
-            const analysis = analysisData[index];
-            return (
-              <IngredientItem
-                key={index}
-                ingredient={ingredient}
-                isMain={analysis.isMain}
-                concern={analysis.concern}
-                index={index}
-              />
-            );
-          })}
+          {displayIngredients.map((ingredient, index) => (
+            <IngredientItem
+              key={index}
+              ingredient={ingredient}
+              index={index}
+            />
+          ))}
         </View>
 
         {hasMore && (
@@ -148,27 +96,15 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
             <Text style={styles.showMoreText}>
               {showAll ? 'Show Less' : `Show ${ingredientsList.length - displayCount} More`}
             </Text>
-            <Ionicons 
-              name={showAll ? 'chevron-up' : 'chevron-down'} 
-              size={16} 
-              color={theme.colors.primary} 
+            <Ionicons
+              name={showAll ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={theme.colors.primary}
             />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Legend */}
-      <View style={styles.legendContainer}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.success }]} />
-          <Text style={styles.legendText}>Natural</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.primary }]} />
-          <Text style={styles.legendText}>Main ingredient</Text>
-        </View>
-      </View>
-      
       {/* Educational Note */}
       <View style={styles.noteContainer}>
         <Text style={styles.noteText}>
@@ -205,39 +141,13 @@ const styles = StyleSheet.create({
   },
 
   ingredientItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: theme.spacing.xs,
-  },
-
-  ingredientContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    flex: 1,
-  },
-
-  indicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
 
   ingredientText: {
     ...theme.typography.body,
     fontSize: 16,
-    flex: 1,
-  },
-
-  mainLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.primary,
-    fontWeight: '600',
-    backgroundColor: theme.colors.primary + '15',
-    paddingHorizontal: theme.spacing.xs,
-    paddingVertical: 2,
-    borderRadius: 4,
+    color: theme.colors.neutral[900],
   },
 
   showMoreButton: {
@@ -268,32 +178,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Legend
-  legendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-  },
-
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-
-  legendDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-
-  legendText: {
-    fontSize: 14,
-    fontFamily: 'System',
-    color: theme.colors.neutral[600],
-    fontWeight: '500',
-  },
 
   // Educational Note
   noteContainer: {

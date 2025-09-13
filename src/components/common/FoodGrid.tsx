@@ -28,7 +28,7 @@ export const FoodGrid = forwardRef<FlatList, FoodGridProps>(({
   refreshing,
 }, ref) => {
   const screenWidth = Dimensions.get('window').width;
-  const cardSpacing = theme.spacing.lg;
+  const cardSpacing = theme.spacing.md;
   const cardWidth = (screenWidth - (cardSpacing * 3)) / 2; // 2 columns with spacing
 
   const renderFoodItem = ({ item }: { item: Food }) => (
@@ -62,7 +62,7 @@ export const FoodGrid = forwardRef<FlatList, FoodGridProps>(({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.xl,
   },
   

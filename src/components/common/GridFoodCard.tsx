@@ -164,27 +164,26 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
 
 const styles = StyleSheet.create({
   gridCard: {
-    backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
-    borderRadius: 8, // var(--Spacing-8, 8px)
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
-    marginBottom: theme.spacing.md,
+    borderColor: '#E5E5E5',
+    marginBottom: 0,
     overflow: 'hidden',
-    // Card Shadow from Figma
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 6,
     flex: 1,
   },
   
   imageContainer: {
     position: 'relative',
-    aspectRatio: 1.4,
+    aspectRatio: 1.2,
     backgroundColor: 'transparent',
   },
   
@@ -222,16 +221,16 @@ const styles = StyleSheet.create({
   },
   
   contentContainer: {
-    padding: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
+    padding: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.md,
     flex: 1,
   },
   
   foodName: {
     ...theme.typography.cardTitle,
     color: theme.colors.green[950],
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
   },
   
   metaContainer: {
