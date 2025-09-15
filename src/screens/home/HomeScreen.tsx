@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: theme.typography.heading.fontFamily,
     fontSize: theme.typography.heading.fontSize, // 32px (2rem)
-    fontWeight: '700',
+    fontWeight: 'bold',
     lineHeight: theme.typography.heading.lineHeight, // 119.712% of 32px = 38px
     letterSpacing: theme.typography.heading.letterSpacing, // -0.96px
     marginBottom: theme.spacing.lg,

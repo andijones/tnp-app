@@ -367,13 +367,17 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
               {/* Action Buttons */}
               <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.viewFoodButton} onPress={handleViewFood}>
-                  <Text style={styles.viewFoodButtonText}>View food</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSearch}>
-                  <Text style={styles.googleButtonText}>Search on Google</Text>
-                </TouchableOpacity>
+                <Button
+                  title="View food"
+                  onPress={handleViewFood}
+                  variant="primary"
+                />
+
+                <Button
+                  title="Search on Google"
+                  onPress={handleGoogleSearch}
+                  variant="tertiary"
+                />
               </View>
             </View>
 
@@ -622,34 +626,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     gap: theme.spacing.md,
     marginBottom: theme.spacing.xxl,
-  },
-  
-  viewFoodButton: {
-    backgroundColor: theme.colors.green[600],
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  
-  viewFoodButtonText: {
-    color: theme.colors.neutral.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  
-  googleButton: {
-    backgroundColor: theme.colors.neutral[100],
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.neutral[200],
-  },
-  
-  googleButtonText: {
-    color: theme.colors.neutral[700],
-    fontSize: 16,
-    fontWeight: '500',
   },
   
   // Section Header

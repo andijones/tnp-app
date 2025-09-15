@@ -170,7 +170,8 @@ export const theme = {
       // Card title style
       cardTitle: {
         fontSize: 19,
-        fontFamily: fontFamilies.bold,
+        fontFamily: 'System',
+        fontWeight: 'bold' as const,
         lineHeight: Math.round(19 * 1.19712), // 22.75px rounded to 23
         letterSpacing: -0.57,
       },
@@ -195,7 +196,8 @@ export const theme = {
       // Heading style
       heading: {
         fontSize: 30,
-        fontFamily: fontFamilies.bold,
+        fontFamily: 'System',
+        fontWeight: 'bold' as const,
         lineHeight: Math.round(30 * 1.19712), // 35.91px rounded to 36
         letterSpacing: -0.90,
       },
