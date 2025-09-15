@@ -218,13 +218,13 @@ export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ 
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
 
 
   // Detailed Nutrition Card
   nutritionCard: {
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
 
   servingSizeContainer: {
@@ -238,16 +238,13 @@ const styles = StyleSheet.create({
   },
 
   servingSizeLabel: {
-    fontSize: 14,
-    fontFamily: 'System',
-    color: theme.colors.neutral[600],
+    ...theme.typography.subtext,
+    color: theme.colors.text.secondary,
   },
 
   servingSizeValue: {
-    fontSize: 16,
-    fontFamily: 'System',
-    fontWeight: '600',
-    color: theme.colors.neutral[900],
+    ...theme.typography.headline,
+    color: theme.colors.text.primary,
   },
 
   nutrientRow: {
@@ -255,12 +252,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    minHeight: 44,
+    paddingVertical: theme.spacing.md,
+    minHeight: 48,
   },
 
   caloriesRow: {
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    marginBottom: theme.spacing.sm,
   },
 
   nutrientInfo: {
@@ -271,22 +271,19 @@ const styles = StyleSheet.create({
   },
 
   nutrientLabel: {
-    fontSize: 16,
-    fontFamily: 'System',
-    fontWeight: '400',
-    color: theme.colors.neutral[700],
+    ...theme.typography.subtext,
+    color: theme.colors.text.primary,
   },
 
   caloriesLabel: {
-    fontSize: 18,
-    fontFamily: 'System',
+    ...theme.typography.headline,
     fontWeight: '700',
-    color: theme.colors.neutral[900],
+    color: theme.colors.text.primary,
   },
 
   dailyValueText: {
-    fontSize: 12,
-    color: theme.colors.neutral[500],
+    ...theme.typography.caption,
+    color: theme.colors.text.tertiary,
     marginLeft: theme.spacing.sm,
   },
 
@@ -297,18 +294,16 @@ const styles = StyleSheet.create({
   },
 
   nutrientValue: {
-    fontSize: 16,
-    fontFamily: 'System',
-    fontWeight: '600',
-    color: theme.colors.neutral[900],
+    ...theme.typography.subtextMedium,
+    color: theme.colors.text.primary,
     textAlign: 'right',
   },
 
   caloriesValue: {
+    ...theme.typography.headline,
     fontSize: 20,
-    fontFamily: 'System',
     fontWeight: '700',
-    color: theme.colors.neutral[900],
+    color: theme.colors.text.primary,
   },
 
   indicatorContainer: {
@@ -331,8 +326,8 @@ const styles = StyleSheet.create({
   },
 
   footnoteText: {
-    fontSize: 12,
-    color: theme.colors.neutral[500],
+    ...theme.typography.caption,
+    color: theme.colors.text.tertiary,
     fontStyle: 'italic',
     textAlign: 'center',
   },
@@ -343,19 +338,15 @@ const styles = StyleSheet.create({
   },
 
   noDataTitle: {
-    fontSize: 18,
-    fontFamily: 'System',
-    fontWeight: '600',
-    color: theme.colors.neutral[700],
+    ...theme.typography.headline,
+    color: theme.colors.text.secondary,
     marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.xs,
   },
 
   noDataSubtitle: {
-    fontSize: 14,
-    fontFamily: 'System',
-    color: theme.colors.neutral[500],
+    ...theme.typography.subtext,
+    color: theme.colors.text.tertiary,
     textAlign: 'center',
-    lineHeight: 20,
   },
 });

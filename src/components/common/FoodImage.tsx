@@ -144,6 +144,8 @@ export const FoodImage: React.FC<FoodImageProps> = ({
             fontSize: 10,
             fontWeight: '700',
             color: '#FFFFFF',
+            fontFamily: 'System',
+            textAlign: 'center',
           }}>
             {novaGroup}
           </Text>

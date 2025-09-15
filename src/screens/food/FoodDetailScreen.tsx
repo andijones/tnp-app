@@ -327,9 +327,22 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
                 <Text style={styles.storeText}>
                   {(food.supermarket || 'TESCO').toUpperCase()}
                 </Text>
-                <Text style={styles.categoryText}>
-                  {food.aisle?.name || 'Pizza'}
-                </Text>
+                <TouchableOpacity
+                  style={styles.categoryButton}
+                  onPress={() => {
+                    if (food.aisle) {
+                      navigation.navigate('AisleDetail', {
+                        slug: food.aisle.slug,
+                        title: food.aisle.name
+                      });
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.categoryText}>
+                    {food.aisle?.name || 'Pizza'}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {/* Product Title */}
@@ -526,6 +539,8 @@ const styles = StyleSheet.create({
     height: 320,
     backgroundColor: theme.colors.neutral.white,
     position: 'relative',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5', // neutral-200
   },
   
   heroImage: {
@@ -544,7 +559,7 @@ const styles = StyleSheet.create({
   
   // Inline Nova Card (for info card)
   novaCardInline: {
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
     backgroundColor: '#FFF3E0',
     borderRadius: 6,
     paddingHorizontal: 12,
@@ -555,9 +570,11 @@ const styles = StyleSheet.create({
   },
   
   novaTextInline: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
     color: '#E65100',
+    textAlign: 'center',
+    fontFamily: 'System',
   },
   
   // Content Container
@@ -582,25 +599,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   
   storeText: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.neutral[900],
+    color: theme.colors.neutral[500],
   },
   
+  categoryButton: {
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
+    backgroundColor: '#F5F5F5', // var(--Neutral-100, #F5F5F5)
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+
   categoryText: {
-    fontSize: 16,
-    color: theme.colors.neutral[500],
+    fontSize: 14,
+    color: '#404040', // var(--Neutral-700, #404040)
+    fontFamily: 'System', // Using System instead of Bricolage Grotesque as per app convention
+    fontWeight: '500',
+    lineHeight: 14,
   },
   
   // Product Title
   productTitle: {
     ...theme.typography.heading,
     color: theme.colors.green[950],
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
     lineHeight: 28,
   },
   
@@ -625,7 +662,7 @@ const styles = StyleSheet.create({
   // Action Buttons
   buttonContainer: {
     gap: theme.spacing.md,
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.xl,
   },
   
   // Section Header

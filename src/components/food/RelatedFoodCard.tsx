@@ -179,6 +179,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#FFFFFF',
+    fontFamily: 'System',
+    textAlign: 'center',
   },
   
   content: {

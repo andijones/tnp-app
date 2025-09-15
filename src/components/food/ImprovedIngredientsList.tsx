@@ -117,18 +117,17 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
 
   // Ingredient Count Header
   countHeader: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
 
   countText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.neutral[900],
+    ...theme.typography.headline,
+    color: theme.colors.text.primary,
   },
 
   // Ingredients List
@@ -137,17 +136,17 @@ const styles = StyleSheet.create({
   },
 
   ingredientsList: {
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
   },
 
   ingredientItem: {
-    paddingVertical: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
   },
 
   ingredientText: {
-    ...theme.typography.body,
-    fontSize: 16,
-    color: theme.colors.neutral[900],
+    ...theme.typography.subtext,
+    color: theme.colors.text.primary,
+    lineHeight: 24,
   },
 
   showMoreButton: {
@@ -160,7 +159,7 @@ const styles = StyleSheet.create({
   },
 
   showMoreText: {
-    ...theme.typography.bodySemibold,
+    ...theme.typography.subtextMedium,
     color: theme.colors.primary,
   },
 
@@ -173,7 +172,7 @@ const styles = StyleSheet.create({
   },
 
   fullText: {
-    ...theme.typography.body,
+    ...theme.typography.subtext,
     color: theme.colors.text.primary,
     lineHeight: 22,
   },
@@ -186,7 +185,7 @@ const styles = StyleSheet.create({
 
   noteText: {
     ...theme.typography.caption,
-    color: theme.colors.text.secondary,
+    color: theme.colors.text.tertiary,
     fontStyle: 'italic',
     textAlign: 'center',
   },

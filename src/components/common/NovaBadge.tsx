@@ -98,6 +98,8 @@ const styles = StyleSheet.create({
   text: {
     color: '#FFFFFF',
     fontWeight: '700',
+    fontFamily: 'System',
+    textAlign: 'center',
   },
   
   smallText: {
