@@ -36,9 +36,9 @@ export const Button: React.FC<ButtonProps> = ({
     >
       {hasIcons ? (
         <View style={styles.content}>
-          {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+          {leftIcon && <View style={[styles.leftIcon, styles[`${variant}Icon`]]}>{leftIcon}</View>}
           <Text style={[styles.buttonText, styles[`${variant}Text`]]}>{title}</Text>
-          {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
+          {rightIcon && <View style={[styles.rightIcon, styles[`${variant}Icon`]]}>{rightIcon}</View>}
         </View>
       ) : (
         <Text style={[styles.buttonText, styles[`${variant}Text`]]}>{title}</Text>
@@ -52,8 +52,9 @@ const styles = StyleSheet.create({
     borderRadius: 11, // 8px Figma size × 1.33
     alignItems: 'center',
     justifyContent: 'center',
-    height: 64, // 48px Figma size × 1.33
+    height: 56,
     paddingHorizontal: 24,
+    width: '100%',
   },
   
   // Variants
@@ -116,20 +117,36 @@ const styles = StyleSheet.create({
   textText: {
     color: '#1F5932',
   },
-  
+
+  // Icon color styles (same as text colors but with 50% opacity)
+  primaryIcon: {
+    color: '#1F5932',
+    opacity: 0.5,
+  },
+  secondaryIcon: {
+    color: '#FFFFFF',
+    opacity: 0.5,
+  },
+  tertiaryIcon: {
+    color: theme.colors.text.primary,
+    opacity: 0.5,
+  },
+  textIcon: {
+    color: '#1F5932',
+    opacity: 0.5,
+  },
+
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   leftIcon: {
     marginRight: theme.spacing.sm,
-    opacity: 0.5,
   },
-  
+
   rightIcon: {
     marginLeft: theme.spacing.sm,
-    opacity: 0.5,
   },
 });

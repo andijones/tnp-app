@@ -330,7 +330,7 @@ export const SubmissionScreen: React.FC = () => {
                 title="Take Photo"
                 onPress={takePhoto}
                 variant="secondary"
-                leftIcon={<Ionicons name="camera" size={20} color="white" />}
+                leftIcon={<Ionicons name="camera" size={20} />}
                 style={styles.addImageButton}
               />
               
@@ -338,7 +338,7 @@ export const SubmissionScreen: React.FC = () => {
                 title="Gallery"
                 onPress={addImageFromGallery}
                 variant="secondary"
-                leftIcon={<Ionicons name="images" size={20} color="white" />}
+                leftIcon={<Ionicons name="images" size={20} />}
                 style={styles.addImageButton}
               />
             </View>
@@ -410,7 +410,7 @@ export const SubmissionScreen: React.FC = () => {
             onPress={handleSubmit}
             disabled={isSubmitting}
             variant="primary"
-            leftIcon={isSubmitting ? <ActivityIndicator color="white" size="small" /> : <Ionicons name="send" size={20} color="white" />}
+            leftIcon={isSubmitting ? <ActivityIndicator size="small" /> : <Ionicons name="send" size={20} />}
           />
         </View>
       </View>

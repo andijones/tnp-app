@@ -16,6 +16,7 @@ import { Food } from '../../types';
 import { supabase } from '../../services/supabase/config';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { FoodGrid } from '../../components/common/FoodGrid';
+import { Button } from '../../components/common/Button';
 import { useFavorites } from '../../hooks/useFavorites';
 
 interface HomeScreenProps {
@@ -172,15 +173,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   </Text>
 
                   {/* CTA Button */}
-                  <TouchableOpacity 
-                    style={styles.scanIngredientsButton}
+                  <Button
+                    title="Scan Ingredients Now"
                     onPress={() => navigation.navigate('Scanner')}
-                    activeOpacity={0.9}
-                  >
-                    <Text style={styles.scanIngredientsButtonText}>
-                      Scan Ingredients Now
-                    </Text>
-                  </TouchableOpacity>
+                    variant="secondary"
+                  />
                 </View>
               </View>
             )}
@@ -370,32 +367,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   
-  scanIngredientsButton: {
-    backgroundColor: '#1F5932',
-    borderWidth: 1,
-    borderColor: '#144925',
-    borderRadius: 11, // 8px Figma size × 1.33
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xl,
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  
-  scanIngredientsButtonText: {
-    fontSize: theme.typography.subtitle.fontSize,
-    fontFamily: theme.typography.subtitle.fontFamily,
-    fontWeight: theme.typography.subtitle.fontWeight,
-    lineHeight: theme.typography.subtitle.lineHeight,
-    letterSpacing: theme.typography.subtitle.letterSpacing,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
   
   statsContainer: {
     paddingHorizontal: theme.spacing.lg,
