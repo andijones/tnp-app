@@ -130,16 +130,17 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <LoadingSpinner message="Loading aisle..." />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         {isSearchActive ? (
           // Search active header
           <View style={styles.searchActiveHeader}>
@@ -239,11 +240,17 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
           )
         )}
       />
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#F7F6F0',
@@ -280,10 +287,9 @@ const styles = StyleSheet.create({
   },
   
   headerTitle: {
+    ...theme.typography.heading,
+    color: theme.colors.green[950],
     flex: 1,
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
     textAlign: 'center',
   },
   
