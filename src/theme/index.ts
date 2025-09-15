@@ -195,11 +195,11 @@ export const theme = {
       
       // Heading style
       heading: {
-        fontSize: 30,
+        fontSize: 26,
         fontFamily: 'System',
         fontWeight: 'bold' as const,
-        lineHeight: Math.round(30 * 1.19712), // 35.91px rounded to 36
-        letterSpacing: -0.90,
+        lineHeight: Math.round(26 * 1.19712), // 31.12px rounded to 31
+        letterSpacing: -0.78,
       },
       
       // Body style
