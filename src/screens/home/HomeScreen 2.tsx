@@ -220,11 +220,12 @@ const styles = StyleSheet.create({
   },
   
   header: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    borderBottomWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   
   headerTopRow: {

@@ -9,6 +9,8 @@ export interface Food {
     status: 'pending' | 'approved' | 'rejected';
     nova_group?: 1 | 2 | 3 | 4;
     user_id: string;
+    original_submitter_id?: string | null;
+    food_link_id?: string | null;
     created_at: string;
     ingredients?: string;
     nutrition_data?: NutritionInfo;
@@ -91,4 +93,24 @@ export interface Food {
     price?: number;
     last_updated: string;
     supermarket?: Supermarket;
+  }
+
+export interface PublicProfile {
+    id: string;
+    username?: string | null;
+    full_name?: string | null;
+    avatar_url?: string | null;
+    created_at: string;
+  }
+
+export interface SubmissionStats {
+    totalContributions: number;
+  }
+
+export interface FoodLink {
+    id: string;
+    url: string;
+    user_id: string;
+    status: 'pending' | 'approved' | 'rejected';
+    created_at: string;
   }

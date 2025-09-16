@@ -55,7 +55,7 @@ function TabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: 'rgba(31, 89, 50, 0.95)',
+          backgroundColor: 'rgba(31, 89, 50, 0.3)',
           borderTopWidth: 0,
           height: 84,
           paddingTop: 12,

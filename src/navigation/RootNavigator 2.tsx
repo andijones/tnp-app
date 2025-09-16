@@ -3,7 +3,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
 import { theme } from '../theme';
 
 // Import your screens
@@ -55,23 +54,20 @@ function TabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: 'rgba(31, 89, 50, 0.95)',
-          borderTopWidth: 0,
+          backgroundColor: '#1F5932',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E5EA',
           height: 84,
           paddingTop: 12,
           paddingBottom: 20,
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
             height: -2,
           },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 10,
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 8,
         },
         tabBarActiveTintColor: '#44DB6D',
         tabBarInactiveTintColor: '#FFFFFF',
