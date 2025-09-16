@@ -16,6 +16,7 @@ interface IngredientItemProps {
 const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, index }) => {
   return (
     <View style={styles.ingredientItem}>
+      <View style={styles.bullet} />
       <Text style={styles.ingredientText}>
         {ingredient}
       </Text>
@@ -51,13 +52,38 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
 
   const ingredientsList = parseIngredients(ingredientsText);
   
-  // If parsing results in less than 2 items, show as original text
+  // If parsing results in less than 2 items, try to split by other delimiters
   if (ingredientsList.length < 2) {
+    // Try splitting by bullet points, periods, or other delimiters
+    const fallbackIngredients = ingredientsText
+      .split(/[•·\.\n]/)
+      .map(item => item.trim())
+      .filter(item => item.length > 2);
+
+    if (fallbackIngredients.length >= 2) {
+      const cleanedIngredients = fallbackIngredients.map(item =>
+        item.charAt(0).toUpperCase() + item.slice(1)
+      );
+
+      return (
+        <View style={styles.container}>
+          <View style={styles.ingredientsList}>
+            {cleanedIngredients.map((ingredient, index) => (
+              <IngredientItem
+                key={index}
+                ingredient={ingredient}
+                index={index}
+              />
+            ))}
+          </View>
+        </View>
+      );
+    }
+
+    // Fallback to original text if still can't parse
     return (
       <View style={styles.container}>
-        <View style={styles.textCard}>
-          <Text style={styles.fullText}>{ingredientsText}</Text>
-        </View>
+        <Text style={styles.fullText}>{ingredientsText}</Text>
       </View>
     );
   }
@@ -140,13 +166,27 @@ const styles = StyleSheet.create({
   },
 
   ingredientItem: {
-    paddingVertical: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+  },
+
+  bullet: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.text.secondary,
+    marginRight: theme.spacing.sm,
+    marginTop: 8,
+    flexShrink: 0,
   },
 
   ingredientText: {
     ...theme.typography.subtext,
     color: theme.colors.text.primary,
-    lineHeight: 24,
+    lineHeight: 20,
+    flex: 1,
   },
 
   showMoreButton: {
@@ -164,13 +204,6 @@ const styles = StyleSheet.create({
   },
 
   // Fallback Text Display
-  textCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    ...theme.shadows.sm,
-  },
-
   fullText: {
     ...theme.typography.subtext,
     color: theme.colors.text.primary,

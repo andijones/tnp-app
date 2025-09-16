@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SvgXml } from 'react-native-svg';
 import { theme } from '../../theme';
 import { Food } from '../../types';
 import { supabase } from '../../services/supabase/config';
@@ -162,22 +163,39 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             {!searchQuery && (
               <View style={styles.featureSection}>
                 <View style={styles.scannerCard}>
-                  {/* Main Title */}
-                  <Text style={styles.scannerTitle}>
-                    Scan any food to{'\n'}see if it's non-upf
-                  </Text>
+                  {/* Background SVG */}
+                  <View style={styles.backgroundContainer}>
+                    <Image
+                      source={require('../../../assets/bg-line.svg')}
+                      style={styles.backgroundSvg}
+                      resizeMode="cover"
+                    />
+                  </View>
+
+                  {/* Content */}
+                  <View style={styles.cardContent}>
+                    {/* Scanner Icon */}
+                    <View style={styles.iconContainer}>
+                      <Ionicons name="scan" size={24} color="white" />
+                    </View>
+
+                    {/* Main Title */}
+                    <Text style={styles.scannerTitle}>
+                      Scan any food to{'\n'}see if it's non-upf
+                    </Text>
 
                   {/* Subtitle */}
                   <Text style={styles.scannerSubtitle}>
                     Simply snap, AI analyses and you get a{'\n'}health score
                   </Text>
 
-                  {/* CTA Button */}
-                  <Button
-                    title="Scan Ingredients Now"
-                    onPress={() => navigation.navigate('Scanner')}
-                    variant="secondary"
-                  />
+                    {/* CTA Button */}
+                    <Button
+                      title="Scan Ingredients Now"
+                      onPress={() => navigation.navigate('Scanner')}
+                      variant="secondary"
+                    />
+                  </View>
                 </View>
               </View>
             )}
@@ -310,8 +328,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#35A756',
-    padding: 24,
-    alignItems: 'stretch',
+    position: 'relative',
+    overflow: 'hidden',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -320,6 +338,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.02,
     shadowRadius: 3,
     elevation: 2,
+  },
+
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  backgroundSvg: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.8,
+  },
+
+  cardContent: {
+    padding: 24,
+    alignItems: 'stretch',
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  iconContainer: {
+    alignSelf: 'center',
+    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    padding: 12,
   },
   
   barcodeIconContainer: {

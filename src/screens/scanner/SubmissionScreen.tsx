@@ -326,21 +326,15 @@ export const SubmissionScreen: React.FC = () => {
           
           {selectedImages.length < 3 && (
             <View style={styles.addImageContainer}>
-              <Button
-                title="Take Photo"
-                onPress={takePhoto}
-                variant="secondary"
-                leftIcon={<Ionicons name="camera" size={20} />}
-                style={styles.addImageButton}
-              />
-              
-              <Button
-                title="Gallery"
-                onPress={addImageFromGallery}
-                variant="secondary"
-                leftIcon={<Ionicons name="images" size={20} />}
-                style={styles.addImageButton}
-              />
+              <TouchableOpacity style={styles.addImageButton} onPress={takePhoto}>
+                <Ionicons name="camera" size={24} color={theme.colors.text.secondary} />
+                <Text style={styles.addImageText}>Take Photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.addImageButton} onPress={addImageFromGallery}>
+                <Ionicons name="images" size={24} color={theme.colors.text.secondary} />
+                <Text style={styles.addImageText}>Gallery</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -505,18 +499,26 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: theme.borderRadius.md,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: `${theme.colors.primary}05`,
+    backgroundColor: theme.colors.surface,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   addImageText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.primary,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,
     fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: theme.spacing.md,

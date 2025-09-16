@@ -1,7 +1,7 @@
 {
   "name": "tnp-clean",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "index.js",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

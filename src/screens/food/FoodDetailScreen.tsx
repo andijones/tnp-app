@@ -685,8 +685,11 @@ const styles = StyleSheet.create({
   },
   
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'Inter',
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: Math.round(24 * 1.19712), // 28.731px rounded to 29
+    letterSpacing: -0.72,
     color: theme.colors.neutral[900],
     flex: 1,
   },
