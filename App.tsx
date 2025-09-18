@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Session } from '@supabase/supabase-js';
 import { NavigationContainer } from '@react-navigation/native';
 
-import { supabase } from './src/services/supabase/config';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { AuthScreen } from './src/screens/auth/AuthScreen';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { theme } from './src/theme';
 import { loadFonts } from './src/utils/fonts';
 
-export default function App() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+const AppContent: React.FC = () => {
+  const { session, loading } = useAuth();
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
@@ -26,19 +23,6 @@ export default function App() {
     };
 
     initApp();
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   if (loading || !fontsLoaded) return null;
@@ -48,5 +32,13 @@ export default function App() {
       <StatusBar style="dark" backgroundColor="#FFFFFF" />
       {session && session.user ? <RootNavigator /> : <AuthScreen />}
     </NavigationContainer>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

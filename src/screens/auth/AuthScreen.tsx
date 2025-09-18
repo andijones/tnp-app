@@ -15,6 +15,7 @@ import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { supabase } from '../../services/supabase/config';
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 
 export const AuthScreen: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -146,6 +147,14 @@ export const AuthScreen: React.FC = () => {
             {isLogin ? (
               <>
                 {/* Login Form */}
+                <GoogleSignInButton />
+
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
                 <Input
                   label="EMAIL ADDRESS"
                   placeholder="Enter email address"
@@ -171,7 +180,7 @@ export const AuthScreen: React.FC = () => {
                   style={styles.signInButton}
                 />
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.forgotPasswordContainer}
                   onPress={handleForgotPassword}
                 >
@@ -188,6 +197,14 @@ export const AuthScreen: React.FC = () => {
             ) : (
               <>
                 {/* Sign Up Form */}
+                <GoogleSignInButton />
+
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
                 <Input
                   label="FULL NAME"
                   placeholder="Enter your full name"
@@ -221,7 +238,7 @@ export const AuthScreen: React.FC = () => {
                   style={styles.signInButton}
                 />
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.backToLoginContainer}
                   onPress={toggleMode}
                 >
@@ -302,5 +319,24 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.subtitle.fontFamily,
     lineHeight: theme.typography.subtitle.lineHeight,
     letterSpacing: theme.typography.subtitle.letterSpacing,
+  },
+
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#dadce0',
+  },
+
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#666',
+    fontSize: 14,
+    fontFamily: theme.typography.subtitle.fontFamily,
   },
 });
