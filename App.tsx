@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { AuthScreen } from './src/screens/auth/AuthScreen';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { loadFonts } from './src/utils/fonts';
+
+const linking = {
+  prefixes: ['tnpclean://'],
+  config: {
+    screens: {
+      Auth: '*',
+    },
+  },
+};
 
 const AppContent: React.FC = () => {
   const { session, loading } = useAuth();
@@ -28,7 +38,7 @@ const AppContent: React.FC = () => {
   if (loading || !fontsLoaded) return null;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <StatusBar style="dark" backgroundColor="#FFFFFF" />
       {session && session.user ? <RootNavigator /> : <AuthScreen />}
     </NavigationContainer>

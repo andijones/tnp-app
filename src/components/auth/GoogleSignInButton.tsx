@@ -14,12 +14,20 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
 
+  // Add debug log on component mount
+  React.useEffect(() => {
+    console.log('🔵 GoogleSignInButton component mounted');
+  }, []);
+
   const handleGoogleSignIn = async () => {
+    console.log('=== GOOGLE SIGN-IN BUTTON CLICKED ===');
     if (loading) return;
 
     setLoading(true);
     try {
+      console.log('About to call googleSignInService.signIn()');
       const { data, error } = await googleSignInService.signIn();
+      console.log('Result from googleSignInService:', { data, error });
 
       if (error) {
         console.error('Google Sign-In Error:', error);
