@@ -6,7 +6,7 @@ interface ProfilePictureProps {
   imageUrl?: string | null;
   fullName?: string | null;
   email?: string | null;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'small' | 'medium' | 'large' | 'xlarge';
   style?: any;
 }
 
@@ -24,6 +24,7 @@ export const ProfilePicture: React.FC<ProfilePictureProps> = ({
     small: { width: 24, height: 24, fontSize: 10 },
     medium: { width: 40, height: 40, fontSize: 16 },
     large: { width: 100, height: 100, fontSize: 36 },
+    xlarge: { width: 120, height: 120, fontSize: 42 },
   };
 
   const config = sizeConfig[size];

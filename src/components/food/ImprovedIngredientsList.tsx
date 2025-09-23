@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 
 interface ImprovedIngredientsListProps {
@@ -15,12 +14,9 @@ interface IngredientItemProps {
 
 const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, index }) => {
   return (
-    <View style={styles.ingredientItem}>
-      <View style={styles.bullet} />
-      <Text style={styles.ingredientText}>
-        {ingredient}
-      </Text>
-    </View>
+    <Text style={styles.ingredientText}>
+      {ingredient}
+    </Text>
   );
 };
 
@@ -67,15 +63,9 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
 
       return (
         <View style={styles.container}>
-          <View style={styles.ingredientsList}>
-            {cleanedIngredients.map((ingredient, index) => (
-              <IngredientItem
-                key={index}
-                ingredient={ingredient}
-                index={index}
-              />
-            ))}
-          </View>
+          <Text style={styles.ingredientsText}>
+            {cleanedIngredients.join(', ')}
+          </Text>
         </View>
       );
     }
@@ -83,7 +73,7 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
     // Fallback to original text if still can't parse
     return (
       <View style={styles.container}>
-        <Text style={styles.fullText}>{ingredientsText}</Text>
+        <Text style={styles.ingredientsText}>{ingredientsText}</Text>
       </View>
     );
   }
@@ -94,132 +84,53 @@ export const ImprovedIngredientsList: React.FC<ImprovedIngredientsListProps> = (
 
   return (
     <View style={styles.container}>
-      {/* Ingredient Count Header */}
-      <View style={styles.countHeader}>
-        <Text style={styles.countText}>
-          {ingredientsList.length} ingredient{ingredientsList.length !== 1 ? 's' : ''}
-        </Text>
-      </View>
+      <Text style={styles.ingredientsText}>
+        {displayIngredients.join(', ')}
+        {hasMore && !showAll && ` and ${ingredientsList.length - displayCount} more`}
+      </Text>
 
-      {/* Ingredients List */}
-      <View style={styles.ingredientsCard}>
-        <View style={styles.ingredientsList}>
-          {displayIngredients.map((ingredient, index) => (
-            <IngredientItem
-              key={index}
-              ingredient={ingredient}
-              index={index}
-            />
-          ))}
-        </View>
-
-        {hasMore && (
-          <TouchableOpacity
-            style={styles.showMoreButton}
-            onPress={() => setShowAll(!showAll)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.showMoreText}>
-              {showAll ? 'Show Less' : `Show ${ingredientsList.length - displayCount} More`}
-            </Text>
-            <Ionicons
-              name={showAll ? 'chevron-up' : 'chevron-down'}
-              size={16}
-              color={theme.colors.primary}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Educational Note */}
-      <View style={styles.noteContainer}>
-        <Text style={styles.noteText}>
-          Listed by weight, highest to lowest.
-        </Text>
-      </View>
+      {hasMore && (
+        <TouchableOpacity
+          style={styles.expandButton}
+          onPress={() => setShowAll(!showAll)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.expandText}>
+            {showAll ? 'Show less' : 'Show all ingredients'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.lg,
+    // Clean container with no extra spacing
   },
 
-  // Ingredient Count Header
-  countHeader: {
-    marginBottom: theme.spacing.sm,
-  },
-
-  countText: {
-    ...theme.typography.headline,
+  ingredientsText: {
+    fontSize: 16,
+    lineHeight: 24,
     color: theme.colors.text.primary,
+    fontWeight: '400',
   },
 
-  // Ingredients List
-  ingredientsCard: {
-    paddingTop: theme.spacing.sm,
+  expandButton: {
+    marginTop: theme.spacing.sm,
+    alignSelf: 'flex-start',
   },
 
-  ingredientsList: {
-    gap: theme.spacing.md,
-  },
-
-  ingredientItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
-  },
-
-  bullet: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.text.secondary,
-    marginRight: theme.spacing.sm,
-    marginTop: 8,
-    flexShrink: 0,
+  expandText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    fontWeight: '500',
   },
 
   ingredientText: {
-    ...theme.typography.subtext,
+    fontSize: 16,
+    lineHeight: 24,
     color: theme.colors.text.primary,
-    lineHeight: 20,
-    flex: 1,
-  },
-
-  showMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    gap: theme.spacing.xs,
-  },
-
-  showMoreText: {
-    ...theme.typography.subtextMedium,
-    color: theme.colors.primary,
-  },
-
-  // Fallback Text Display
-  fullText: {
-    ...theme.typography.subtext,
-    color: theme.colors.text.primary,
-    lineHeight: 22,
-  },
-
-
-  // Educational Note
-  noteContainer: {
-    paddingHorizontal: theme.spacing.xs,
-  },
-
-  noteText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.tertiary,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontWeight: '400',
   },
 });

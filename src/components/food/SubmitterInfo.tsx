@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
 import { PublicProfile, SubmissionStats, FoodLink } from '../../types';
@@ -21,6 +22,7 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
   originalSubmitterId,
   foodLinkId,
 }) => {
+  const navigation = useNavigation();
   const [submitterProfile, setSubmitterProfile] = useState<PublicProfile | null>(null);
   const [submissionStats, setSubmissionStats] = useState<SubmissionStats | null>(null);
   const [foodLink, setFoodLink] = useState<FoodLink | null>(null);
@@ -36,17 +38,26 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
   }, [originalSubmitterId, foodLinkId]);
 
   const fetchSubmitterData = async () => {
+    console.log('SubmitterInfo - originalSubmitterId:', originalSubmitterId, 'foodLinkId:', foodLinkId);
     try {
       // Fetch profile data if we have a submitter ID
       if (originalSubmitterId) {
         const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, avatar_url, created_at')
-          .eq('id', originalSubmitterId)
-          .maybeSingle();
+          .rpc('get_public_profile', { user_id: originalSubmitterId });
 
-        if (!profileError && profileData) {
-          setSubmitterProfile(profileData);
+        if (profileError) {
+          console.error('Profile error:', profileError);
+        }
+
+        if (profileData && profileData.length > 0) {
+          const profile = profileData[0]; // RPC returns an array, get first element
+          console.log('Profile data found from RPC:', profile);
+          console.log('Full name:', profile.full_name);
+          console.log('Username:', profile.username);
+          setSubmitterProfile(profile);
+        } else {
+          console.log('No profile data returned from RPC for user:', originalSubmitterId);
+          setSubmitterProfile(null);
         }
 
         // Fetch submission statistics - simplified approach
@@ -97,18 +108,29 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
   };
 
   const getDisplayName = (): string => {
+    console.log('getDisplayName called with submitterProfile:', submitterProfile);
+
     if (!submitterProfile) {
+      console.log('No submitter profile found, showing Community Member');
       return 'Community Member';
     }
 
-    if (submitterProfile.full_name) {
+    // Check if we have actual name data with detailed debugging
+    console.log('Checking full_name:', typeof submitterProfile.full_name, '"' + submitterProfile.full_name + '"');
+    console.log('Checking username:', typeof submitterProfile.username, '"' + submitterProfile.username + '"');
+
+    if (submitterProfile.full_name && typeof submitterProfile.full_name === 'string' && submitterProfile.full_name.trim() !== '') {
+      console.log('✅ Using full_name:', submitterProfile.full_name);
       return submitterProfile.full_name;
     }
 
-    if (submitterProfile.username) {
+    if (submitterProfile.username && typeof submitterProfile.username === 'string' && submitterProfile.username.trim() !== '') {
+      console.log('✅ Using username:', submitterProfile.username);
       return submitterProfile.username;
     }
 
+    // If the RPC returned a profile but it's empty, something's wrong
+    console.log('RPC returned profile but no name data:', submitterProfile);
     return 'Community Member';
   };
 
@@ -160,19 +182,21 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
 
   const displayName = getDisplayName();
   const contributionCount = submissionStats?.totalContributions || 0;
-  const rank = getRank(contributionCount);
+
+  const handlePress = () => {
+    if (originalSubmitterId) {
+      navigation.navigate('UserProfile' as never, { userId: originalSubmitterId } as never);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      {/* Social Header */}
-      <View style={styles.socialHeader}>
-        <Ionicons name="heart" size={16} color={theme.colors.green[600]} />
-        <Text style={styles.socialText}>
-          Community member {foodLink ? 'shared' : 'added'} this food
-        </Text>
-      </View>
-
-      {/* User Profile Row - matching review pattern */}
+    <TouchableOpacity
+      style={styles.container}
+      onPress={handlePress}
+      activeOpacity={0.7}
+      disabled={!originalSubmitterId}
+    >
+      {/* User Profile Row - simplified */}
       <View style={styles.userInfo}>
         <View style={styles.avatarContainer}>
           {submitterProfile?.avatar_url ? (
@@ -188,50 +212,21 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
         </View>
 
         <View style={styles.userDetails}>
-          <View style={styles.nameRow}>
-            <Text style={styles.username}>{displayName}</Text>
-            {foodLink && (
-              <View style={styles.sourceIndicator}>
-                <Ionicons name="link" size={12} color={theme.colors.green[600]} />
-              </View>
-            )}
-          </View>
-
-          <View style={styles.contributionInfo}>
-            <Text style={styles.contributionText}>
-              {contributionCount} contribution{contributionCount !== 1 ? 's' : ''} • {rank.title}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.appreciationBadge}>
-          <Ionicons name="star" size={14} color={theme.colors.warning} />
+          <Text style={styles.username}>{displayName}</Text>
+          <Text style={styles.contributionText}>
+            {contributionCount} contribution{contributionCount !== 1 ? 's' : ''}
+          </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: theme.spacing.md,
+    // Removed vertical padding for tighter spacing
   },
 
-  // Social Header
-  socialHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.md,
-  },
-
-  socialText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    fontWeight: '500',
-  },
-
-  // User Profile Row - matching review pattern exactly
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -260,40 +255,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
-  },
-
   username: {
     fontSize: theme.typography.fontSize.md,
     fontWeight: '600',
     color: theme.colors.text.primary,
-  },
-
-  sourceIndicator: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: theme.colors.green[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  contributionInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 2,
   },
 
   contributionText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-  },
-
-  appreciationBadge: {
-    marginLeft: theme.spacing.sm,
   },
 
   loadingText: {

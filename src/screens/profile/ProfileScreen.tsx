@@ -10,6 +10,7 @@ import {
   ScrollView,
   FlatList,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,13 +22,37 @@ import { GridFoodCard } from '../../components/common/GridFoodCard';
 import { supabase } from '../../services/supabase/config';
 import { useUser } from '../../hooks/useUser';
 import { useFavorites } from '../../hooks/useFavorites';
+import { useNavigation } from '@react-navigation/native';
 import { Food } from '../../types';
 
 const { width } = Dimensions.get('window');
 
-export const ProfileScreen: React.FC = () => {
-  const { user, profile, loading, error, updateProfile } = useUser();
+interface ProfileScreenProps {
+  route?: {
+    params?: {
+      userId?: string;
+    };
+  };
+}
+
+export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
+  const targetUserId = route?.params?.userId;
+  const navigation = useNavigation();
+  const { user, profile: currentUserProfile, loading: currentUserLoading, error: currentUserError, updateProfile } = useUser();
   const { favoriteIds, isFavorite, toggleFavorite } = useFavorites();
+
+  // Determine if viewing own profile or someone else's
+  const isOwnProfile = !targetUserId || targetUserId === user?.id;
+
+  // Check if we need to show header (when navigated via UserProfile route, not Profile tab)
+  const showHeader = route?.name === 'UserProfile';
+
+  // State for profile data (either current user or target user)
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Edit mode states (only for own profile)
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
@@ -37,35 +62,101 @@ export const ProfileScreen: React.FC = () => {
     avatar_url: '',
   });
   const [saving, setSaving] = useState(false);
+
+  // Common profile data states
   const [favoriteFoods, setFavoriteFoods] = useState<Food[]>([]);
   const [userStats, setUserStats] = useState({
     totalFavorites: 0,
     totalReviews: 0,
+    totalContributions: 0,
     joinDate: '',
   });
   const [loadingFavorites, setLoadingFavorites] = useState(false);
 
-  React.useEffect(() => {
-    if (profile) {
-      setFormData({
-        full_name: profile.full_name || '',
-        username: profile.username || '',
-        instagram: profile.instagram || '',
-        bio: profile.bio || '',
-        avatar_url: profile.avatar_url || '',
-      });
-    }
-  }, [profile]);
-
-  // Load favorite foods when user data is available
+  // Load profile data based on whether it's own profile or target user
   useEffect(() => {
-    if (user && favoriteIds && favoriteIds.length > 0) {
-      loadFavoriteFoods();
+    const loadProfile = async () => {
+      console.log('ProfileScreen loading profile for:', { targetUserId, isOwnProfile });
+      setLoading(true);
+      setError(null);
+
+      try {
+        if (isOwnProfile) {
+          // Use current user's profile data
+          if (currentUserProfile) {
+            console.log('Using current user profile:', currentUserProfile);
+            setProfile(currentUserProfile);
+            setFormData({
+              full_name: currentUserProfile.full_name || '',
+              username: currentUserProfile.username || '',
+              instagram: currentUserProfile.instagram || '',
+              bio: currentUserProfile.bio || '',
+              avatar_url: currentUserProfile.avatar_url || '',
+            });
+          } else {
+            console.log('No current user profile available');
+            setError('Profile not available');
+          }
+        } else {
+          // Fetch target user's profile
+          console.log('Fetching profile for user ID:', targetUserId);
+          const { data: profileData, error: profileError } = await supabase
+            .rpc('get_public_profile', { user_id: targetUserId });
+
+          console.log('Profile fetch result:', { profileData, profileError });
+
+          if (profileError) {
+            console.error('Profile fetch error:', profileError);
+            setError('Failed to load profile');
+            return;
+          }
+
+          if (profileData && profileData.length > 0) {
+            const profile = profileData[0]; // RPC returns an array, get first element
+            setProfile(profile);
+          } else {
+            // User exists but no profile created yet - create a minimal profile object
+            console.log('No profile found for user, creating minimal profile');
+            setProfile({
+              id: targetUserId,
+              full_name: null,
+              username: null,
+              bio: null,
+              avatar_url: null,
+              instagram: null,
+              created_at: new Date().toISOString(),
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Profile loading error:', err);
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Always load profile if we have the necessary data
+    if (isOwnProfile || targetUserId) {
+      loadProfile();
+    } else {
+      setLoading(false);
+      setError('No user specified');
     }
-    if (user) {
-      loadUserStats();
+  }, [isOwnProfile, currentUserProfile, targetUserId]);
+
+  // Load favorite foods and stats when profile is loaded
+  useEffect(() => {
+    if (profile) {
+      const userId = isOwnProfile ? user?.id : targetUserId;
+      if (userId) {
+        loadUserStats(userId);
+        if (isOwnProfile && favoriteIds && favoriteIds.length > 0) {
+          loadFavoriteFoods();
+        }
+      }
     }
-  }, [user, favoriteIds]);
+  }, [profile, favoriteIds, isOwnProfile]);
 
   const loadFavoriteFoods = async () => {
     if (!favoriteIds || favoriteIds.length === 0) return;
@@ -87,25 +178,38 @@ export const ProfileScreen: React.FC = () => {
     }
   };
 
-  const loadUserStats = async () => {
-    if (!user) return;
-
+  const loadUserStats = async (userId: string) => {
     try {
-      // Get total reviews count
-      const { count: reviewsCount } = await supabase
+      // Get reviews with content (not just count)
+      const { data: reviews } = await supabase
         .from('ratings')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id);
+        .select('*, foods(id, name)')
+        .eq('user_id', userId)
+        .not('review', 'is', null);
 
-      // Get join date from user metadata
-      const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
+      // Get food contributions count using the proper query from your documentation
+      const { data: foodContributions } = await supabase
+        .from('foods')
+        .select('id')
+        .or(`user_id.eq.${userId},original_submitter_id.eq.${userId}`)
+        .eq('status', 'approved');
+
+      // Get favorites count (only for own profile)
+      let favoritesCount = 0;
+      if (isOwnProfile) {
+        favoritesCount = favoriteIds ? favoriteIds.length : 0;
+      }
+
+      // Get join date from profile creation
+      const joinDate = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
         month: 'long',
         year: 'numeric'
       }) : '';
 
       setUserStats({
-        totalFavorites: favoriteIds ? favoriteIds.length : 0,
-        totalReviews: reviewsCount || 0,
+        totalFavorites: favoritesCount,
+        totalReviews: reviews?.length || 0,
+        totalContributions: foodContributions?.length || 0,
         joinDate,
       });
     } catch (error) {
@@ -216,17 +320,36 @@ export const ProfileScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
+    <SafeAreaView style={[styles.safeArea, showHeader && styles.safeAreaWithHeader]}>
+      {/* Standard Header */}
+      {showHeader && (
         <View style={styles.header}>
-          <View style={styles.profileSection}>
+          <View style={styles.headerTopRow}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {isOwnProfile ? 'My Profile' : 'Profile'}
+            </Text>
+            <View style={styles.headerRight} />
+          </View>
+        </View>
+      )}
+
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Modern Profile Header */}
+        <View style={styles.modernHeader}>
+          {/* Profile Picture Section */}
+          <View style={styles.profilePictureSection}>
             <View style={styles.profilePictureContainer}>
               <ProfilePicture
                 imageUrl={editing && formData.avatar_url ? formData.avatar_url : profile?.avatar_url}
                 fullName={profile?.full_name}
                 email={user?.email}
-                size="large"
+                size="xlarge"
                 style={styles.profilePicture}
               />
               {editing && (
@@ -237,65 +360,68 @@ export const ProfileScreen: React.FC = () => {
                 >
                   <Ionicons
                     name="camera-outline"
-                    size={16}
+                    size={20}
                     color={theme.colors.background}
                   />
                 </TouchableOpacity>
               )}
             </View>
 
-            <View style={styles.profileInfo}>
-              <Text style={styles.userName}>
-                {profile?.full_name || 'Food Explorer'}
-              </Text>
-              {profile?.username && (
-                <Text style={styles.userHandle}>@{profile.username}</Text>
-              )}
-              {userStats.joinDate && (
-                <Text style={styles.joinDate}>
-                  <Ionicons name="calendar-outline" size={12} color={theme.colors.text.tertiary} />
-                  {' '}Joined {userStats.joinDate}
-                </Text>
-              )}
-            </View>
-
-            {!editing && (
+            {!editing && isOwnProfile && (
               <TouchableOpacity
-                style={styles.editButton}
+                style={styles.editProfileButton}
                 onPress={() => setEditing(true)}
                 activeOpacity={0.7}
               >
-                <Ionicons
-                  name="create-outline"
-                  size={18}
-                  color={theme.colors.text.secondary}
-                />
+                <Ionicons name="create-outline" size={16} color={theme.colors.primary} />
+                <Text style={styles.editProfileText}>Edit Profile</Text>
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Bio Section */}
-          {profile?.bio && !editing && (
-            <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>{profile.bio}</Text>
-            </View>
-          )}
+          {/* User Info Section */}
+          <View style={styles.userInfoSection}>
+            <Text style={styles.displayName}>
+              {(profile?.full_name && profile.full_name.trim() !== '') ? profile.full_name :
+               (profile?.username && profile.username.trim() !== '') ? profile.username :
+               'User Profile'}
+            </Text>
 
-          {/* Social Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{userStats.totalFavorites}</Text>
-              <Text style={styles.statLabel}>Favorites</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{userStats.totalReviews}</Text>
-              <Text style={styles.statLabel}>Reviews</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{Math.floor(Math.random() * 50) + 10}</Text>
-              <Text style={styles.statLabel}>Discoveries</Text>
+            {profile?.username && profile.full_name && (
+              <Text style={styles.username}>@{profile.username}</Text>
+            )}
+
+            {profile?.bio && !editing && (
+              <Text style={styles.bio}>{profile.bio}</Text>
+            )}
+
+            {/* Meta Info */}
+            <View style={styles.metaInfo}>
+              {userStats.joinDate && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="calendar-outline" size={16} color={theme.colors.text.secondary} />
+                  <Text style={styles.metaText}>Joined {userStats.joinDate}</Text>
+                </View>
+              )}
+
+              {profile?.instagram && (
+                <TouchableOpacity
+                  style={styles.metaItem}
+                  onPress={async () => {
+                    const url = `https://instagram.com/${profile.instagram}`;
+                    const supported = await Linking.canOpenURL(url);
+                    if (supported) {
+                      await Linking.openURL(url);
+                    } else {
+                      Alert.alert('Error', 'Unable to open Instagram profile');
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-instagram" size={16} color={theme.colors.text.secondary} />
+                  <Text style={[styles.metaText, styles.instagramLink]}>@{profile.instagram}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
@@ -356,10 +482,81 @@ export const ProfileScreen: React.FC = () => {
             </View>
           </View>
         ) : (
-          /* Display Mode - Social Content */
+          /* Display Mode - Modern Stats & Content */
           <View style={styles.contentContainer}>
-            {/* Favorite Foods Section */}
-            {favoriteFoods.length > 0 && (
+            {/* Stats Sections */}
+            <View style={styles.sectionsContainer}>
+              {isOwnProfile && (
+                <TouchableOpacity style={styles.sectionCard} activeOpacity={0.7}>
+                  <View style={styles.sectionContent}>
+                    <View style={styles.sectionTextContainer}>
+                      <Text style={styles.sectionTitle}>Favorites</Text>
+                      <Text style={styles.sectionCount}>{userStats.totalFavorites} items</Text>
+                    </View>
+                    <View style={styles.sectionAction}>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color={theme.colors.text.secondary}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={styles.sectionCard}
+                onPress={() => {
+                  navigation.navigate('UserReviews' as never, {
+                    userId: isOwnProfile ? user?.id : targetUserId,
+                    userName: profile?.full_name || profile?.username || 'User'
+                  } as never);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.sectionContent}>
+                  <View style={styles.sectionTextContainer}>
+                    <Text style={styles.sectionTitle}>Reviews</Text>
+                    <Text style={styles.sectionCount}>{userStats.totalReviews} reviews</Text>
+                  </View>
+                  <View style={styles.sectionAction}>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={theme.colors.text.secondary}
+                    />
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sectionCard}
+                onPress={() => {
+                  navigation.navigate('UserContributions' as never, {
+                    userId: isOwnProfile ? user?.id : targetUserId,
+                    userName: profile?.full_name || profile?.username || 'User'
+                  } as never);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.sectionContent}>
+                  <View style={styles.sectionTextContainer}>
+                    <Text style={styles.sectionTitle}>Contributions</Text>
+                    <Text style={styles.sectionCount}>{userStats.totalContributions} foods</Text>
+                  </View>
+                  <View style={styles.sectionAction}>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={theme.colors.text.secondary}
+                    />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Favorite Foods Section - Only for own profile */}
+            {isOwnProfile && favoriteFoods.length > 0 && (
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <Ionicons name="heart" size={20} color={theme.colors.error} />
@@ -393,57 +590,16 @@ export const ProfileScreen: React.FC = () => {
               </View>
             )}
 
-            {/* Activity/Achievements Card */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="trophy" size={20} color={theme.colors.primary} />
-                <Text style={styles.sectionTitle}>Food Journey</Text>
-              </View>
 
-              <View style={styles.achievementsList}>
-                <View style={styles.achievementItem}>
-                  <View style={styles.achievementIcon}>
-                    <Ionicons name="star" size={16} color={theme.colors.primary} />
-                  </View>
-                  <View style={styles.achievementContent}>
-                    <Text style={styles.achievementTitle}>Food Explorer</Text>
-                    <Text style={styles.achievementDesc}>Discovered healthy food choices</Text>
-                  </View>
-                </View>
-
-                {userStats.totalReviews > 0 && (
-                  <View style={styles.achievementItem}>
-                    <View style={styles.achievementIcon}>
-                      <Ionicons name="chatbubble" size={16} color={theme.colors.green[600]} />
-                    </View>
-                    <View style={styles.achievementContent}>
-                      <Text style={styles.achievementTitle}>Community Contributor</Text>
-                      <Text style={styles.achievementDesc}>Shared {userStats.totalReviews} helpful review{userStats.totalReviews !== 1 ? 's' : ''}</Text>
-                    </View>
-                  </View>
-                )}
-
-                {userStats.totalFavorites >= 10 && (
-                  <View style={styles.achievementItem}>
-                    <View style={styles.achievementIcon}>
-                      <Ionicons name="heart" size={16} color={theme.colors.error} />
-                    </View>
-                    <View style={styles.achievementContent}>
-                      <Text style={styles.achievementTitle}>Food Enthusiast</Text>
-                      <Text style={styles.achievementDesc}>Curated a collection of favorite foods</Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-            </View>
-
-            {/* Contact Info Card */}
+            {/* Contact Info Card - Only for own profile or if public info */}
             <View style={styles.sectionCard}>
               <View style={styles.contactInfo}>
-                <View style={styles.contactItem}>
-                  <Ionicons name="mail-outline" size={18} color={theme.colors.text.secondary} />
-                  <Text style={styles.contactText}>{user?.email}</Text>
-                </View>
+                {isOwnProfile && (
+                  <View style={styles.contactItem}>
+                    <Ionicons name="mail-outline" size={18} color={theme.colors.text.secondary} />
+                    <Text style={styles.contactText}>{user?.email}</Text>
+                  </View>
+                )}
 
                 {profile?.instagram && (
                   <View style={styles.contactItem}>
@@ -456,19 +612,21 @@ export const ProfileScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Sign Out & App Info */}
-        <View style={styles.footerContainer}>
-          <Button
-            title="Sign Out"
-            onPress={handleSignOut}
-            variant="tertiary"
-          />
+        {/* Sign Out & App Info - Only for own profile */}
+        {isOwnProfile && (
+          <View style={styles.footerContainer}>
+            <Button
+              title="Sign Out"
+              onPress={handleSignOut}
+              variant="tertiary"
+            />
 
-          <View style={styles.appInfo}>
-            <Text style={styles.appInfoText}>The Naked Pantry v1.0</Text>
-            <Text style={styles.appInfoText}>Made with care for healthy eating</Text>
+            <View style={styles.appInfo}>
+              <Text style={styles.appInfoText}>The Naked Pantry v1.0</Text>
+              <Text style={styles.appInfoText}>Made with care for healthy eating</Text>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -477,6 +635,10 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: theme.colors.neutral.BG,
+  },
+
+  safeAreaWithHeader: {
     backgroundColor: '#FFFFFF',
   },
 
@@ -485,17 +647,125 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral.BG,
   },
 
+  // Standard Header
   header: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  backButton: {
+    padding: 4,
+    marginRight: theme.spacing.sm,
+  },
+
+  headerTitle: {
+    ...theme.typography.heading,
+    color: theme.colors.green[950],
+    flex: 1,
+    textAlign: 'center',
+  },
+
+  headerRight: {
+    width: 32,
+    alignItems: 'center',
+  },
+
+  // Modern Profile Header
+  modernHeader: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xl,
     paddingBottom: theme.spacing.lg,
   },
 
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  profilePictureSection: {
+    alignItems: 'center',
     marginBottom: theme.spacing.lg,
+  },
+
+  userInfoSection: {
+    alignItems: 'center',
+  },
+
+  displayName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+    textAlign: 'center',
+  },
+
+  username: {
+    fontSize: 16,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.sm,
+    textAlign: 'center',
+  },
+
+  bio: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+  },
+
+  metaInfo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: theme.spacing.md,
+  },
+
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+
+  metaText: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+  },
+
+  instagramLink: {
+    color: theme.colors.primary,
+    fontWeight: '500',
+  },
+
+  editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary + '10',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.xs,
+  },
+
+  editProfileText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
   
   profilePictureContainer: {
@@ -612,20 +882,53 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.md,
   },
 
+  // Sections Container
+  sectionsContainer: {
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.xs,
+  },
+
   sectionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    shadowColor: '#000000',
+    borderRadius: 8,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
+
+  sectionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+  },
+
+  sectionTextContainer: {
+    flex: 1,
+  },
+
+  sectionTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: '500',
+    color: theme.colors.text.primary,
+    marginBottom: 2,
+  },
+
+  sectionCount: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+
+  sectionAction: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+
 
   sectionHeader: {
     flexDirection: 'row',
@@ -668,42 +971,6 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.xs,
   },
 
-  achievementsList: {
-    gap: theme.spacing.sm,
-  },
-
-  achievementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-  },
-
-  achievementIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(68, 219, 109, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-
-  achievementContent: {
-    flex: 1,
-  },
-
-  achievementTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs / 2,
-  },
-
-  achievementDesc: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 18,
-  },
 
   contactInfo: {
     gap: theme.spacing.md,

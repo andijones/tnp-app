@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { Rating } from '../../types';
 import { SectionHeader } from '../common/SectionHeader';
@@ -51,6 +52,7 @@ interface RatingItemProps {
 }
 
 const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
+  const navigation = useNavigation();
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -60,10 +62,21 @@ const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
     });
   };
 
+  const handleUserPress = () => {
+    if (rating.user_id) {
+      navigation.navigate('UserProfile' as never, { userId: rating.user_id } as never);
+    }
+  };
+
   return (
     <View style={styles.ratingItem}>
       <View style={styles.ratingHeader}>
-        <View style={styles.userInfo}>
+        <TouchableOpacity
+          style={styles.userInfo}
+          onPress={handleUserPress}
+          activeOpacity={0.7}
+          disabled={!rating.user_id}
+        >
           {rating.avatar_url ? (
             <Image source={{ uri: rating.avatar_url }} style={styles.avatar} />
           ) : (
@@ -79,7 +92,7 @@ const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
               {formatDate(rating.created_at)}
             </Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <StarRating rating={rating.ratingValue || 0} size={14} />
       </View>
       

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { NutritionInfo } from '../../types';
 
@@ -12,341 +11,126 @@ interface NutrientRowProps {
   label: string;
   value?: number;
   unit: string;
-  healthIndicator?: 'good' | 'moderate' | 'high' | 'neutral';
   isCalories?: boolean;
 }
 
-const NutrientRow: React.FC<NutrientRowProps> = (props) => {
-  const { 
-    label, 
-    value, 
-    unit, 
-    healthIndicator = 'neutral',
-    isCalories = false 
-  } = props;
-  
-  // Early return with null if no value
+const NutrientRow: React.FC<NutrientRowProps> = ({ label, value, unit, isCalories = false }) => {
   if (value === undefined || value === null) return null;
-  
-  // Ensure all string values are properly defined
-  const safeLabel = String(label || '');
-  const safeUnit = String(unit || '');
-  const safeValue = value;
-
-  const getIndicatorColor = () => {
-    switch (healthIndicator) {
-      case 'good': return '#34C759'; // iOS green
-      case 'moderate': return '#FF9F0A'; // iOS orange
-      case 'high': return '#FF3B30'; // iOS red
-      default: return '#8E8E93'; // iOS gray
-    }
-  };
-
-  const getIndicatorIcon = () => {
-    switch (healthIndicator) {
-      case 'good': return 'checkmark-circle';
-      case 'moderate': return 'warning';
-      case 'high': return 'alert-circle';
-      default: return 'information-circle';
-    }
-  };
 
   return (
-    <View style={[styles.nutrientRow, isCalories && styles.caloriesRow]}>
+    <View style={styles.nutrientRow}>
       <Text style={[styles.nutrientLabel, isCalories && styles.caloriesLabel]}>
-        {safeLabel}
+        {label}
       </Text>
-      
-      <View style={styles.nutrientValueContainer}>
-        <Text style={[styles.nutrientValue, isCalories && styles.caloriesValue]}>
-          {safeValue}{safeUnit}
-        </Text>
-        {healthIndicator !== 'neutral' && (
-          <View style={[styles.indicatorContainer, { backgroundColor: getIndicatorColor() }]}>
-            <Ionicons 
-              name={getIndicatorIcon()} 
-              size={12} 
-              color="white" 
-            />
-          </View>
-        )}
-      </View>
+      <Text style={[styles.nutrientValue, isCalories && styles.caloriesValue]}>
+        {value}{unit}
+      </Text>
     </View>
   );
 };
 
-const getHealthIndicator = (nutrient: string, value?: number): 'good' | 'moderate' | 'high' | 'neutral' => {
-  if (value === undefined) return 'neutral';
-  
-  switch (nutrient) {
-    case 'protein':
-      return value >= 10 ? 'good' : 'neutral';
-    case 'fiber':
-      return value >= 3 ? 'good' : 'neutral';
-    case 'sugar':
-      return value >= 15 ? 'high' : value >= 5 ? 'moderate' : 'good';
-    case 'sodium':
-      return value >= 600 ? 'high' : value >= 300 ? 'moderate' : 'good';
-    case 'saturatedFat':
-      return value >= 5 ? 'high' : value >= 2 ? 'moderate' : 'good';
-    case 'calories':
-      return 'neutral'; // Calories are context-dependent
-    default:
-      return 'neutral';
-  }
-};
-
-const getIndicatorColor = (indicator: 'good' | 'moderate' | 'high' | 'neutral'): string => {
-  switch (indicator) {
-    case 'good': return theme.colors.success;
-    case 'moderate': return theme.colors.warning;
-    case 'high': return theme.colors.error;
-    default: return theme.colors.text.tertiary;
-  }
-};
-
-const calculateDailyValue = (nutrient: string, value?: number): number | undefined => {
-  if (value === undefined) return undefined;
-  
-  const dailyValues: { [key: string]: number } = {
-    fat: 65,
-    saturatedFat: 20,
-    sodium: 2300,
-    carbs: 300,
-    fiber: 25,
-    sugar: 50,
-    protein: 50,
-  };
-  
-  const dv = dailyValues[nutrient];
-  return dv ? Math.round((value / dv) * 100) : undefined;
-};
 
 export const ImprovedNutritionPanel: React.FC<ImprovedNutritionPanelProps> = ({ nutrition }) => {
-  const hasNutritionData = nutrition && Object.values(nutrition).some(value => value !== undefined);
-
-  if (!hasNutritionData) {
+  if (!nutrition) {
     return (
-      <View style={styles.container}>
-        <View style={styles.noDataContainer}>
-          <Ionicons name="nutrition-outline" size={48} color={theme.colors.text.tertiary} />
-          <Text style={styles.noDataTitle}>No Nutrition Data</Text>
-          <Text style={styles.noDataSubtitle}>
-            Nutrition information is not available for this product
-          </Text>
-        </View>
-      </View>
+      <Text style={styles.noDataText}>
+        Nutrition information not available
+      </Text>
     );
   }
 
-  // Get key nutrients that are available
-  const keyNutrients = [
-    { key: 'calories', label: 'Calories', value: nutrition.calories, unit: '', isCalories: true },
-    { key: 'protein', label: 'Protein', value: nutrition.protein, unit: 'g' },
-    { key: 'fiber', label: 'Fiber', value: nutrition.fiber, unit: 'g' },
-    { key: 'sugar', label: 'Sugar', value: nutrition.sugar, unit: 'g' },
-    { key: 'sodium', label: 'Sodium', value: nutrition.sodium, unit: 'mg' },
-  ].filter(nutrient => nutrient.value !== undefined);
-
-  const hasBasicInfo = keyNutrients.length > 0;
-
   return (
     <View style={styles.container}>
-      {/* Detailed Nutrition Facts */}
-      <View style={styles.nutritionCard}>
-        {nutrition.servingSize && (
-          <View style={styles.servingSizeContainer}>
-            <Text style={styles.servingSizeLabel}>Per serving</Text>
-            <Text style={styles.servingSizeValue}>{nutrition.servingSize}</Text>
-          </View>
-        )}
-        
-        {/* Calories - Always first and prominent */}
-        <NutrientRow
-          label="Calories"
-          value={nutrition.calories}
-          unit=""
-          isCalories={true}
-        />
-        
-        {/* Macronutrients */}
-        <NutrientRow
-          label="Total Fat"
-          value={nutrition.fat}
-          unit="g"
-          healthIndicator={getHealthIndicator('fat', nutrition.fat)}
-        />
-        
-        <NutrientRow
-          label="Sodium"
-          value={nutrition.sodium}
-          unit="mg"
-          healthIndicator={getHealthIndicator('sodium', nutrition.sodium)}
-        />
-        
-        <NutrientRow
-          label="Total Carbohydrate"
-          value={nutrition.carbs}
-          unit="g"
-          healthIndicator={getHealthIndicator('carbs', nutrition.carbs)}
-        />
-        
-        <NutrientRow
-          label="Dietary Fiber"
-          value={nutrition.fiber}
-          unit="g"
-          healthIndicator={getHealthIndicator('fiber', nutrition.fiber)}
-        />
-        
-        <NutrientRow
-          label="Total Sugars"
-          value={nutrition.sugar}
-          unit="g"
-          healthIndicator={getHealthIndicator('sugar', nutrition.sugar)}
-        />
-        
-        <NutrientRow
-          label="Protein"
-          value={nutrition.protein}
-          unit="g"
-          healthIndicator={getHealthIndicator('protein', nutrition.protein)}
-        />
-      </View>
+      <NutrientRow
+        label="Calories"
+        value={nutrition.calories}
+        unit=""
+        isCalories={true}
+      />
+
+      <NutrientRow
+        label="Total Fat"
+        value={nutrition.fat}
+        unit="g"
+      />
+
+      <NutrientRow
+        label="Sodium"
+        value={nutrition.sodium}
+        unit="mg"
+      />
+
+      <NutrientRow
+        label="Total Carbohydrate"
+        value={nutrition.carbs}
+        unit="g"
+      />
+
+      <NutrientRow
+        label="Dietary Fiber"
+        value={nutrition.fiber}
+        unit="g"
+      />
+
+      <NutrientRow
+        label="Total Sugars"
+        value={nutrition.sugar}
+        unit="g"
+      />
+
+      <NutrientRow
+        label="Protein"
+        value={nutrition.protein}
+        unit="g"
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.lg,
-  },
-
-
-  // Detailed Nutrition Card
-  nutritionCard: {
-    gap: theme.spacing.sm,
-  },
-
-  servingSizeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.background,
-    marginBottom: theme.spacing.xs,
-  },
-
-  servingSizeLabel: {
-    ...theme.typography.subtext,
-    color: theme.colors.text.secondary,
-  },
-
-  servingSizeValue: {
-    ...theme.typography.headline,
-    color: theme.colors.text.primary,
+    gap: theme.spacing.xs,
   },
 
   nutrientRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    minHeight: 48,
-  },
-
-  caloriesRow: {
-    paddingVertical: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    marginBottom: theme.spacing.sm,
-  },
-
-  nutrientInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 2,
   },
 
   nutrientLabel: {
-    ...theme.typography.subtext,
+    fontSize: 16,
+    lineHeight: 24,
     color: theme.colors.text.primary,
+    fontWeight: '400',
   },
 
   caloriesLabel: {
-    ...theme.typography.headline,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 24,
     color: theme.colors.text.primary,
-  },
-
-  dailyValueText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.tertiary,
-    marginLeft: theme.spacing.sm,
-  },
-
-  nutrientValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: theme.spacing.md,
+    fontWeight: '600',
   },
 
   nutrientValue: {
-    ...theme.typography.subtextMedium,
+    fontSize: 16,
+    lineHeight: 24,
     color: theme.colors.text.primary,
-    textAlign: 'right',
+    fontWeight: '500',
   },
 
   caloriesValue: {
-    ...theme.typography.headline,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 24,
     color: theme.colors.text.primary,
+    fontWeight: '600',
   },
 
-  indicatorContainer: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: theme.spacing.sm,
-  },
-
-  separator: {
-    height: 1,
-    backgroundColor: theme.colors.border,
-    marginHorizontal: theme.spacing.md,
-  },
-
-  footnoteContainer: {
-    paddingHorizontal: theme.spacing.xs,
-  },
-
-  footnoteText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.tertiary,
-    fontStyle: 'italic',
-    textAlign: 'center',
-  },
-
-  noDataContainer: {
-    padding: theme.spacing.xl,
-    alignItems: 'center',
-  },
-
-  noDataTitle: {
-    ...theme.typography.headline,
+  noDataText: {
+    fontSize: 16,
+    lineHeight: 24,
     color: theme.colors.text.secondary,
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
-  },
-
-  noDataSubtitle: {
-    ...theme.typography.subtext,
-    color: theme.colors.text.tertiary,
-    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

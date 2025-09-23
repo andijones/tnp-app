@@ -94,22 +94,57 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
       console.log('Raw ratings data:', ratingsData);
       console.log('Aisle data from food item:', aisleData);
+      console.log('Food data with submitter info:', {
+        id: foodData.id,
+        name: foodData.name,
+        original_submitter_id: foodData.original_submitter_id,
+        food_link_id: foodData.food_link_id
+      });
 
       // Fetch user profiles for ratings
       const ratings = [];
       if (ratingsData && ratingsData.length > 0) {
         for (const rating of ratingsData) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('username, avatar_url')
-            .eq('id', rating.user_id)
-            .single();
+          console.log('Processing rating for user_id:', rating.user_id);
+
+          const { data: profileData, error: profileError } = await supabase
+            .rpc('get_public_profile', { user_id: rating.user_id });
+
+          if (profileError) {
+            console.error('Error fetching profile for rating:', profileError);
+          }
+
+          console.log('Profile data for rating:', profileData);
+
+          // Use full_name first, then username, then fallback
+          let displayName = null;
+
+          if (profileData && profileData.length > 0) {
+            const profile = profileData[0]; // RPC returns an array, get first element
+            console.log('Rating user profile check - full_name:', typeof profile.full_name, '"' + profile.full_name + '"');
+            console.log('Rating user profile check - username:', typeof profile.username, '"' + profile.username + '"');
+
+            // Check for actual non-empty values
+            if (profile.full_name && typeof profile.full_name === 'string' && profile.full_name.trim() !== '') {
+              displayName = profile.full_name;
+              console.log('✅ Using full_name for rating:', displayName);
+            } else if (profile.username && typeof profile.username === 'string' && profile.username.trim() !== '') {
+              displayName = profile.username;
+              console.log('✅ Using username for rating:', displayName);
+            } else {
+              console.log('❌ RPC returned profile but no valid name data for rating user:', rating.user_id, profile);
+            }
+          }
+
+          if (!displayName) {
+            console.log('No display name found in profile for user:', rating.user_id);
+          }
 
           ratings.push({
             ...rating,
             ratingValue: parseInt(rating.rating) || 0,
-            username: profileData?.username,
-            avatar_url: profileData?.avatar_url
+            username: displayName || 'Anonymous User',
+            avatar_url: profileData && profileData.length > 0 ? profileData[0].avatar_url : null
           });
         }
       }
@@ -324,7 +359,7 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               )}
               
               {/* Store and Category */}
-              <View style={styles.metaRow}>
+              <View style={styles.metaColumn}>
                 <Text style={styles.storeText}>
                   {(food.supermarket || 'TESCO').toUpperCase()}
                 </Text>
@@ -407,23 +442,19 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
             {/* Ingredients Card */}
             <View style={styles.card}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="leaf" size={20} color={theme.colors.green[600]} />
+              <View style={styles.cleanSectionHeader}>
                 <Text style={styles.sectionTitle}>Ingredients</Text>
-                <Text style={styles.portionText}>Per 1/2 Pizza</Text>
               </View>
-              <ImprovedIngredientsList 
-                ingredients={food.ingredients} 
-                description={food.description} 
+              <ImprovedIngredientsList
+                ingredients={food.ingredients}
+                description={food.description}
               />
             </View>
 
             {/* Nutrition Card */}
             <View style={styles.card}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="leaf" size={20} color={theme.colors.green[600]} />
+              <View style={styles.cleanSectionHeader}>
                 <Text style={styles.sectionTitle}>Nutrition Facts</Text>
-                <Text style={styles.portionText}>Per 1/2 Pizza</Text>
               </View>
               <ImprovedNutritionPanel nutrition={food.nutrition} />
             </View>
@@ -542,7 +573,7 @@ const styles = StyleSheet.create({
   },
   
   scrollContent: {
-    paddingBottom: theme.spacing.xxl,
+    paddingBottom: theme.spacing.lg,
   },
   
   // Hero Image Container
@@ -591,9 +622,9 @@ const styles = StyleSheet.create({
   // Content Container
   contentContainer: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.xl,
-    gap: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
+    gap: theme.spacing.md,
   },
   
   // Card Styling from Figma
@@ -602,15 +633,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.neutral[200], // var(--Neutral-200, #E5E5E5)
     backgroundColor: theme.colors.neutral.white, // var(--Neutral-white, #FFF)
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
   },
   
-  // Meta Row - Store and Category
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+  // Meta Column - Store and Category stacked
+  metaColumn: {
+    flexDirection: 'column',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   
   storeText: {
@@ -620,6 +650,7 @@ const styles = StyleSheet.create({
   },
   
   categoryButton: {
+    alignSelf: 'flex-start',
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
@@ -648,7 +679,7 @@ const styles = StyleSheet.create({
   productTitle: {
     ...theme.typography.heading,
     color: theme.colors.green[950],
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     lineHeight: 28,
   },
   
@@ -657,7 +688,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   
   starsContainer: {
@@ -673,7 +704,7 @@ const styles = StyleSheet.create({
   // Action Buttons
   buttonContainer: {
     gap: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   
   // Section Header
@@ -681,7 +712,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+
+  // Clean Section Header (no icons)
+  cleanSectionHeader: {
+    marginBottom: theme.spacing.md,
   },
   
   sectionTitle: {
@@ -701,7 +737,7 @@ const styles = StyleSheet.create({
   
   // Reviews Section Styles
   reviewsHeader: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   
   reviewsTitleRow: {
@@ -749,7 +785,7 @@ const styles = StyleSheet.create({
   },
   
   reviewContent: {
-    gap: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   
   // Footer

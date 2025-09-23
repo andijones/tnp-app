@@ -15,6 +15,8 @@ import { FoodDetailScreen } from '../screens/food/FoodDetailScreen';
 import { IngredientScannerScreen } from '../screens/scanner/IngredientScannerScreen';
 import { SubmissionScreen } from '../screens/scanner/SubmissionScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { UserReviewsScreen } from '../screens/profile/UserReviewsScreen';
+import { UserContributionsScreen } from '../screens/profile/UserContributionsScreen';
 import { ProfilePicture } from '../components/common/ProfilePicture';
 import { useUser } from '../hooks/useUser';
 
@@ -149,9 +151,21 @@ export function RootNavigator() {
         name="AisleDetail" 
         component={AisleDetailView}
       />
-      <Stack.Screen 
-        name="FoodDetail" 
+      <Stack.Screen
+        name="FoodDetail"
         component={FoodDetailScreen}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={ProfileScreen}
+      />
+      <Stack.Screen
+        name="UserReviews"
+        component={UserReviewsScreen}
+      />
+      <Stack.Screen
+        name="UserContributions"
+        component={UserContributionsScreen}
       />
     </Stack.Navigator>
   );
