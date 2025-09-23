@@ -6,6 +6,7 @@ import * as Linking from 'expo-linking';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { AuthScreen } from './src/screens/auth/AuthScreen';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { SplashScreen } from './src/screens/SplashScreen';
 import { loadFonts } from './src/utils/fonts';
 
 const linking = {
@@ -20,11 +21,17 @@ const linking = {
 const AppContent: React.FC = () => {
   const { session, loading } = useAuth();
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
     const initApp = async () => {
       try {
-        await loadFonts();
+        // Force minimum splash duration
+        const [fontsResult] = await Promise.all([
+          loadFonts(),
+          new Promise(resolve => setTimeout(resolve, 1000)) // Minimum 1 second
+        ]);
         setFontsLoaded(true);
       } catch (error) {
         console.error('Error loading fonts:', error);
@@ -35,7 +42,24 @@ const AppContent: React.FC = () => {
     initApp();
   }, []);
 
-  if (loading || !fontsLoaded) return null;
+  // Wait for both auth and fonts to be ready
+  useEffect(() => {
+    if (!loading && fontsLoaded) {
+      setAppReady(true);
+    }
+  }, [loading, fontsLoaded]);
+
+  // Show splash screen until app is ready AND splash animation completes
+  if (showSplash || !appReady) {
+    return (
+      <SplashScreen
+        onAnimationComplete={() => {
+          console.log('Splash animation completed');
+          setShowSplash(false);
+        }}
+      />
+    );
+  }
 
   return (
     <NavigationContainer linking={linking}>

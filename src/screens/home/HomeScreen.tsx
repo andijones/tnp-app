@@ -163,10 +163,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             {!searchQuery && (
               <View style={styles.featureSection}>
                 <View style={styles.scannerCard}>
-                  {/* Background SVG */}
+                  {/* Background Pattern */}
                   <View style={styles.backgroundContainer}>
                     <Image
-                      source={require('../../../assets/bg-line.svg')}
+                      source={require('../../../assets/bg-line.png')}
                       style={styles.backgroundSvg}
                       resizeMode="cover"
                     />
