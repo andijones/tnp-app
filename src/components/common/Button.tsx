@@ -49,7 +49,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 11, // 8px Figma size × 1.33
+    borderRadius: 11, // 8px Figma size × 1.33 (will be overridden for secondary)
     alignItems: 'center',
     justifyContent: 'center',
     height: 56,
@@ -69,16 +69,19 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   secondary: {
-    backgroundColor: '#1F5932',
+    backgroundColor: '#1F5932', // var(--Green-950, #1F5932)
+    borderRadius: 8, // var(--Spacing-8, 8px) - exact Figma value
     borderWidth: 1,
-    borderColor: '#144925',
+    borderColor: '#144925', // border: 1px solid #144925
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.1, // 0 1px 4px 0 rgba(0, 0, 0, 0.10)
     shadowRadius: 4,
     elevation: 2,
-    // Note: React Native doesn't support gradient backgrounds or inset shadows natively
-    // You may need to use react-native-linear-gradient for the gradient effect
+    // Note: The Figma design includes a linear gradient and inset shadow:
+    // background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 50%, rgba(0, 0, 0, 0.10) 100%), var(--Green-950, #1F5932);
+    // box-shadow: 0 1px 0 0 rgba(38, 106, 60, 0.50) inset, 0 1px 4px 0 rgba(0, 0, 0, 0.10);
+    // These effects are not natively supported in React Native
   },
   tertiary: {
     backgroundColor: '#FAFAFA',
@@ -98,11 +101,11 @@ const styles = StyleSheet.create({
   
   // Text styles
   buttonText: {
-    fontSize: theme.typography.subtitle.fontSize,
-    fontFamily: theme.typography.subtitle.fontFamily,
-    fontWeight: theme.typography.subtitle.fontWeight,
-    lineHeight: theme.typography.subtitle.lineHeight,
-    letterSpacing: theme.typography.subtitle.letterSpacing,
+    fontFamily: 'Inter',
+    fontSize: 19, // 16px * 1.2 scale factor
+    fontWeight: '600',
+    lineHeight: Math.round(19 * 1.19712), // 119.712% of 19px = 22.75px rounded to 23
+    letterSpacing: -0.58, // -0.48px * 1.2 scale factor
     textAlign: 'center',
   },
   primaryText: {

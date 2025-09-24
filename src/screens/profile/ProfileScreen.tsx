@@ -8,7 +8,6 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
-  FlatList,
   Dimensions,
   Linking,
 } from 'react-native';
@@ -18,12 +17,10 @@ import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { ProfilePicture } from '../../components/common/ProfilePicture';
 import { Input } from '../../components/common/Input';
-import { GridFoodCard } from '../../components/common/GridFoodCard';
 import { supabase } from '../../services/supabase/config';
 import { useUser } from '../../hooks/useUser';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useNavigation } from '@react-navigation/native';
-import { Food } from '../../types';
 
 const { width } = Dimensions.get('window');
 
@@ -486,23 +483,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
           <View style={styles.contentContainer}>
             {/* Stats Sections */}
             <View style={styles.sectionsContainer}>
-              {isOwnProfile && (
-                <TouchableOpacity style={styles.sectionCard} activeOpacity={0.7}>
-                  <View style={styles.sectionContent}>
-                    <View style={styles.sectionTextContainer}>
-                      <Text style={styles.sectionTitle}>Favorites</Text>
-                      <Text style={styles.sectionCount}>{userStats.totalFavorites} items</Text>
-                    </View>
-                    <View style={styles.sectionAction}>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={16}
-                        color={theme.colors.text.secondary}
-                      />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              )}
 
               <TouchableOpacity
                 style={styles.sectionCard}
@@ -555,60 +535,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Favorite Foods Section - Only for own profile */}
-            {isOwnProfile && favoriteFoods.length > 0 && (
-              <View style={styles.sectionCard}>
-                <View style={styles.sectionHeader}>
-                  <Ionicons name="heart" size={20} color={theme.colors.error} />
-                  <Text style={styles.sectionTitle}>Favorite Foods</Text>
-                  <Text style={styles.sectionCount}>({userStats.totalFavorites})</Text>
-                </View>
-
-                {loadingFavorites ? (
-                  <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: theme.spacing.lg }} />
-                ) : (
-                  <View style={styles.favoritesGrid}>
-                    {favoriteFoods.slice(0, 4).map((food) => (
-                      <View key={food.id} style={styles.favoriteItem}>
-                        <GridFoodCard
-                          food={food}
-                          onPress={() => {/* Navigate to food detail */}}
-                          isFavorite={isFavorite(food.id)}
-                          onToggleFavorite={toggleFavorite}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                {userStats.totalFavorites > 4 && (
-                  <TouchableOpacity style={styles.viewAllButton}>
-                    <Text style={styles.viewAllText}>View all {userStats.totalFavorites} favorites</Text>
-                    <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
 
 
-            {/* Contact Info Card - Only for own profile or if public info */}
-            <View style={styles.sectionCard}>
-              <View style={styles.contactInfo}>
-                {isOwnProfile && (
-                  <View style={styles.contactItem}>
-                    <Ionicons name="mail-outline" size={18} color={theme.colors.text.secondary} />
-                    <Text style={styles.contactText}>{user?.email}</Text>
-                  </View>
-                )}
-
-                {profile?.instagram && (
-                  <View style={styles.contactItem}>
-                    <Ionicons name="logo-instagram" size={18} color={theme.colors.text.secondary} />
-                    <Text style={styles.contactText}>@{profile.instagram}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
           </View>
         )}
 
@@ -635,7 +563,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.neutral.BG,
+    backgroundColor: '#FFFFFF',
   },
 
   safeAreaWithHeader: {
@@ -936,13 +864,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
 
-  sectionCount: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.tertiary,
-    marginLeft: theme.spacing.xs,
-    fontWeight: '500',
-  },
-
   favoritesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1014,13 +935,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
 
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.lg,
-    letterSpacing: -0.3,
-  },
   
   savingIndicator: {
     flexDirection: 'row',

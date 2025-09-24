@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
 
@@ -21,14 +21,23 @@ export const Input: React.FC<InputProps> = ({
   error,
   multiline = false,
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
-        style={[styles.input, error && styles.inputError, multiline && styles.multilineInput]}
+        style={[
+          styles.input,
+          isFocused && styles.inputFocused,
+          error && styles.inputError,
+          multiline && styles.multilineInput
+        ]}
         placeholder={placeholder}
         value={value}
         onChangeText={onChangeText}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         secureTextEntry={secureTextEntry}
         multiline={multiline}
         placeholderTextColor={theme.colors.text.tertiary}
@@ -52,15 +61,16 @@ const styles = StyleSheet.create({
   },
   input: {
     // Figma styles converted to our scale
-    padding: 21, // 16px Figma × 1.33
+    paddingHorizontal: 21, // 16px Figma × 1.33
+    paddingVertical: 16, // Adjust vertical padding for better text clearance
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'stretch',
     borderRadius: 11, // 8px Figma × 1.33
-    borderWidth: 1,
-    borderColor: '#E5E5E5', // Neutral-200
+    borderWidth: 2, // Match focused state to prevent jumping
+    borderColor: '#FFFFFF', // White border for inactive state
     backgroundColor: '#FFFFFF',
-    
+
     // Text styling
     fontSize: theme.typography.body.fontSize,
     fontFamily: 'System', // System font supports light weights better
@@ -68,8 +78,9 @@ const styles = StyleSheet.create({
     lineHeight: theme.typography.body.lineHeight,
     letterSpacing: theme.typography.body.letterSpacing,
     color: theme.colors.text.primary,
-    minHeight: 64, // 48px Figma × 1.33
-    
+    height: 69, // 52px Figma × 1.33 scale factor
+    textAlignVertical: 'center', // Ensure proper vertical text alignment
+
     // Remove shadows for clean design
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
@@ -81,6 +92,12 @@ const styles = StyleSheet.create({
     minHeight: 107, // 80px Figma × 1.33
     textAlignVertical: 'top',
     paddingTop: 21, // Maintain consistent padding
+  },
+  inputFocused: {
+    borderRadius: 11, // 8px Figma × 1.33 (var(--Spacing-8, 8px))
+    borderWidth: 2, // 2px solid from Figma
+    borderColor: '#26733E', // var(--Green-900, #26733E)
+    backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
   },
   inputError: {
     borderColor: theme.colors.error,

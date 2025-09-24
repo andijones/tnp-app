@@ -224,7 +224,7 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
         icon="star-outline"
       />
       
-      <View style={styles.reviewForm}>
+      <View style={styles.reviewCard}>
         {/* Star Rating */}
         <View style={styles.ratingSection}>
           <Text style={styles.ratingLabel}>Your Rating</Text>
@@ -259,32 +259,25 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={styles.cancelButton}
+          <Button
+            title={isSubmitting ? "Submitting..." : "Submit Review"}
+            onPress={handleSubmitReview}
+            variant="primary"
+            disabled={rating === 0 || isSubmitting}
+            style={styles.submitButtonStyle}
+          />
+
+          <Button
+            title="Cancel"
             onPress={() => {
               setIsExpanded(false);
               setRating(0);
               setReviewText('');
             }}
+            variant="tertiary"
             disabled={isSubmitting}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[
-              styles.submitButton,
-              (rating === 0 || isSubmitting) && styles.submitButtonDisabled
-            ]}
-            onPress={handleSubmitReview}
-            disabled={rating === 0 || isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color={theme.colors.background} />
-            ) : (
-              <Text style={styles.submitButtonText}>Submit Review</Text>
-            )}
-          </TouchableOpacity>
+            style={styles.cancelButtonStyle}
+          />
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -301,14 +294,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: theme.colors.neutral[200],
   },
 
   existingReviewText: {
@@ -336,19 +323,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  reviewForm: {
+  reviewCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.lg,
     gap: theme.spacing.lg,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: theme.colors.neutral[200],
   },
 
   ratingSection: {
@@ -404,42 +385,14 @@ const styles = StyleSheet.create({
   },
 
   actionButtons: {
-    flexDirection: 'row',
     gap: theme.spacing.md,
-    justifyContent: 'flex-end',
   },
 
-  cancelButton: {
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  cancelButtonStyle: {
+    // No additional styling needed
   },
 
-  cancelButtonText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    fontWeight: '500',
-  },
-
-  submitButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.full,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-
-  submitButtonDisabled: {
-    backgroundColor: theme.colors.text.tertiary,
-    opacity: 0.6,
-  },
-
-  submitButtonText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.background,
-    fontWeight: '600',
+  submitButtonStyle: {
+    // No additional styling needed
   },
 });

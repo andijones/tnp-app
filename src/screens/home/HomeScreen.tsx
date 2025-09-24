@@ -415,15 +415,19 @@ const styles = StyleSheet.create({
   
   
   statsContainer: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
+    alignItems: 'flex-start',
   },
-  
+
   statsText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
+    fontFamily: 'Inter',
+    fontSize: 14, // 12px * 1.2 scale factor
     fontWeight: '600',
+    color: '#737373',
+    textAlign: 'left',
+    alignSelf: 'flex-start',
   },
   
   

@@ -251,6 +251,7 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
+    backgroundColor: theme.colors.neutral.BG,
   },
 
   statsHeader: {
@@ -259,6 +260,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
   },
 
   statsText: {
@@ -268,21 +270,16 @@ const styles = StyleSheet.create({
   },
 
   listContainer: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
     gap: theme.spacing.md,
   },
 
   contributionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.lg,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.neutral[200],
   },
 
   cardContent: {
@@ -364,6 +361,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.spacing.xl,
+    backgroundColor: theme.colors.neutral.BG,
   },
 
   emptyTitle: {

@@ -26,7 +26,7 @@ import { SectionHeader } from '../../components/common/SectionHeader';
 import { NutritionPanel } from '../../components/food/NutritionPanel';
 import { IngredientsList } from '../../components/food/IngredientsList';
 import { MinimalNutritionPanel } from '../../components/food/MinimalNutritionPanel';
-import { RatingsSection } from '../../components/food/RatingsSection';
+import { ImprovedRatingsSection } from '../../components/food/ImprovedRatingsSection';
 import { ReviewSubmission } from '../../components/food/ReviewSubmission';
 import { useFavorites } from '../../hooks/useFavorites';
 import { NovaRatingBanner } from '../../components/food/NovaRatingBanner';
@@ -34,6 +34,7 @@ import { ImprovedNutritionPanel } from '../../components/food/ImprovedNutritionP
 import { ImprovedIngredientsList } from '../../components/food/ImprovedIngredientsList';
 import { RelatedFoodsSection } from '../../components/food/RelatedFoodsSection';
 import { SubmitterInfo } from '../../components/food/SubmitterInfo';
+import { CategoryCard } from '../../components/aisles/CategoryCard';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -358,27 +359,11 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
                 </View>
               )}
               
-              {/* Store and Category */}
+              {/* Store Info */}
               <View style={styles.metaColumn}>
                 <Text style={styles.storeText}>
                   {(food.supermarket || 'TESCO').toUpperCase()}
                 </Text>
-                <TouchableOpacity
-                  style={styles.categoryButton}
-                  onPress={() => {
-                    if (food.aisle) {
-                      navigation.navigate('AisleDetail', {
-                        slug: food.aisle.slug,
-                        title: food.aisle.name
-                      });
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.categoryText}>
-                    {food.aisle?.name || 'Pizza'}
-                  </Text>
-                </TouchableOpacity>
               </View>
 
               {/* Product Title */}
@@ -430,6 +415,24 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
               </View>
             </View>
 
+            {/* Category/Aisle Card */}
+            {food.aisle && (
+              <CategoryCard
+                aisle={{
+                  id: food.aisle.id || 'unknown',
+                  name: food.aisle.name,
+                  slug: food.aisle.slug,
+                  children: []
+                }}
+                onPress={(aisle) => {
+                  navigation.navigate('AisleDetail', {
+                    slug: aisle.slug,
+                    title: aisle.name
+                  });
+                }}
+              />
+            )}
+
             {/* Submitter Info Card */}
             {(food.original_submitter_id || food.food_link_id) && (
               <View style={styles.card}>
@@ -461,57 +464,26 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
             {/* Reviews Card */}
             <View style={styles.card} ref={reviewSectionRef}>
-              <View style={styles.reviewsHeader}>
-                <View style={styles.reviewsTitleRow}>
-                  <Ionicons name="star" size={20} color={theme.colors.green[600]} />
-                  <Text style={styles.sectionTitle}>Reviews</Text>
-                </View>
-                
-                {food.ratings_count > 0 ? (
-                  <View style={styles.reviewsSummary}>
-                    <View style={styles.averageRating}>
-                      <Text style={styles.averageRatingNumber}>
-                        {food.average_rating?.toFixed(1) || '0.0'}
-                      </Text>
-                      <View style={styles.summaryStars}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Ionicons
-                            key={star}
-                            name="star"
-                            size={12}
-                            color={star <= Math.round(food.average_rating || 0) ? "#FFA500" : "#E5E5E5"}
-                          />
-                        ))}
-                      </View>
-                    </View>
-                    <Text style={styles.reviewsCount}>
-                      {food.ratings_count} review{food.ratings_count !== 1 ? 's' : ''}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.noReviewsText}>Be the first to review</Text>
-                )}
+              <View style={styles.cleanSectionHeader}>
+                <Text style={styles.sectionTitle}>Reviews</Text>
               </View>
-              
-              {/* Single Review Submission/Display */}
-              <View style={styles.reviewContent}>
-                {!hasUserReview && (
-                  <ReviewSubmission 
+
+              <ImprovedRatingsSection
+                ratings={food.ratings}
+                averageRating={food.average_rating}
+                ratingsCount={food.ratings_count}
+                reviewSubmission={!hasUserReview ? (
+                  <ReviewSubmission
                     foodId={foodId}
                     onReviewSubmitted={fetchFoodDetails}
                     hasExistingReview={hasUserReview}
                   />
-                )}
-                
-                {food.ratings && food.ratings.length > 0 && (
-                  <RatingsSection 
-                    ratings={food.ratings}
-                    averageRating={food.average_rating}
-                    ratingsCount={food.ratings_count}
-                    reviewSubmission={null}
-                  />
-                )}
-              </View>
+                ) : undefined}
+                onWriteReview={hasUserReview ? undefined : () => {
+                  // Scroll to review submission or open modal
+                  console.log('Write review pressed');
+                }}
+              />
             </View>
 
             {/* Footer */}
@@ -536,7 +508,7 @@ const styles = StyleSheet.create({
   
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
   
   // Header Design
@@ -621,7 +593,7 @@ const styles = StyleSheet.create({
   
   // Content Container
   contentContainer: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.md,
     gap: theme.spacing.md,
@@ -640,7 +612,7 @@ const styles = StyleSheet.create({
   metaColumn: {
     flexDirection: 'column',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   
   storeText: {
@@ -649,37 +621,12 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[500],
   },
   
-  categoryButton: {
-    alignSelf: 'flex-start',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
-    backgroundColor: '#F5F5F5', // var(--Neutral-100, #F5F5F5)
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-
-  categoryText: {
-    fontSize: 14,
-    color: '#404040', // var(--Neutral-700, #404040)
-    fontFamily: 'System', // Using System instead of Bricolage Grotesque as per app convention
-    fontWeight: '500',
-    lineHeight: 14,
-  },
   
   // Product Title
   productTitle: {
     ...theme.typography.heading,
     color: theme.colors.green[950],
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
     lineHeight: 28,
   },
   
@@ -688,7 +635,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   
   starsContainer: {
@@ -704,7 +651,6 @@ const styles = StyleSheet.create({
   // Action Buttons
   buttonContainer: {
     gap: theme.spacing.md,
-    marginBottom: theme.spacing.md,
   },
   
   // Section Header
@@ -735,58 +681,6 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[500],
   },
   
-  // Reviews Section Styles
-  reviewsHeader: {
-    marginBottom: theme.spacing.md,
-  },
-  
-  reviewsTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  
-  reviewsSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  
-  averageRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  
-  averageRatingNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.neutral[900],
-  },
-  
-  summaryStars: {
-    flexDirection: 'row',
-    gap: 2,
-  },
-  
-  reviewsCount: {
-    fontSize: 14,
-    color: theme.colors.neutral[500],
-    fontWeight: '500',
-  },
-  
-  noReviewsText: {
-    fontSize: 16,
-    color: theme.colors.neutral[500],
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingVertical: theme.spacing.md,
-  },
-  
-  reviewContent: {
-    gap: theme.spacing.md,
-  },
   
   // Footer
   footer: {

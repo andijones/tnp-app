@@ -60,8 +60,10 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 6, // Figma: border-radius: 6px
     marginVertical: 4,
+    borderWidth: 1,
+    borderColor: '#E5E5E5', // theme.colors.neutral[200]
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
