@@ -65,6 +65,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        // Handle refresh token errors specifically
+        if (error instanceof Error && error.message.includes('Invalid Refresh Token')) {
+          console.log('Clearing invalid refresh token');
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.error('Error during signOut:', signOutError);
+          }
+        }
         setSession(null);
         setUser(null);
       } finally {

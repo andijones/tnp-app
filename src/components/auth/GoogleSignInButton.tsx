@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, View, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator, Text } from 'react-native';
 import { googleSignInService } from '../../services/GoogleSignInService';
 import { theme } from '../../theme';
+import { Button } from '../common/Button';
 
 interface GoogleSignInButtonProps {
   onSignInSuccess?: () => void;
@@ -58,71 +59,39 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     }
   };
 
+  const GoogleIcon = () => (
+    <View style={styles.googleIconContainer}>
+      <Text style={styles.googleG}>G</Text>
+    </View>
+  );
+
   return (
-    <TouchableOpacity
-      style={[styles.button, loading && styles.buttonDisabled]}
+    <Button
+      title={loading ? 'Signing in...' : 'Continue with Google'}
       onPress={handleGoogleSignIn}
       disabled={loading}
-    >
-      <View style={styles.buttonContent}>
-        {loading ? (
-          <ActivityIndicator size="small" color="#3c4043" style={styles.icon} />
-        ) : (
-          <View style={styles.icon}>
-            <Text style={styles.googleIcon}>G</Text>
-          </View>
-        )}
-        <Text style={styles.buttonText}>
-          {loading ? 'Signing in...' : 'Continue with Google'}
-        </Text>
-      </View>
-    </TouchableOpacity>
+      variant="tertiary"
+      leftIcon={loading ? <ActivityIndicator size="small" color="#4285f4" /> : <GoogleIcon />}
+      style={styles.customButtonStyle}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  button: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#dadce0',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  customButtonStyle: {
     marginVertical: 8,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: {
+  googleIconContainer: {
     width: 20,
     height: 20,
-    marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  googleIcon: {
+  googleG: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#4285f4',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#3c4043',
-    fontFamily: theme.typography.subtitle.fontFamily,
+    fontFamily: 'Inter',
   },
 });
 
