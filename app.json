@@ -14,7 +14,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.TNP-clean"
+      "bundleIdentifier": "com.yourcompany.tnp",
+      "buildNumber": "1",
+      "associatedDomains": ["applinks:uacihrlnwlqhpbobzajs.supabase.co"],
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan ingredient labels and barcodes",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to select images of food products"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +28,21 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.TNP-clean"
+      "package": "com.yourcompany.tnp",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "uacihrlnwlqhpbobzajs.supabase.co",
+              "pathPrefix": "/auth/v1/callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -13,7 +13,9 @@ const linking = {
   prefixes: ['tnpclean://'],
   config: {
     screens: {
-      Auth: '*',
+      Auth: {
+        path: 'auth/callback',
+      },
     },
   },
 };

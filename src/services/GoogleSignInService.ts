@@ -9,11 +9,11 @@ class GoogleSignInService {
   private getRedirectUrl(): string {
     if (Platform.OS === 'web') {
       // For web, use the exact URL where our app is hosted
-      // This needs to match what's configured in Supabase dashboard
       return window.location.origin;
     } else {
-      // For mobile, use the Expo auth proxy
-      return 'https://auth.expo.io/@anonymous/nakedpantryapp';
+      // For mobile development, use the app scheme
+      // In production, we'll need to use the Supabase callback URL
+      return 'tnpclean://auth/callback';
     }
   }
 
@@ -88,26 +88,47 @@ class GoogleSignInService {
           console.log('Browser result:', result);
 
           if (result.type === 'success' && result.url) {
-            console.log('OAuth success, processing result...');
+            console.log('✅ OAuth success! Processing callback URL:', result.url);
 
-            // The URL should contain auth tokens
-            // Let's wait a moment for Supabase to process the callback
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // The result.url contains the callback with tokens
+            if (result.url.includes('#')) {
+              // Extract tokens from the callback URL
+              const hashParams = new URLSearchParams(result.url.split('#')[1]);
+              const accessToken = hashParams.get('access_token');
+              const refreshToken = hashParams.get('refresh_token');
 
-            // Check if we now have a session
-            const { data: sessionData } = await supabase.auth.getSession();
+              if (accessToken && refreshToken) {
+                console.log('🔑 Setting session with tokens from callback...');
 
-            if (sessionData.session) {
-              console.log('Session established successfully');
-              return { data: sessionData, error: null };
+                // Set the session directly
+                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                });
+
+                if (sessionError) {
+                  console.error('❌ Error setting session:', sessionError);
+                  throw sessionError;
+                }
+
+                if (sessionData.session) {
+                  console.log('✅ Session established successfully:', sessionData.session.user.email);
+                  return { data: sessionData, error: null };
+                } else {
+                  throw new Error('Failed to create session with tokens');
+                }
+              } else {
+                console.log('⚠️ No tokens found in callback URL');
+                throw new Error('No authentication tokens received');
+              }
             } else {
-              console.log('No session found, auth may have failed');
-              return { data: null, error: new Error('Authentication failed - no session created') };
+              console.log('⚠️ No hash found in callback URL');
+              throw new Error('Invalid callback URL format');
             }
           } else if (result.type === 'cancel') {
             return { data: null, error: new Error('User cancelled the sign-in process') };
           } else {
-            return { data: null, error: new Error('OAuth flow failed') };
+            throw new Error(`OAuth flow failed: ${result.type}`);
           }
         } else {
           throw new Error('No OAuth URL received from Supabase');

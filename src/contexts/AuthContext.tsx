@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase/config';
+import * as Linking from 'expo-linking';
 
 interface AuthContextType {
   session: Session | null;
@@ -30,8 +31,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Handle OAuth redirect URLs
+    const handleUrl = (url: string) => {
+      console.log('📱 Deep link received:', url);
+      if (url.includes('auth/callback')) {
+        console.log('🔗 Processing OAuth callback URL:', url);
+
+        // Handle the callback URL - Supabase will process it automatically
+        if (url.includes('#')) {
+          // Extract tokens from URL hash
+          const hashParams = new URLSearchParams(url.split('#')[1]);
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+
+          if (accessToken && refreshToken) {
+            console.log('🔑 Found tokens in URL, setting session...');
+            supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            }).then(({ data, error }) => {
+              if (error) {
+                console.error('❌ Error setting session:', error);
+              } else {
+                console.log('✅ Session set successfully:', data.session?.user?.email);
+              }
+            });
+          } else {
+            console.log('⚠️ No tokens found in callback URL');
+          }
+        }
+      }
+    };
+
+    // Listen for incoming URLs
+    const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+
+    // Check if the app was opened with a URL
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log('📱 Initial URL:', url);
+        handleUrl(url);
+      }
+    });
+
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
 
@@ -39,6 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Token refreshed successfully');
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
+        } else if (event === 'SIGNED_IN') {
+          console.log('✅ User signed in:', session?.user?.email);
         }
 
         setSession(session);
@@ -83,7 +129,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription?.remove();
+      authSubscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {

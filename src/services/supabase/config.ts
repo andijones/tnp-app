@@ -15,6 +15,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true, // Enable session detection from URL for OAuth callback
+    flowType: 'implicit', // Use implicit flow for mobile OAuth
   },
 });
 
