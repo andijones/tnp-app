@@ -13,6 +13,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { supabase } from '../../services/supabase/config';
@@ -29,6 +30,7 @@ interface ScanResult {
 }
 
 export const IngredientScannerScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [permission, requestPermission] = useCameraPermissions();
   const [currentStep, setCurrentStep] = useState<ScanStep>('intro');
   const [facing, setFacing] = useState<'back' | 'front'>('back');
@@ -41,6 +43,58 @@ export const IngredientScannerScreen: React.FC = () => {
   const [frontImage, setFrontImage] = useState<string | null>(null);
   
   const cameraRef = useRef<CameraView>(null);
+
+  // Hide/show tab bar based on scan step
+  useEffect(() => {
+    const shouldHideTabBar = currentStep === 'ingredients' || currentStep === 'front';
+
+    navigation.getParent()?.setOptions({
+      tabBarStyle: shouldHideTabBar ? { display: 'none' } : {
+        backgroundColor: 'rgba(31, 89, 50, 0.95)',
+        borderTopWidth: 0,
+        height: 84,
+        paddingTop: 12,
+        paddingBottom: 20,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: -2,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 10,
+      }
+    });
+
+    // Cleanup: Show tab bar when component unmounts
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          backgroundColor: 'rgba(31, 89, 50, 0.95)',
+          borderTopWidth: 0,
+          height: 84,
+          paddingTop: 12,
+          paddingBottom: 20,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 10,
+        }
+      });
+    };
+  }, [currentStep, navigation]);
 
   const optimizeImage = async (imageUri: string): Promise<string> => {
     try {

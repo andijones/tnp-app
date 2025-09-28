@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
   
   headerTitle: {
     ...theme.typography.heading,
+    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
     color: theme.colors.green[950],
   },
   

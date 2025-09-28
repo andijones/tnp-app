@@ -174,10 +174,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
                   {/* Content */}
                   <View style={styles.cardContent}>
-                    {/* Scanner Icon */}
-                    <View style={styles.iconContainer}>
-                      <Ionicons name="scan" size={24} color="white" />
-                    </View>
+                    {/* Barcode Icon */}
+                    <Image
+                      source={require('../../../assets/barcode.png')}
+                      style={styles.barcodeImage}
+                      resizeMode="contain"
+                    />
 
                     {/* Main Title */}
                     <Text style={styles.scannerTitle}>
@@ -361,35 +363,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 
-  iconContainer: {
+  
+  barcodeImage: {
+    width: 60,
+    height: 60,
     alignSelf: 'center',
-    marginBottom: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    padding: 12,
-  },
-  
-  barcodeIconContainer: {
-    marginBottom: theme.spacing.xl,
-  },
-  
-  barcodeIcon: {
-    width: 80,
-    height: 50,
-    backgroundColor: 'transparent',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingHorizontal: 8,
-  },
-  
-  barcodeLine: {
-    width: 3,
-    height: 25,
-    backgroundColor: '#FFFFFF',
+    marginBottom: theme.spacing.lg,
   },
   
   scannerTitle: {

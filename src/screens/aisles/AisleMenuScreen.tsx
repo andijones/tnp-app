@@ -9,6 +9,7 @@ import {
   Alert,
   TextInput,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -149,6 +150,7 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
         {isSearchActive ? (
@@ -298,6 +300,7 @@ const styles = StyleSheet.create({
   
   headerTitle: {
     ...theme.typography.heading,
+    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
     color: theme.colors.green[950],
     flex: 1,
     textAlign: 'center',

@@ -503,12 +503,12 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.neutral.BG,
+    backgroundColor: '#FFFFFF',
   },
-  
+
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
   },
   
   // Header Design
@@ -625,6 +625,7 @@ const styles = StyleSheet.create({
   // Product Title
   productTitle: {
     ...theme.typography.heading,
+    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
     color: theme.colors.green[950],
     marginBottom: theme.spacing.lg,
     lineHeight: 28,

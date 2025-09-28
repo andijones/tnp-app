@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   
   headerTitle: {
-    fontSize: theme.typography.fontSize.xxl,
+    fontSize: 22, // Updated to match other headers (was 24px)
     fontWeight: '700',
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,

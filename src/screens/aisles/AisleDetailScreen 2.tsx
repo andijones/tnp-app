@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   
   headerTitle: {
     flex: 1,
-    fontSize: theme.typography.fontSize.xl,
+    fontSize: 22, // Updated to match other headers (was 20px)
     fontWeight: '600',
     color: theme.colors.text.primary,
     textAlign: 'center',
