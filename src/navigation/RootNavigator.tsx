@@ -3,7 +3,8 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Animated } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { theme } from '../theme';
 
 // Import your screens
@@ -23,6 +24,81 @@ import { useUser } from '../hooks/useUser';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 // Drawer removed – Aisle browsing lives as a regular stack screen
+
+// Custom Floating Tab Bar Background
+function FloatingTabBarBackground({ style }: any) {
+  return (
+    <View style={[StyleSheet.absoluteFillObject, { paddingHorizontal: 20 }]}>
+      <View style={styles.floatingContainer}>
+        <BlurView
+          intensity={80}
+          tint="light"
+          style={styles.blurContainer}
+        >
+          <View style={styles.glassOverlay} />
+        </BlurView>
+      </View>
+    </View>
+  );
+}
+
+// Animated Tab Icon Component
+function AnimatedTabIcon({
+  name,
+  focusedName,
+  focused,
+  color,
+  size
+}: {
+  name: string;
+  focusedName: string;
+  focused: boolean;
+  color: string;
+  size: number;
+}) {
+  const scaleAnim = React.useRef(new Animated.Value(focused ? 1 : 0.85)).current;
+  const bounceAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: focused ? 1.15 : 0.85,
+        useNativeDriver: true,
+        friction: 4,
+        tension: 80,
+      }),
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: focused ? -4 : 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(bounceAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 5,
+        }),
+      ]),
+    ]).start();
+  }, [focused]);
+
+  return (
+    <Animated.View
+      style={{
+        transform: [
+          { scale: scaleAnim },
+          { translateY: bounceAnim }
+        ],
+      }}
+    >
+      <Ionicons
+        name={focused ? focusedName : name}
+        size={size}
+        color={color}
+      />
+    </Animated.View>
+  );
+}
 
 // Profile Tab Icon Component
 function ProfileTabIcon({ color, size, focused }: { color: string; size: number; focused: boolean }) {
@@ -57,26 +133,29 @@ function TabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: 'rgba(31, 89, 50, 0.95)',
-          borderTopWidth: 0,
-          height: 84,
-          paddingTop: 12,
-          paddingBottom: 20,
           position: 'absolute',
-          bottom: 0,
+          bottom: 30,
           left: 0,
           right: 0,
+          height: 68,
+          borderRadius: 34,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
-            height: -2,
+            height: 10,
           },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 10,
+          shadowOpacity: 0.25,
+          shadowRadius: 20,
+          elevation: 15,
+          paddingHorizontal: 24,
+          paddingTop: 12,
+          paddingBottom: 12,
         },
-        tabBarActiveTintColor: '#44DB6D',
-        tabBarInactiveTintColor: '#FFFFFF',
+        tabBarActiveTintColor: '#1F5932',
+        tabBarInactiveTintColor: 'rgba(31, 89, 50, 0.5)',
+        tabBarBackground: () => <FloatingTabBarBackground style={undefined} />,
       }}
     >
       <Tab.Screen
@@ -84,28 +163,67 @@ function TabNavigator() {
         component={HomeScreen}
         options={{
           title: 'All Foods',
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons name={focused ? "nutrition" : "nutrition-outline"} size={size} color={color} />
+          tabBarIcon: ({ focused, color }) => (
+            <AnimatedTabIcon
+              name="nutrition-outline"
+              focusedName="nutrition"
+              focused={focused}
+              color={color}
+              size={28}
+            />
           ),
         }}
       />
       <Tab.Screen
         name="Scanner"
         component={IngredientScannerScreen}
-        options={{
+        options={({ route }) => ({
           title: 'Scanner',
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons name={focused ? "scan" : "scan-outline"} size={size} color={color} />
+          tabBarIcon: ({ focused, color }) => (
+            <AnimatedTabIcon
+              name="scan-outline"
+              focusedName="scan"
+              focused={focused}
+              color={color}
+              size={28}
+            />
           ),
-        }}
+          tabBarStyle: (route.params as any)?.hideTabBar ? { display: 'none' } : {
+            position: 'absolute',
+            bottom: 30,
+            left: 0,
+            right: 0,
+            height: 68,
+            borderRadius: 34,
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 10,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 20,
+            elevation: 15,
+            paddingHorizontal: 24,
+            paddingTop: 12,
+            paddingBottom: 12,
+          },
+        })}
       />
       <Tab.Screen
         name="Submit"
         component={SubmissionScreen}
         options={{
           title: 'Submit',
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={size} color={color} />
+          tabBarIcon: ({ focused, color }) => (
+            <AnimatedTabIcon
+              name="add-circle-outline"
+              focusedName="add-circle"
+              focused={focused}
+              color={color}
+              size={28}
+            />
           ),
         }}
       />
@@ -114,8 +232,14 @@ function TabNavigator() {
         component={FavoritesScreen}
         options={{
           title: 'Favorites',
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons name={focused ? "heart" : "heart-outline"} size={size} color={color} />
+          tabBarIcon: ({ focused, color }) => (
+            <AnimatedTabIcon
+              name="heart-outline"
+              focusedName="heart"
+              focused={focused}
+              color={color}
+              size={28}
+            />
           ),
         }}
       />
@@ -124,8 +248,8 @@ function TabNavigator() {
         component={ProfileScreen}
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused, color, size }) => (
-            <ProfileTabIcon color={color} size={size} focused={focused} />
+          tabBarIcon: ({ focused, color }) => (
+            <ProfileTabIcon color={color} size={28} focused={focused} />
           ),
         }}
       />
@@ -170,3 +294,23 @@ export function RootNavigator() {
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  floatingContainer: {
+    flex: 1,
+    borderRadius: 34,
+    overflow: 'hidden',
+  },
+  blurContainer: {
+    flex: 1,
+    borderRadius: 34,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 34,
+  },
+});

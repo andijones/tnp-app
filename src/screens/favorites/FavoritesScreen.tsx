@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   Alert,
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -23,12 +23,13 @@ interface FavoritesScreenProps {
 }
 
 export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [favoritesFoods, setFavoritesFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
-  
+
   const { isFavorite, toggleFavorite } = useFavorites();
 
   // Fetch favorites directly from database on screen focus
@@ -122,14 +123,14 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <LoadingSpinner message="Loading favorites..." />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         {isSearchActive ? (
@@ -215,7 +216,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         }
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

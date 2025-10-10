@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Pressable,
   Alert,
@@ -13,6 +12,7 @@ import {
   Linking,
   FlatList,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { theme } from '../../theme';
@@ -37,6 +37,7 @@ interface ProfileScreenProps {
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
+  const insets = useSafeAreaInsets();
   const targetUserId = route?.params?.userId;
   const navigation = useNavigation();
   const { user, profile: currentUserProfile, loading: userLoading, error: currentUserError, updateProfile } = useUser();
@@ -404,28 +405,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
           <Text style={styles.errorText}>{error}</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, showHeader && styles.safeAreaWithHeader]}>
+    <View style={[styles.safeArea, showHeader && styles.safeAreaWithHeader, { paddingTop: showHeader ? 0 : insets.top }]}>
       {/* Standard Header */}
       {showHeader && (
         <View style={styles.header}>
@@ -774,7 +775,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
         )}
 
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1125,7 +1126,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: 120, // Extra padding for floating tab bar
   },
 
   gridCardWrapper: {
@@ -1138,7 +1139,7 @@ const styles = StyleSheet.create({
   reviewsList: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: 120, // Extra padding for floating tab bar
   },
 
   reviewCard: {
@@ -1226,7 +1227,7 @@ const styles = StyleSheet.create({
 
   editingContainer: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+    marginBottom: 120, // Extra padding for floating tab bar
   },
 
   editSection: {

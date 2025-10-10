@@ -5,15 +5,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  SafeAreaView,
   ActivityIndicator,
   Image,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { supabase } from '../../services/supabase/config';
@@ -30,6 +30,7 @@ interface ScanResult {
 }
 
 export const IngredientScannerScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [permission, requestPermission] = useCameraPermissions();
   const [currentStep, setCurrentStep] = useState<ScanStep>('intro');
@@ -44,56 +45,11 @@ export const IngredientScannerScreen: React.FC = () => {
   
   const cameraRef = useRef<CameraView>(null);
 
-  // Hide/show tab bar based on scan step
+  // Hide/show tab bar based on scan step using route params
   useEffect(() => {
-    const shouldHideTabBar = currentStep === 'ingredients' || currentStep === 'front';
+    const shouldHideTabBar = currentStep === 'ingredients' || currentStep === 'front' || currentStep === 'processing';
 
-    navigation.getParent()?.setOptions({
-      tabBarStyle: shouldHideTabBar ? { display: 'none' } : {
-        backgroundColor: 'rgba(31, 89, 50, 0.95)',
-        borderTopWidth: 0,
-        height: 84,
-        paddingTop: 12,
-        paddingBottom: 20,
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: -2,
-        },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 10,
-      }
-    });
-
-    // Cleanup: Show tab bar when component unmounts
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          backgroundColor: 'rgba(31, 89, 50, 0.95)',
-          borderTopWidth: 0,
-          height: 84,
-          paddingTop: 12,
-          paddingBottom: 20,
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: -2,
-          },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 10,
-        }
-      });
-    };
+    navigation.setParams({ hideTabBar: shouldHideTabBar } as any);
   }, [currentStep, navigation]);
 
   const optimizeImage = async (imageUri: string): Promise<string> => {
@@ -417,48 +373,83 @@ export const IngredientScannerScreen: React.FC = () => {
 
   const renderIntro = () => (
     <View style={styles.introContainer}>
-      <View style={styles.iconContainer}>
-        <Ionicons name="scan" size={64} color={theme.colors.primary} />
+      {/* Hero Section with Camera Icon */}
+      <View style={styles.heroSection}>
+        <View style={styles.scannerIconWrapper}>
+          <View style={styles.scannerPulse} />
+          <View style={styles.scannerIconContainer}>
+            <Ionicons name="camera" size={48} color={theme.colors.primary} />
+          </View>
+        </View>
+
+        <Text style={styles.heroTitle}>Scan Ingredients</Text>
+        <Text style={styles.heroSubtitle}>
+          Point your camera at any ingredient label for instant AI analysis
+        </Text>
       </View>
-      
-      <Text style={styles.introTitle}>Ingredient Scanner</Text>
-      <Text style={styles.introSubtitle}>
-        AI-powered ingredient analysis with instant NOVA classification
-      </Text>
-      
-      <View style={styles.stepsContainer}>
-        <View style={styles.step}>
-          <View style={styles.stepNumber}>
-            <Text style={styles.stepNumberText}>1</Text>
+
+      {/* Feature Cards */}
+      <View style={styles.featuresSection}>
+        <View style={styles.featureCard}>
+          <View style={styles.featureIconCircle}>
+            <Ionicons name="flash" size={20} color="#FFB800" />
           </View>
-          <Text style={styles.stepText}>Take a clear photo of the ingredients list</Text>
+          <View style={styles.featureContent}>
+            <Text style={styles.featureTitle}>Instant Results</Text>
+            <Text style={styles.featureDescription}>
+              AI analyzes ingredients in seconds
+            </Text>
+          </View>
         </View>
-        
-        <View style={styles.step}>
-          <View style={styles.stepNumber}>
-            <Text style={styles.stepNumberText}>2</Text>
+
+        <View style={styles.featureCard}>
+          <View style={[styles.featureIconCircle, { backgroundColor: 'rgba(68, 219, 109, 0.15)' }]}>
+            <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
           </View>
-          <Text style={styles.stepText}>Take a photo of the product front</Text>
+          <View style={styles.featureContent}>
+            <Text style={styles.featureTitle}>NOVA Score</Text>
+            <Text style={styles.featureDescription}>
+              Get food processing classification
+            </Text>
+          </View>
         </View>
-        
-        <View style={styles.step}>
-          <View style={styles.stepNumber}>
-            <Text style={styles.stepNumberText}>3</Text>
+
+        <View style={styles.featureCard}>
+          <View style={[styles.featureIconCircle, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+            <Ionicons name="warning" size={20} color="#EF4444" />
           </View>
-          <Text style={styles.stepText}>Get AI-powered NOVA classification</Text>
+          <View style={styles.featureContent}>
+            <Text style={styles.featureTitle}>Detect Additives</Text>
+            <Text style={styles.featureDescription}>
+              Find seed oils and harmful ingredients
+            </Text>
+          </View>
         </View>
       </View>
 
+      {/* Subtle Nudge - Not Barcode */}
+      <View style={styles.nudgeContainer}>
+        <Ionicons name="alert-circle-outline" size={16} color="#F59E0B" />
+        <Text style={styles.nudgeText}>
+          Scan the ingredients section, not the barcode
+        </Text>
+      </View>
+
+      {/* CTA Button */}
       <Button
-        title="Start Scanning"
-        variant="secondary"
+        title="Open Camera"
         onPress={() => setCurrentStep('ingredients')}
-        style={styles.startButton}
+        variant="primary"
+        leftIcon={<Ionicons name="camera-outline" size={20} color="#1F5932" />}
       />
 
-      <Text style={styles.disclaimer}>
-        Uses OpenAI GPT-4 Vision for accurate ingredient extraction
-      </Text>
+      {/* Trust Badge */}
+      <View style={styles.trustBadge}>
+        <Ionicons name="shield-checkmark" size={14} color={theme.colors.primary} />
+        <Text style={styles.trustText}>
+          Powered by GPT-4 Vision
+        </Text>
+      </View>
     </View>
   );
 
@@ -753,12 +744,12 @@ export const IngredientScannerScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, (currentStep === 'intro' || currentStep === 'results') && { paddingTop: insets.top }]}>
       {currentStep === 'intro' && renderIntro()}
       {(currentStep === 'ingredients' || currentStep === 'front') && renderCamera()}
       {currentStep === 'processing' && renderProcessing()}
       {currentStep === 'results' && renderResults()}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -767,7 +758,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  
+
   container: {
     flex: 1,
     backgroundColor: '#F7F6F0',
@@ -785,71 +776,127 @@ const styles = StyleSheet.create({
   },
   introContainer: {
     flex: 1,
-    padding: theme.spacing.lg,
+    backgroundColor: '#F7F6F0',
+    paddingHorizontal: 24,
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: 120, // Extra padding for floating tab bar
   },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: `${theme.colors.primary}15`,
+
+  // Hero Section
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  scannerIconWrapper: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  scannerPulse: {
+    position: 'absolute',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(68, 219, 109, 0.15)',
+    top: -8,
+    left: -8,
+  },
+  scannerIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(68, 219, 109, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.lg,
   },
-  introTitle: {
-    fontSize: theme.typography.fontSize.xxxl,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1F5932',
     textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.5,
   },
-  introSubtitle: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
+  heroSubtitle: {
+    fontSize: 15,
+    color: '#737373',
     textAlign: 'center',
-    marginBottom: theme.spacing.xl,
     lineHeight: 22,
+    paddingHorizontal: 20,
   },
-  stepsContainer: {
-    width: '100%',
-    marginBottom: theme.spacing.xl,
+
+  // Features Section
+  featuresSection: {
+    marginBottom: 24,
+    gap: 10,
   },
-  step: {
+  featureCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  featureIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 184, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  featureContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  featureTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1F5932',
+    marginBottom: 2,
+  },
+  featureDescription: {
+    fontSize: 13,
+    color: '#737373',
+    lineHeight: 18,
+  },
+
+  // Subtle Nudge
+  nudgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderRadius: 8,
+    marginBottom: 16,
   },
-  stepNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.primary,
+  nudgeText: {
+    fontSize: 13,
+    color: '#92400E',
+    fontWeight: '500',
+  },
+
+
+  // Trust Badge
+  trustBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
+    gap: 6,
   },
-  stepNumberText: {
-    color: 'white',
-    fontWeight: theme.typography.fontWeight.bold,
-    fontSize: theme.typography.fontSize.md,
-  },
-  stepText: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    lineHeight: 22,
-  },
-  startButton: {
-    marginBottom: theme.spacing.md,
-  },
-  disclaimer: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    paddingHorizontal: theme.spacing.xl,
+  trustText: {
+    fontSize: 12,
+    color: '#737373',
+    fontWeight: '500',
   },
   cameraContainer: {
     flex: 1,
@@ -1262,7 +1309,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
-    marginBottom: theme.spacing.xxl,
+    marginBottom: 120, // Extra padding for floating tab bar
     paddingHorizontal: theme.spacing.lg,
     lineHeight: 16,
   },

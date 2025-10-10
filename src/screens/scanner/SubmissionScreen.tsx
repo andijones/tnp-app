@@ -5,11 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -26,6 +28,7 @@ interface ImageItem {
 }
 
 export const SubmissionScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<SubmissionMode>('photo');
   const [selectedImages, setSelectedImages] = useState<ImageItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -385,207 +388,342 @@ export const SubmissionScreen: React.FC = () => {
 
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Submit Food</Text>
-      </View>
-
-      {renderModeSelector()}
-
-      <View style={styles.container}>
-        <View style={styles.content}>
-          {mode === 'photo' && renderPhotoMode()}
-          {mode === 'url' && renderUrlMode()}
+    <KeyboardAvoidingView
+      style={[styles.safeArea, { paddingTop: insets.top }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Descriptive Header */}
+        <View style={styles.descriptiveHeader}>
+          <Text style={styles.descriptiveTitle}>Add a Food to the Database</Text>
+          <Text style={styles.descriptiveBody}>
+            Help the community by contributing products you've found. Your submissions help others make healthier choices.
+          </Text>
         </View>
 
-        <View style={styles.submitContainer}>
-          <Button
-            title={isSubmitting ? 'Submitting...' : `Submit ${mode === 'photo' ? 'Photos' : 'URL'}`}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-            variant="primary"
-            leftIcon={isSubmitting ? <ActivityIndicator size="small" /> : <Ionicons name="send" size={20} />}
+        {/* Mode Selector Card */}
+        <View style={styles.modeCard}>
+          <Text style={styles.modeLabel}>How would you like to submit?</Text>
+          <SegmentedTabs
+            options={tabOptions}
+            selectedIndex={getModeIndex(mode)}
+            onSelectionChange={(index) => setMode(getIndexMode(index))}
           />
         </View>
-      </View>
-    </SafeAreaView>
+
+        {/* Photo Mode */}
+        {mode === 'photo' && (
+          <>
+            {/* Image Upload Section */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="images" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>Product Photos</Text>
+              </View>
+
+              <View style={styles.imageGrid}>
+                {selectedImages.map((image) => (
+                  <View key={image.id} style={styles.imageWrapper}>
+                    <Image source={{ uri: image.uri }} style={styles.thumbnailImage} />
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => removeImage(image.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="close" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {selectedImages.length < 3 && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={takePhoto}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="camera" size={28} color={theme.colors.primary} />
+                      <Text style={styles.uploadButtonText}>Camera</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={addImageFromGallery}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="image" size={28} color={theme.colors.primary} />
+                      <Text style={styles.uploadButtonText}>Gallery</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+
+              {selectedImages.length < 3 && (
+                <Text style={styles.helperText}>
+                  Upload up to 3 clear photos of the product
+                </Text>
+              )}
+            </View>
+
+            {/* Product Details Card */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>Product Details</Text>
+              </View>
+
+              <Input
+                label="Product Name *"
+                value={productName}
+                onChangeText={setProductName}
+                placeholder="E.g., Organic Almond Milk"
+              />
+
+              <Input
+                label="Supermarket"
+                value={supermarket}
+                onChangeText={setSupermarket}
+                placeholder="E.g., Tesco, Sainsbury's"
+              />
+
+              <Input
+                label="Additional Notes"
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Any special details about this product..."
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+          </>
+        )}
+
+        {/* URL Mode */}
+        {mode === 'url' && (
+          <>
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="link" size={20} color={theme.colors.primary} />
+                <Text style={styles.cardTitle}>Product URL</Text>
+              </View>
+
+              <Input
+                label="Product Link *"
+                value={productUrl}
+                onChangeText={setProductUrl}
+                placeholder="https://www.supermarket.com/product"
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </View>
+
+            <View style={styles.infoCard}>
+              <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
+              <Text style={styles.infoCardText}>
+                We'll automatically extract product details from the URL and add it to our database
+              </Text>
+            </View>
+          </>
+        )}
+
+        {/* Submit Button */}
+        <Button
+          title={isSubmitting ? "Submitting..." : "Submit for Review"}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+          variant="secondary"
+          leftIcon={isSubmitting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Ionicons name="paper-plane" size={20} color="#FFFFFF" />}
+        />
+
+        {/* Footer Note */}
+        <View style={styles.footerNote}>
+          <Ionicons name="time" size={16} color="#737373" />
+          <Text style={styles.footerNoteText}>
+            Submissions are reviewed within 24-48 hours
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  
-  container: {
-    flex: 1,
     backgroundColor: '#F7F6F0',
   },
-  header: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0', // Using fallback since border not in theme yet
-    backgroundColor: '#FFFFFF',
-  },
-  title: {
-    ...theme.typography.heading,
-    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
-    color: theme.colors.green[950],
-    textAlign: 'center',
-  },
-  tabContainer: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-  },
-  segmentedTabs: {
-    width: '100%',
-  },
-  content: {
+
+  scrollContainer: {
     flex: 1,
   },
-  formContainer: {
-    flex: 1,
-    padding: theme.spacing.lg,
+  scrollContent: {
+    padding: 20,
+    paddingTop: 28,
+    paddingBottom: 140, // Extra padding for floating tab bar
   },
-  section: {
-    marginBottom: theme.spacing.lg,
+
+  // Descriptive Header
+  descriptiveHeader: {
+    marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+  descriptiveTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1F5932',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+    lineHeight: 34,
   },
+  descriptiveBody: {
+    fontSize: 15,
+    color: '#737373',
+    lineHeight: 22,
+    letterSpacing: -0.1,
+  },
+
+  // Mode Selector
+  modeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modeLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F5932',
+    marginBottom: 12,
+  },
+
+  // Card Styles
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1F5932',
+  },
+
+  // Image Grid
   imageGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: 12,
+    marginBottom: 12,
   },
-  imageItem: {
-    position: 'relative',
+  imageWrapper: {
     width: 100,
     height: 100,
+    borderRadius: 12,
+    position: 'relative',
   },
-  selectedImage: {
+  thumbnailImage: {
     width: '100%',
     height: '100%',
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    borderRadius: 12,
   },
-  removeImageButton: {
+  deleteButton: {
     position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: 'white',
-    borderRadius: 10,
+    top: -6,
+    right: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
-  addImageContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  addImageButton: {
+  uploadButton: {
     width: 100,
     height: 100,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#44DB6D',
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(68, 219, 109, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.surface,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    gap: 6,
   },
-  addImageText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-    fontWeight: theme.typography.fontWeight.medium,
-    textAlign: 'center',
+  uploadButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1F5932',
   },
-  inputContainer: {
-    marginBottom: theme.spacing.md,
+  helperText: {
+    fontSize: 13,
+    color: '#737373',
+    marginTop: 4,
   },
-  inputLabel: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    fontSize: theme.typography.fontSize.md,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    color: theme.colors.text.primary,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  infoBox: {
+
+  // Info Card
+  infoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: `${theme.colors.primary}10`,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    marginTop: theme.spacing.md,
+    backgroundColor: 'rgba(68, 219, 109, 0.08)',
+    borderWidth: 1,
+    borderColor: '#44DB6D',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
   },
-  infoText: {
+  infoCardText: {
     flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginLeft: theme.spacing.sm,
+    fontSize: 14,
+    color: '#1F5932',
     lineHeight: 20,
   },
-  submitContainer: {
-    padding: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#F7F6F0',
-  },
-  submitButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.full,
-    alignItems: 'center',
+
+
+  // Footer
+  footerNote: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
   },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    ...theme.typography.subtitle,
-    color: 'white',
+  footerNoteText: {
+    fontSize: 13,
+    color: '#737373',
   },
 });
