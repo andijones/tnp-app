@@ -427,21 +427,15 @@ export const IngredientScannerScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Subtle Nudge - Not Barcode */}
-      <View style={styles.nudgeContainer}>
-        <Ionicons name="alert-circle-outline" size={16} color="#F59E0B" />
-        <Text style={styles.nudgeText}>
-          Scan the ingredients section, not the barcode
-        </Text>
-      </View>
-
       {/* CTA Button */}
-      <Button
-        title="Open Camera"
-        onPress={() => setCurrentStep('ingredients')}
-        variant="primary"
-        leftIcon={<Ionicons name="camera-outline" size={20} color="#1F5932" />}
-      />
+      <View style={styles.ctaContainer}>
+        <Button
+          title="Open Camera"
+          onPress={() => setCurrentStep('ingredients')}
+          variant="primary"
+          leftIcon={<Ionicons name="camera-outline" size={20} color="#1F5932" />}
+        />
+      </View>
 
       {/* Trust Badge */}
       <View style={styles.trustBadge}>
@@ -709,32 +703,58 @@ export const IngredientScannerScreen: React.FC = () => {
           </View>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.saveButton]}
-            onPress={saveToDatabase}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <>
-                <Ionicons name="save" size={20} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.actionButtonText}>Save to Database</Text>
-              </>
-            )}
-          </TouchableOpacity>
+        {novaClassification.nova_group === 4 ? (
+          // NOVA 4 (Ultra-processed) - Don't allow saving
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.scanAnotherButton]}
+              onPress={resetScanner}
+            >
+              <Ionicons name="scan" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
+              <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
+                Scan Another Product
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionButton, styles.scanAnotherButton]}
-            onPress={resetScanner}
-          >
-            <Ionicons name="scan" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
-            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
-              Scan Another Product
-            </Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.returnHomeButton]}
+              onPress={() => (navigation as any).navigate('Home')}
+            >
+              <Ionicons name="home-outline" size={20} color={theme.colors.text.secondary} style={{ marginRight: 8 }} />
+              <Text style={[styles.actionButtonText, { color: theme.colors.text.secondary }]}>
+                Return Home
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          // NOVA 1-3 - Allow saving
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.saveButton]}
+              onPress={saveToDatabase}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <>
+                  <Ionicons name="save" size={20} color="white" style={{ marginRight: 8 }} />
+                  <Text style={styles.actionButtonText}>Save to Database</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.scanAnotherButton]}
+              onPress={resetScanner}
+            >
+              <Ionicons name="scan" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
+              <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
+                Scan Another Product
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <Text style={styles.resultDisclaimer}>
           This analysis is automated and for reference only. Results may vary based on image quality and OCR accuracy.
@@ -867,24 +887,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // Subtle Nudge
-  nudgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-    borderRadius: 8,
-    marginBottom: 16,
+  // CTA Container
+  ctaContainer: {
+    marginBottom: 24,
   },
-  nudgeText: {
-    fontSize: 13,
-    color: '#92400E',
-    fontWeight: '500',
-  },
-
 
   // Trust Badge
   trustBadge: {
@@ -1296,6 +1302,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: theme.colors.primary,
+  },
+  returnHomeButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   actionButtonText: {
     fontSize: theme.typography.subtitle.fontSize,

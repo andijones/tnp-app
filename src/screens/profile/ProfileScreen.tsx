@@ -927,7 +927,8 @@ const styles = StyleSheet.create({
   
   profilePictureContainer: {
     position: 'relative',
-    marginRight: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   profilePicture: {

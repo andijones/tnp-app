@@ -144,24 +144,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         ) : (
           // Normal header
           <View style={styles.headerTopRow}>
-            <TouchableOpacity 
-              onPress={() => navigation.navigate('AisleMenu')} 
+            <TouchableOpacity
+              onPress={() => navigation.navigate('AisleMenu')}
               style={styles.menuButton}
             >
               <Ionicons name="menu" size={24} color={theme.colors.text.primary} />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.logoContainer}
+            <TouchableOpacity
+              style={styles.titleContainer}
               onPress={scrollToTop}
               activeOpacity={0.7}
             >
-              <Image 
-                source={require('../../../assets/logo.png')} 
-                style={styles.logo} 
-                resizeMode="contain"
-              />
+              <Text style={styles.headerTitleText}>Foods</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setIsSearchActive(true)}
               style={styles.searchButton}
             >
@@ -291,16 +287,18 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   
-  logoContainer: {
+  titleContainer: {
     flex: 1,
     alignItems: 'center',
   },
-  
-  logo: {
-    height: 50,
-    width: 180,
+
+  headerTitleText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: theme.colors.green[950],
+    letterSpacing: -0.3,
   },
-  
+
   headerTitle: {
     fontSize: theme.typography.fontSize.xxl,
     fontWeight: '700',

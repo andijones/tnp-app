@@ -103,25 +103,49 @@ function AnimatedTabIcon({
 // Profile Tab Icon Component
 function ProfileTabIcon({ color, size, focused }: { color: string; size: number; focused: boolean }) {
   const { user, profile, loading } = useUser();
-  
+  const scaleAnim = React.useRef(new Animated.Value(focused ? 1 : 0.85)).current;
+
+  React.useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: focused ? 1.15 : 0.85,
+      useNativeDriver: true,
+      friction: 4,
+      tension: 80,
+    }).start();
+  }, [focused, scaleAnim]);
+
   if (loading) {
-    return <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />;
+    return (
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleAnim }],
+        }}
+      >
+        <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />
+      </Animated.View>
+    );
   }
-  
+
   return (
-    <ProfilePicture
-      imageUrl={profile?.avatar_url}
-      fullName={profile?.full_name}
-      email={user?.email}
-      size="small"
+    <Animated.View
       style={{
+        transform: [{ scale: scaleAnim }],
         width: size,
         height: size,
         borderRadius: size / 2,
         borderWidth: focused ? 2 : 0,
         borderColor: focused ? color : 'transparent',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
-    />
+    >
+      <ProfilePicture
+        imageUrl={profile?.avatar_url}
+        fullName={profile?.full_name}
+        email={user?.email}
+        size="small"
+      />
+    </Animated.View>
   );
 }
 
@@ -159,22 +183,6 @@ function TabNavigator() {
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          title: 'All Foods',
-          tabBarIcon: ({ focused, color }) => (
-            <AnimatedTabIcon
-              name="nutrition-outline"
-              focusedName="nutrition"
-              focused={focused}
-              color={color}
-              size={28}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="Scanner"
         component={IngredientScannerScreen}
         options={({ route }) => ({
@@ -210,6 +218,22 @@ function TabNavigator() {
             paddingBottom: 12,
           },
         })}
+      />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: 'All Foods',
+          tabBarIcon: ({ focused, color }) => (
+            <AnimatedTabIcon
+              name="nutrition-outline"
+              focusedName="nutrition"
+              focused={focused}
+              color={color}
+              size={28}
+            />
+          ),
+        }}
       />
       <Tab.Screen
         name="Submit"

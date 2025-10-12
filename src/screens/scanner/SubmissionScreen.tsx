@@ -388,24 +388,23 @@ export const SubmissionScreen: React.FC = () => {
 
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.safeArea, { paddingTop: insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Add Food</Text>
+      </View>
+
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {/* Descriptive Header */}
-        <View style={styles.descriptiveHeader}>
-          <Text style={styles.descriptiveTitle}>Add a Food to the Database</Text>
-          <Text style={styles.descriptiveBody}>
-            Help the community by contributing products you've found. Your submissions help others make healthier choices.
-          </Text>
-        </View>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
 
         {/* Mode Selector Card */}
         <View style={styles.modeCard}>
@@ -549,12 +548,43 @@ export const SubmissionScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
+  header: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: theme.colors.green[950],
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+
+  keyboardView: {
     flex: 1,
     backgroundColor: '#F7F6F0',
   },
@@ -564,27 +594,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingTop: 28,
+    paddingTop: 20,
     paddingBottom: 140, // Extra padding for floating tab bar
-  },
-
-  // Descriptive Header
-  descriptiveHeader: {
-    marginBottom: 24,
-  },
-  descriptiveTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1F5932',
-    marginBottom: 8,
-    letterSpacing: -0.5,
-    lineHeight: 34,
-  },
-  descriptiveBody: {
-    fontSize: 15,
-    color: '#737373',
-    lineHeight: 22,
-    letterSpacing: -0.1,
   },
 
   // Mode Selector
