@@ -58,12 +58,40 @@ export const theme = {
         950: '#1F5932',
       },
       
-      // NOVA classification colors - using system colors
+      // NOVA classification colors - using system colors (legacy)
       nova: {
         group1: '#22c55e',     // Unprocessed - Success green
-        group2: '#84cc16',     // Processed culinary - Light green  
+        group2: '#84cc16',     // Processed culinary - Light green
         group3: '#f59e0b',     // Processed foods - Warning orange
         group4: '#ef4444',     // Ultra-processed - Error red
+      },
+
+      // Processing Level Scale (user-friendly)
+      processing: {
+        wholeFood: {
+          color: '#22c55e',        // Vibrant green
+          light: '#E8F5E8',        // Light green background
+          label: 'Whole Food',
+          description: 'Natural and unprocessed'
+        },
+        extractedFoods: {
+          color: '#84cc16',        // Light green
+          light: '#F0F8E8',        // Very light green
+          label: 'Extracted Foods',
+          description: 'Single ingredient like oil or butter'
+        },
+        lightlyProcessed: {
+          color: '#f59e0b',        // Warm amber/orange
+          light: '#FFF4E6',        // Light orange
+          label: 'Lightly Processed',
+          description: 'Few added ingredients'
+        },
+        processed: {
+          color: '#ff6b35',        // Warm orange (softer than red)
+          light: '#FFE6E6',        // Light coral
+          label: 'Processed',
+          description: 'Multiple added ingredients'
+        }
       }
     },
     

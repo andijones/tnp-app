@@ -17,6 +17,9 @@ import { aisleService } from '../../services/aisleService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { FoodGrid } from '../../components/common/FoodGrid';
 import { useFavorites } from '../../hooks/useFavorites';
+import { FilterBar } from '../../components/common/FilterBar2';
+import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/filterUtils';
+import { Supermarket } from '../../types';
 
 interface AisleDetailViewProps {
   navigation: any;
@@ -40,7 +43,12 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
-  
+  const [filters, setFilters] = useState<FilterState>({
+    processingLevels: [],
+    supermarketIds: [],
+  });
+  const [availableSupermarkets, setAvailableSupermarkets] = useState<Supermarket[]>([]);
+
   const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
@@ -48,8 +56,18 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
   }, [slug]);
 
   useEffect(() => {
-    filterFoods();
-  }, [searchQuery, foods]);
+    // Apply filters whenever search, filters, or foods change
+    const filtered = applyFilters(foods, filters, searchQuery);
+    setFilteredFoods(filtered);
+  }, [searchQuery, foods, filters]);
+
+  useEffect(() => {
+    // Extract unique supermarkets when foods load
+    if (foods.length > 0) {
+      const supermarkets = getUniqueSupermarkets(foods);
+      setAvailableSupermarkets(supermarkets);
+    }
+  }, [foods]);
 
   const loadAisleData = async () => {
     try {
@@ -87,18 +105,6 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
       Alert.alert('Error', 'Failed to load aisle data');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const filterFoods = () => {
-    if (searchQuery.trim() === '') {
-      setFilteredFoods(foods);
-    } else {
-      const filtered = foods.filter(food =>
-        food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        food.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredFoods(filtered);
     }
   };
 
@@ -189,6 +195,17 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
         )}
       </View>
 
+      {/* Filter Bar */}
+      {!isSearchActive && (
+        <FilterBar
+          activeFilters={filters}
+          onFiltersChange={setFilters}
+          availableSupermarkets={availableSupermarkets}
+          totalCount={foods.length}
+          filteredCount={filteredFoods.length}
+        />
+      )}
+
       <FoodGrid
         foods={filteredFoods}
         onFoodPress={navigateToFoodDetail}
@@ -196,14 +213,6 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
         onToggleFavorite={toggleFavorite}
         ListHeaderComponent={() => (
           <View>
-            {/* Results count */}
-            <Text style={styles.resultsText}>
-              {searchQuery 
-                ? `${filteredFoods.length} results for "${searchQuery}"` 
-                : `${foods.length} foods available`
-              }
-            </Text>
-
             {/* Child aisles section */}
             {childAisles.length > 0 && !searchQuery && (
               <View style={styles.childAislesSection}>
@@ -307,15 +316,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginLeft: theme.spacing.sm,
   },
-  
-  
-  resultsText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-  },
-  
+
   childAislesSection: {
     marginBottom: theme.spacing.lg,
   },

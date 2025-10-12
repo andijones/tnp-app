@@ -19,6 +19,9 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { FoodGrid } from '../../components/common/FoodGrid';
 import { Button } from '../../components/common/Button';
 import { useFavorites } from '../../hooks/useFavorites';
+import { FilterBar } from '../../components/common/FilterBar2';
+import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/filterUtils';
+import { Supermarket } from '../../types';
 
 interface HomeScreenProps {
   navigation: any;
@@ -31,6 +34,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    processingLevels: [],
+    supermarketIds: [],
+  });
+  const [availableSupermarkets, setAvailableSupermarkets] = useState<Supermarket[]>([]);
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const foodGridRef = useRef<FlatList>(null);
@@ -40,22 +48,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredFoods(foods);
-    } else {
-      const filtered = foods.filter(food =>
-        food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        food.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredFoods(filtered);
+    // Apply filters whenever search, filters, or foods change
+    const filtered = applyFilters(foods, filters, searchQuery);
+    setFilteredFoods(filtered);
+  }, [searchQuery, foods, filters]);
+
+  useEffect(() => {
+    // Extract unique supermarkets when foods load
+    if (foods.length > 0) {
+      const supermarkets = getUniqueSupermarkets(foods);
+      setAvailableSupermarkets(supermarkets);
     }
-  }, [searchQuery, foods]);
+  }, [foods]);
 
   const fetchFoods = async () => {
     try {
       const { data, error } = await supabase
         .from('foods')
-        .select('*')
+        .select(`
+          *,
+          food_supermarkets(supermarket)
+        `)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
@@ -65,7 +78,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         return;
       }
 
-      setFoods(data || []);
+      // Transform data to flatten supermarkets array
+      const transformedData = (data || []).map(food => ({
+        ...food,
+        supermarkets: food.food_supermarkets?.map((fs: any) => fs.supermarket) ||
+                      (food.supermarket ? [food.supermarket] : [])
+      }));
+
+      setFoods(transformedData);
     } catch (error) {
       console.error('Error:', error);
       Alert.alert('Error', 'An unexpected error occurred.');
@@ -151,6 +171,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         )}
       </View>
 
+      {/* Filter Bar */}
+      {!isSearchActive && (
+        <FilterBar
+          activeFilters={filters}
+          onFiltersChange={setFilters}
+          availableSupermarkets={availableSupermarkets}
+          totalCount={foods.length}
+          filteredCount={filteredFoods.length}
+        />
+      )}
+
       <View style={styles.container}>
         <FoodGrid
           ref={foodGridRef}
@@ -161,10 +192,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         ListHeaderComponent={
           <View>
             {/* Scanner Feature Section - Only show when not searching */}
+            {/* Temporarily hidden - may add back later
             {!searchQuery && (
               <View style={styles.featureSection}>
                 <View style={styles.scannerCard}>
-                  {/* Background Pattern */}
                   <View style={styles.backgroundContainer}>
                     <Image
                       source={require('../../../assets/bg-line.png')}
@@ -173,26 +204,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     />
                   </View>
 
-                  {/* Content */}
                   <View style={styles.cardContent}>
-                    {/* Barcode Icon */}
                     <Image
                       source={require('../../../assets/barcode.png')}
                       style={styles.barcodeImage}
                       resizeMode="contain"
                     />
 
-                    {/* Main Title */}
                     <Text style={styles.scannerTitle}>
                       Scan any food to{'\n'}see if it's non-upf
                     </Text>
 
-                  {/* Subtitle */}
                   <Text style={styles.scannerSubtitle}>
                     Simply snap, AI analyses and you get a{'\n'}health score
                   </Text>
 
-                    {/* CTA Button */}
                     <Button
                       title="Scan Ingredients Now"
                       onPress={() => navigation.navigate('Scanner')}
@@ -202,16 +228,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </View>
               </View>
             )}
-            
-            {/* Stats Section */}
-            <View style={styles.statsContainer}>
-              <Text style={styles.statsText}>
-                {searchQuery 
-                  ? `${filteredFoods.length} results for "${searchQuery}"` 
-                  : `${foods.length} foods available`
-                }
-              </Text>
-            </View>
+            */}
           </View>
         }
         ListEmptyComponent={
@@ -392,25 +409,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     alignSelf: 'stretch',
   },
-  
-  
-  statsContainer: {
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
-    alignItems: 'flex-start',
-  },
 
-  statsText: {
-    fontFamily: 'Inter',
-    fontSize: 14, // 12px * 1.2 scale factor
-    fontWeight: '600',
-    color: '#737373',
-    textAlign: 'left',
-    alignSelf: 'flex-start',
-  },
-  
-  
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: theme.spacing.xxl,

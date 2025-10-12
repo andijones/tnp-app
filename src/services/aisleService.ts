@@ -146,10 +146,13 @@ class AisleService {
         return [];
       }
 
-      // Get actual food data
+      // Get actual food data with supermarkets
       const { data: foods, error: foodsError } = await supabase
         .from('foods')
-        .select('*')
+        .select(`
+          *,
+          food_supermarkets(supermarket)
+        `)
         .in('id', foodIds)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
@@ -159,9 +162,15 @@ class AisleService {
         return [];
       }
 
-      const result = foods || [];
-      this.cacheFoods(result, aisleId);
-      return result;
+      // Transform data to flatten supermarkets array
+      const transformedData = (foods || []).map(food => ({
+        ...food,
+        supermarkets: food.food_supermarkets?.map((fs: any) => fs.supermarket) ||
+                      (food.supermarket ? [food.supermarket] : [])
+      }));
+
+      this.cacheFoods(transformedData, aisleId);
+      return transformedData;
 
     } catch (error) {
       console.error('Error in getFoodsForAisle:', error);
@@ -174,7 +183,10 @@ class AisleService {
     try {
       const { data: foods, error } = await supabase
         .from('foods')
-        .select('*')
+        .select(`
+          *,
+          food_supermarkets(supermarket)
+        `)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
@@ -183,7 +195,14 @@ class AisleService {
         return [];
       }
 
-      return foods || [];
+      // Transform data to flatten supermarkets array
+      const transformedData = (foods || []).map(food => ({
+        ...food,
+        supermarkets: food.food_supermarkets?.map((fs: any) => fs.supermarket) ||
+                      (food.supermarket ? [food.supermarket] : [])
+      }));
+
+      return transformedData;
     } catch (error) {
       console.error('Error in getAllFoods:', error);
       return [];

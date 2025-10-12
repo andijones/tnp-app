@@ -58,18 +58,33 @@ export const FoodImage: React.FC<FoodImageProps> = ({
     }
   };
 
-  const getNovaColor = (novaGroup?: number) => {
+  const getProcessingColor = (novaGroup?: number) => {
     switch (novaGroup) {
       case 1:
-        return theme.colors.nova.group1;
+        return theme.colors.processing.wholeFood.color;
       case 2:
-        return theme.colors.nova.group2;
+        return theme.colors.processing.extractedFoods.color;
       case 3:
-        return theme.colors.nova.group3;
+        return theme.colors.processing.lightlyProcessed.color;
       case 4:
-        return theme.colors.nova.group4;
+        return theme.colors.processing.processed.color;
       default:
         return theme.colors.text.tertiary;
+    }
+  };
+
+  const getProcessingLabel = (novaGroup?: number): string => {
+    switch (novaGroup) {
+      case 1:
+        return 'W'; // Whole
+      case 2:
+        return 'E'; // Extracted
+      case 3:
+        return 'L'; // Lightly
+      case 4:
+        return 'P'; // Processed
+      default:
+        return '?';
     }
   };
 
@@ -127,27 +142,35 @@ export const FoodImage: React.FC<FoodImageProps> = ({
         />
       )}
       
-      {/* NOVA Tag - only show if not in grid layout (when borderRadius isn't 0) */}
+      {/* Processing Level Tag - only show if not in grid layout (when borderRadius isn't 0) */}
       {novaGroup && style?.borderRadius !== 0 && (
         <View style={{
           position: 'absolute',
           top: -4,
           right: -4,
-          width: 20,
-          height: 20,
-          borderRadius: 10,
-          backgroundColor: getNovaColor(novaGroup),
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: getProcessingColor(novaGroup),
           justifyContent: 'center',
           alignItems: 'center',
+          borderWidth: 2,
+          borderColor: '#FFFFFF',
+          // Shadow for depth
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 3,
+          elevation: 3,
         }}>
           <Text style={{
-            fontSize: 10,
-            fontWeight: '700',
+            fontSize: 9,
+            fontWeight: '800',
             color: '#FFFFFF',
             fontFamily: 'System',
             textAlign: 'center',
           }}>
-            {novaGroup}
+            {getProcessingLabel(novaGroup)}
           </Text>
         </View>
       )}
