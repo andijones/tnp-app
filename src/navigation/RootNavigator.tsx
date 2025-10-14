@@ -13,7 +13,7 @@ import { FavoritesScreen } from '../screens/favorites/FavoritesScreen';
 import { AisleMenuView } from '../screens/aisles/AisleMenuScreen';
 import { AisleDetailView } from '../screens/aisles/AisleDetailScreen';
 import { FoodDetailScreen } from '../screens/food/FoodDetailScreen';
-import { IngredientScannerScreen } from '../screens/scanner/IngredientScannerScreen';
+import { UnifiedScannerScreen } from '../screens/scanner/UnifiedScannerScreen';
 import { SubmissionScreen } from '../screens/scanner/SubmissionScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { UserReviewsScreen } from '../screens/profile/UserReviewsScreen';
@@ -184,7 +184,7 @@ function TabNavigator() {
     >
       <Tab.Screen
         name="Scanner"
-        component={IngredientScannerScreen}
+        component={UnifiedScannerScreen}
         options={({ route }) => ({
           title: 'Scanner',
           tabBarIcon: ({ focused, color }) => (

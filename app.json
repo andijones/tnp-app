@@ -16,7 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.yourcompany.tnp",
       "buildNumber": "1",
-      "associatedDomains": ["applinks:uacihrlnwlqhpbobzajs.supabase.co"],
+      "associatedDomains": [
+        "applinks:uacihrlnwlqhpbobzajs.supabase.co"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to scan ingredient labels and barcodes",
         "NSPhotoLibraryUsageDescription": "This app accesses your photo library to select images of food products"
@@ -40,13 +42,19 @@
               "pathPrefix": "/auth/v1/callback"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "tnpclean"
+    "scheme": "tnpclean",
+    "plugins": [
+      "expo-barcode-scanner"
+    ]
   }
 }
