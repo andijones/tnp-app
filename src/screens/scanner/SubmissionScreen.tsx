@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -17,7 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { SegmentedTabs } from '../../components/common/SegmentedTabs';
 import { supabase } from '../../services/supabase/config';
 
 type SubmissionMode = 'photo' | 'url';
@@ -32,10 +32,7 @@ export const SubmissionScreen: React.FC = () => {
   const [mode, setMode] = useState<SubmissionMode>('photo');
   const [selectedImages, setSelectedImages] = useState<ImageItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const tabOptions = ['Photo', 'URL'];
-  const getModeIndex = (mode: SubmissionMode) => mode === 'photo' ? 0 : 1;
-  const getIndexMode = (index: number): SubmissionMode => index === 0 ? 'photo' : 'url';
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Form data
   const [productName, setProductName] = useState('');
@@ -43,9 +40,26 @@ export const SubmissionScreen: React.FC = () => {
   const [supermarket, setSupermarket] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Animation for mode switching
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const switchMode = (newMode: SubmissionMode) => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    setMode(newMode);
+  };
+
   const compressImage = async (uri: string): Promise<string> => {
-    // For now, return the original URI
-    // In production, you'd implement proper image compression here
     return uri;
   };
 
@@ -117,36 +131,30 @@ export const SubmissionScreen: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         Alert.alert('Error', 'Please log in to submit');
         return;
       }
 
-      // Upload images to Supabase Storage
       const uploadedImages: string[] = [];
-      
+
       for (let i = 0; i < selectedImages.length; i++) {
         const image = selectedImages[i];
         const fileName = `photo-submission-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}.jpg`;
-        
-        console.log('Uploading image:', fileName, 'URI:', image.uri);
-        
-        // Convert image URI to ArrayBuffer for better React Native compatibility
+
         const response = await fetch(image.uri);
         if (!response.ok) {
           throw new Error(`Failed to fetch image: ${response.status}`);
         }
-        
+
         const arrayBuffer = await response.arrayBuffer();
-        console.log('ArrayBuffer size:', arrayBuffer.byteLength);
-        
-        // Verify ArrayBuffer has content
+
         if (arrayBuffer.byteLength === 0) {
           throw new Error('Image ArrayBuffer is empty - image may be corrupted');
         }
-        
+
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('food-images')
           .upload(`submissions/${fileName}`, arrayBuffer, {
@@ -155,51 +163,34 @@ export const SubmissionScreen: React.FC = () => {
           });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
           throw uploadError;
         }
-
-        console.log('Upload successful:', uploadData);
 
         const { data: { publicUrl } } = supabase.storage
           .from('food-images')
           .getPublicUrl(`submissions/${fileName}`);
 
-        console.log('Public URL:', publicUrl);
-        
-        // Verify the uploaded image is accessible
-        try {
-          const urlTest = await fetch(publicUrl);
-          console.log('URL accessibility test:', urlTest.status);
-          if (!urlTest.ok) {
-            console.warn('Warning: Uploaded image may not be accessible');
-          }
-        } catch (urlTestError) {
-          console.warn('Warning: Could not verify image accessibility:', urlTestError);
-        }
-        
         uploadedImages.push(publicUrl);
       }
 
-      // Create description with additional image URLs
       let description = notes.trim();
       if (uploadedImages.length > 1) {
-        const additionalImages = uploadedImages.slice(1).map((url, index) => 
+        const additionalImages = uploadedImages.slice(1).map((url, index) =>
           `Additional Image ${index + 2}: ${url}`
         ).join('\n');
         description += description ? `\n\n${additionalImages}` : additionalImages;
       }
 
-      // Insert into foods table
       const { error: insertError } = await supabase
         .from('foods')
         .insert({
           name: productName.trim(),
           category: 'photo-submission',
           description: description,
-          image: uploadedImages[0], // Primary image
+          image: uploadedImages[0],
           status: 'pending',
           user_id: user.id,
+          supermarket: supermarket.trim() || null,
           created_at: new Date().toISOString(),
         });
 
@@ -208,26 +199,23 @@ export const SubmissionScreen: React.FC = () => {
       }
 
       Alert.alert(
-        'Success!', 
-        'Your photo submission has been sent for review. Thank you for contributing!',
-        [{ text: 'OK', onPress: resetForm }]
+        '✓ Submitted!',
+        'Your food has been submitted for review. We\'ll notify you once it\'s approved.',
+        [{ text: 'Got it', onPress: resetForm }]
       );
 
     } catch (error) {
       console.error('Photo submission error:', error);
-      
-      // Provide more specific error messages
-      let errorMessage = 'Failed to submit photos. Please try again.';
+
+      let errorMessage = 'Failed to submit. Please try again.';
       if (error instanceof Error) {
         if (error.message.includes('Failed to fetch image')) {
-          errorMessage = 'Could not access the selected image. Please try selecting a different image.';
+          errorMessage = 'Could not access the selected image. Please try a different image.';
         } else if (error.message.includes('storage')) {
-          errorMessage = 'Image upload failed. Please check your internet connection and try again.';
-        } else if (error.message.includes('policies')) {
-          errorMessage = 'Storage permission error. Please contact support.';
+          errorMessage = 'Upload failed. Please check your connection and try again.';
         }
       }
-      
+
       Alert.alert('Upload Error', errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -242,7 +230,7 @@ export const SubmissionScreen: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         Alert.alert('Error', 'Please log in to submit');
@@ -263,9 +251,9 @@ export const SubmissionScreen: React.FC = () => {
       }
 
       Alert.alert(
-        'Success!', 
-        'Your URL submission has been sent for review.',
-        [{ text: 'OK', onPress: resetForm }]
+        '✓ Submitted!',
+        'Your product link has been submitted. We\'ll extract the details and add it to our database.',
+        [{ text: 'Got it', onPress: resetForm }]
       );
 
     } catch (error) {
@@ -275,7 +263,6 @@ export const SubmissionScreen: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
 
   const resetForm = () => {
     setSelectedImages([]);
@@ -287,454 +274,500 @@ export const SubmissionScreen: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    switch (mode) {
-      case 'photo':
-        submitPhotoSubmission();
-        break;
-      case 'url':
-        submitUrl();
-        break;
+    if (mode === 'photo') {
+      submitPhotoSubmission();
+    } else {
+      submitUrl();
     }
   };
 
-  const renderModeSelector = () => (
-    <View style={styles.tabContainer}>
-      <SegmentedTabs
-        options={tabOptions}
-        selectedIndex={getModeIndex(mode)}
-        onSelectionChange={(index) => setMode(getIndexMode(index))}
-        style={styles.segmentedTabs}
-      />
-    </View>
-  );
-
-  const renderPhotoMode = () => (
-    <ScrollView style={styles.formContainer}>
-      {/* Image Selection */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Product Images (Max 3)</Text>
-        
-        <View style={styles.imageGrid}>
-          {selectedImages.map((image) => (
-            <View key={image.id} style={styles.imageItem}>
-              <Image source={{ uri: image.uri }} style={styles.selectedImage} />
-              <TouchableOpacity
-                style={styles.removeImageButton}
-                onPress={() => removeImage(image.id)}
-              >
-                <Ionicons name="close-circle" size={20} color={theme.colors.error} />
-              </TouchableOpacity>
-            </View>
-          ))}
-          
-          {selectedImages.length < 3 && (
-            <View style={styles.addImageContainer}>
-              <TouchableOpacity style={styles.addImageButton} onPress={takePhoto}>
-                <Ionicons name="camera" size={24} color={theme.colors.text.secondary} />
-                <Text style={styles.addImageText}>Take Photo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.addImageButton} onPress={addImageFromGallery}>
-                <Ionicons name="images" size={24} color={theme.colors.text.secondary} />
-                <Text style={styles.addImageText}>Gallery</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Form Fields */}
-      <Input
-        label="Product Name *"
-        value={productName}
-        onChangeText={setProductName}
-        placeholder="Enter product name"
-      />
-
-      <Input
-        label="Supermarket"
-        value={supermarket}
-        onChangeText={setSupermarket}
-        placeholder="e.g., Tesco, Sainsbury's"
-      />
-
-      <Input
-        label="Notes (Optional)"
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Any additional information about this product"
-        multiline
-      />
-    </ScrollView>
-  );
-
-  const renderUrlMode = () => (
-    <ScrollView style={styles.formContainer}>
-      <Input
-        label="Product URL *"
-        value={productUrl}
-        onChangeText={setProductUrl}
-        placeholder="https://example.com/product"
-      />
-
-      <View style={styles.infoBox}>
-        <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-        <Text style={styles.infoText}>
-          Paste a product URL from any major retailer. Our team will extract the product information and add it to the database.
-        </Text>
-      </View>
-    </ScrollView>
-  );
-
+  const isPhotoFormValid = selectedImages.length > 0 && productName.trim().length > 0;
+  const isUrlFormValid = productUrl.trim().length > 0;
+  const isFormValid = mode === 'photo' ? isPhotoFormValid : isUrlFormValid;
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Add Food</Text>
+        <Text style={styles.headerSubtitle}>Help grow our database</Text>
       </View>
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
-          style={styles.scrollContainer}
+          ref={scrollViewRef}
+          style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Mode Selector */}
+          <View style={styles.modeSelectorContainer}>
+            <TouchableOpacity
+              style={[styles.modeButton, mode === 'photo' && styles.modeButtonActive]}
+              onPress={() => switchMode('photo')}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="camera"
+                size={20}
+                color={mode === 'photo' ? '#1F5932' : '#737373'}
+              />
+              <Text style={[styles.modeButtonText, mode === 'photo' && styles.modeButtonTextActive]}>
+                Take Photo
+              </Text>
+            </TouchableOpacity>
 
-        {/* Mode Selector Card */}
-        <View style={styles.modeCard}>
-          <Text style={styles.modeLabel}>How would you like to submit?</Text>
-          <SegmentedTabs
-            options={tabOptions}
-            selectedIndex={getModeIndex(mode)}
-            onSelectionChange={(index) => setMode(getIndexMode(index))}
-          />
-        </View>
+            <TouchableOpacity
+              style={[styles.modeButton, mode === 'url' && styles.modeButtonActive]}
+              onPress={() => switchMode('url')}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="link"
+                size={20}
+                color={mode === 'url' ? '#1F5932' : '#737373'}
+              />
+              <Text style={[styles.modeButtonText, mode === 'url' && styles.modeButtonTextActive]}>
+                Share Link
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Photo Mode */}
-        {mode === 'photo' && (
-          <>
-            {/* Image Upload Section */}
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Ionicons name="images" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Product Photos</Text>
-              </View>
+          <Animated.View style={{ opacity: fadeAnim }}>
+            {/* Photo Mode */}
+            {mode === 'photo' && (
+              <View style={styles.formContent}>
+                {/* Hero Image Upload */}
+                {selectedImages.length === 0 ? (
+                  <View style={styles.emptyImageState}>
+                    <View style={styles.emptyImageIconContainer}>
+                      <Ionicons name="camera" size={48} color="#44DB6D" />
+                    </View>
+                    <Text style={styles.emptyImageTitle}>Add product photos</Text>
+                    <Text style={styles.emptyImageSubtitle}>
+                      Take clear photos of the product and ingredients
+                    </Text>
 
-              <View style={styles.imageGrid}>
-                {selectedImages.map((image) => (
-                  <View key={image.id} style={styles.imageWrapper}>
-                    <Image source={{ uri: image.uri }} style={styles.thumbnailImage} />
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => removeImage(image.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="close" size={16} color="#FFFFFF" />
-                    </TouchableOpacity>
+                    <View style={styles.uploadActionsRow}>
+                      <TouchableOpacity
+                        style={styles.uploadActionButton}
+                        onPress={takePhoto}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.uploadActionIconContainer}>
+                          <Ionicons name="camera" size={24} color="#1F5932" />
+                        </View>
+                        <Text style={styles.uploadActionLabel}>Camera</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.uploadActionButton}
+                        onPress={addImageFromGallery}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.uploadActionIconContainer}>
+                          <Ionicons name="images" size={24} color="#1F5932" />
+                        </View>
+                        <Text style={styles.uploadActionLabel}>Gallery</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                ))}
+                ) : (
+                  <View style={styles.imagesContainer}>
+                    {/* Primary Image */}
+                    <View style={styles.primaryImageContainer}>
+                      <Image
+                        source={{ uri: selectedImages[0].uri }}
+                        style={styles.primaryImage}
+                      />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => removeImage(selectedImages[0].id)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </View>
 
-                {selectedImages.length < 3 && (
-                  <>
-                    <TouchableOpacity
-                      style={styles.uploadButton}
-                      onPress={takePhoto}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="camera" size={28} color={theme.colors.primary} />
-                      <Text style={styles.uploadButtonText}>Camera</Text>
-                    </TouchableOpacity>
+                    {/* Thumbnail Grid */}
+                    <View style={styles.thumbnailGrid}>
+                      {selectedImages.slice(1).map((image) => (
+                        <View key={image.id} style={styles.thumbnailWrapper}>
+                          <Image
+                            source={{ uri: image.uri }}
+                            style={styles.thumbnailImage}
+                          />
+                          <TouchableOpacity
+                            style={styles.removeThumbnailButton}
+                            onPress={() => removeImage(image.id)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="close" size={14} color="#FFFFFF" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
 
-                    <TouchableOpacity
-                      style={styles.uploadButton}
-                      onPress={addImageFromGallery}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="image" size={28} color={theme.colors.primary} />
-                      <Text style={styles.uploadButtonText}>Gallery</Text>
-                    </TouchableOpacity>
-                  </>
+                      {/* Add More Button */}
+                      {selectedImages.length < 3 && (
+                        <TouchableOpacity
+                          style={styles.addMoreButton}
+                          onPress={addImageFromGallery}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="add" size={28} color="#44DB6D" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    <Text style={styles.imageCounter}>
+                      {selectedImages.length} of 3 photos
+                    </Text>
+                  </View>
+                )}
+
+                {/* Form Fields - Only show after image is added */}
+                {selectedImages.length > 0 && (
+                  <View style={styles.formFields}>
+                    <Input
+                      label="Product Name"
+                      value={productName}
+                      onChangeText={setProductName}
+                      placeholder="E.g., Organic Almond Milk"
+                    />
+
+                    <Input
+                      label="Supermarket (Optional)"
+                      value={supermarket}
+                      onChangeText={setSupermarket}
+                      placeholder="E.g., Tesco, Sainsbury's"
+                    />
+
+                    <Input
+                      label="Notes (Optional)"
+                      value={notes}
+                      onChangeText={setNotes}
+                      placeholder="Any additional details..."
+                      multiline
+                    />
+                  </View>
                 )}
               </View>
+            )}
 
-              {selectedImages.length < 3 && (
-                <Text style={styles.helperText}>
-                  Upload up to 3 clear photos of the product
-                </Text>
-              )}
-            </View>
+            {/* URL Mode */}
+            {mode === 'url' && (
+              <View style={styles.formContent}>
+                <View style={styles.urlHero}>
+                  <View style={styles.urlIconContainer}>
+                    <Ionicons name="link" size={40} color="#44DB6D" />
+                  </View>
+                  <Text style={styles.urlTitle}>Share a product link</Text>
+                  <Text style={styles.urlSubtitle}>
+                    We'll automatically extract the product details
+                  </Text>
+                </View>
 
-            {/* Product Details Card */}
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Product Details</Text>
+                <View style={styles.formFields}>
+                  <Input
+                    label="Product URL"
+                    value={productUrl}
+                    onChangeText={setProductUrl}
+                    placeholder="https://www.supermarket.com/product"
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+
+                  <View style={styles.urlInfoBox}>
+                    <Ionicons name="information-circle-outline" size={20} color="#1F5932" />
+                    <Text style={styles.urlInfoText}>
+                      Paste any supermarket product URL
+                    </Text>
+                  </View>
+                </View>
               </View>
+            )}
+          </Animated.View>
 
-              <Input
-                label="Product Name *"
-                value={productName}
-                onChangeText={setProductName}
-                placeholder="E.g., Organic Almond Milk"
-              />
-
-              <Input
-                label="Supermarket"
-                value={supermarket}
-                onChangeText={setSupermarket}
-                placeholder="E.g., Tesco, Sainsbury's"
-              />
-
-              <Input
-                label="Additional Notes"
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Any special details about this product..."
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </>
-        )}
-
-        {/* URL Mode */}
-        {mode === 'url' && (
-          <>
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Ionicons name="link" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Product URL</Text>
-              </View>
-
-              <Input
-                label="Product Link *"
-                value={productUrl}
-                onChangeText={setProductUrl}
-                placeholder="https://www.supermarket.com/product"
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
-
-            <View style={styles.infoCard}>
-              <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
-              <Text style={styles.infoCardText}>
-                We'll automatically extract product details from the URL and add it to our database
-              </Text>
-            </View>
-          </>
-        )}
-
-        {/* Submit Button */}
-        <Button
-          title={isSubmitting ? "Submitting..." : "Submit for Review"}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-          variant="secondary"
-          leftIcon={isSubmitting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Ionicons name="paper-plane" size={20} color="#FFFFFF" />}
-        />
-
-        {/* Footer Note */}
-        <View style={styles.footerNote}>
-          <Ionicons name="time" size={16} color="#737373" />
-          <Text style={styles.footerNoteText}>
-            Submissions are reviewed within 24-48 hours
-          </Text>
-        </View>
-      </ScrollView>
+          {/* Submit Button - Now inside ScrollView */}
+          <View style={styles.submitContainer}>
+            <Button
+              title={isSubmitting ? "Submitting..." : "Submit"}
+              onPress={handleSubmit}
+              disabled={isSubmitting || !isFormValid}
+              variant="secondary"
+              leftIcon={
+                isSubmitting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                )
+              }
+            />
+            <Text style={styles.submitNote}>
+              Reviewed within 24-48 hours
+            </Text>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: theme.colors.green[950],
-    textAlign: 'center',
-    letterSpacing: -0.3,
-  },
-
-  keyboardView: {
+  container: {
     flex: 1,
     backgroundColor: '#F7F6F0',
   },
-
-  scrollContainer: {
+  header: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#1F5932',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#737373',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 20,
-    paddingTop: 20,
-    paddingBottom: 140, // Extra padding for floating tab bar
+    paddingBottom: 120, // Extra padding for tab bar (100px) + spacing
   },
 
   // Mode Selector
-  modeCard: {
+  modeSelectorContainer: {
+    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
+    padding: 4,
+    marginBottom: 24,
+    gap: 4,
   },
-  modeLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1F5932',
-    marginBottom: 12,
-  },
-
-  // Card Styles
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  cardHeader: {
+  modeButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     gap: 8,
   },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+  modeButtonActive: {
+    backgroundColor: '#E0FFE7',
+  },
+  modeButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#737373',
+  },
+  modeButtonTextActive: {
     color: '#1F5932',
   },
 
-  // Image Grid
-  imageGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 12,
+  // Form Content
+  formContent: {
+    gap: 24,
   },
-  imageWrapper: {
-    width: 100,
-    height: 100,
+
+  // Empty Image State
+  emptyImageState: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyImageIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#E0FFE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  emptyImageTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F5932',
+    marginBottom: 8,
+  },
+  emptyImageSubtitle: {
+    fontSize: 14,
+    color: '#737373',
+    textAlign: 'center',
+    marginBottom: 28,
+  },
+  uploadActionsRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  uploadActionButton: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  uploadActionIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#E0FFE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadActionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F5932',
+  },
+
+  // Images Container (with photos)
+  imagesContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+  },
+  primaryImageContainer: {
+    width: '100%',
+    aspectRatio: 4 / 3,
     borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+    position: 'relative',
+  },
+  primaryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbnailGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  thumbnailWrapper: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+    overflow: 'hidden',
     position: 'relative',
   },
   thumbnailImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
   },
-  deleteButton: {
+  removeThumbnailButton: {
     position: 'absolute',
-    top: -6,
-    right: -6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#EF4444',
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
   },
-  uploadButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
+  addMoreButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: '#44DB6D',
     borderStyle: 'dashed',
-    backgroundColor: 'rgba(68, 219, 109, 0.05)',
+    backgroundColor: '#E0FFE7',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
   },
-  uploadButtonText: {
+  imageCounter: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#1F5932',
-  },
-  helperText: {
-    fontSize: 13,
     color: '#737373',
-    marginTop: 4,
+    textAlign: 'center',
   },
 
-  // Info Card
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: 'rgba(68, 219, 109, 0.08)',
-    borderWidth: 1,
-    borderColor: '#44DB6D',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    gap: 12,
-  },
-  infoCardText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1F5932',
-    lineHeight: 20,
+  // Form Fields
+  formFields: {
+    gap: 0,
   },
 
-
-  // Footer
-  footerNote: {
-    flexDirection: 'row',
+  // URL Mode
+  urlHero: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+  },
+  urlIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E0FFE7',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
+    marginBottom: 16,
   },
-  footerNoteText: {
-    fontSize: 13,
+  urlTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F5932',
+    marginBottom: 8,
+  },
+  urlSubtitle: {
+    fontSize: 14,
     color: '#737373',
+    textAlign: 'center',
+  },
+  urlInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E0FFE7',
+    borderRadius: 8,
+    padding: 12,
+    gap: 8,
+    marginTop: -8,
+  },
+  urlInfoText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#1F5932',
+    fontWeight: '500',
+  },
+
+  // Submit Container
+  submitContainer: {
+    marginTop: 32,
+  },
+  submitNote: {
+    fontSize: 12,
+    color: '#737373',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });

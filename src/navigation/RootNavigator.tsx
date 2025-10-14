@@ -20,6 +20,10 @@ import { UserReviewsScreen } from '../screens/profile/UserReviewsScreen';
 import { UserContributionsScreen } from '../screens/profile/UserContributionsScreen';
 import { ProfilePicture } from '../components/common/ProfilePicture';
 import { useUser } from '../hooks/useUser';
+import { ScannerIcon } from '../components/icons/ScannerIcon';
+import { TNPLogoIcon } from '../components/icons/TNPLogoIcon';
+import { AddIcon } from '../components/icons/AddIcon';
+import { HeartIcon } from '../components/icons/HeartIcon';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -48,13 +52,15 @@ function AnimatedTabIcon({
   focusedName,
   focused,
   color,
-  size
+  size,
+  customIcon,
 }: {
   name: string;
   focusedName: string;
   focused: boolean;
   color: string;
   size: number;
+  customIcon?: 'scanner' | 'tnp-logo' | 'add' | 'heart';
 }) {
   const scaleAnim = React.useRef(new Animated.Value(focused ? 1 : 0.85)).current;
   const bounceAnim = React.useRef(new Animated.Value(0)).current;
@@ -82,6 +88,29 @@ function AnimatedTabIcon({
     ]).start();
   }, [focused]);
 
+  // Render custom icon if specified
+  const renderIcon = () => {
+    if (customIcon === 'scanner') {
+      return <ScannerIcon size={size} color={color} focused={focused} />;
+    }
+    if (customIcon === 'tnp-logo') {
+      return <TNPLogoIcon size={size} color={color} focused={focused} />;
+    }
+    if (customIcon === 'add') {
+      return <AddIcon size={size} color={color} focused={focused} />;
+    }
+    if (customIcon === 'heart') {
+      return <HeartIcon size={size} color={color} focused={focused} />;
+    }
+    return (
+      <Ionicons
+        name={focused ? focusedName : name}
+        size={size}
+        color={color}
+      />
+    );
+  };
+
   return (
     <Animated.View
       style={{
@@ -91,11 +120,7 @@ function AnimatedTabIcon({
         ],
       }}
     >
-      <Ionicons
-        name={focused ? focusedName : name}
-        size={size}
-        color={color}
-      />
+      {renderIcon()}
     </Animated.View>
   );
 }
@@ -194,6 +219,7 @@ function TabNavigator() {
               focused={focused}
               color={color}
               size={28}
+              customIcon="scanner"
             />
           ),
           tabBarStyle: (route.params as any)?.hideTabBar ? { display: 'none' } : {
@@ -231,6 +257,7 @@ function TabNavigator() {
               focused={focused}
               color={color}
               size={28}
+              customIcon="tnp-logo"
             />
           ),
         }}
@@ -247,6 +274,7 @@ function TabNavigator() {
               focused={focused}
               color={color}
               size={28}
+              customIcon="add"
             />
           ),
         }}
@@ -263,6 +291,7 @@ function TabNavigator() {
               focused={focused}
               color={color}
               size={28}
+              customIcon="heart"
             />
           ),
         }}

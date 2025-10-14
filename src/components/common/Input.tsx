@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Text, StyleSheet, KeyboardTypeOptions, TextInputProps } from 'react-native';
 import { theme } from '../../theme';
 
 interface InputProps {
@@ -10,6 +10,9 @@ interface InputProps {
   secureTextEntry?: boolean;
   error?: string;
   multiline?: boolean;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  keyboardType?: KeyboardTypeOptions;
+  numberOfLines?: number;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -20,6 +23,9 @@ export const Input: React.FC<InputProps> = ({
   secureTextEntry = false,
   error,
   multiline = false,
+  autoCapitalize = 'sentences',
+  keyboardType = 'default',
+  numberOfLines,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -40,7 +46,12 @@ export const Input: React.FC<InputProps> = ({
         onBlur={() => setIsFocused(false)}
         secureTextEntry={secureTextEntry}
         multiline={multiline}
+        numberOfLines={numberOfLines}
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
         placeholderTextColor={theme.colors.text.tertiary}
+        returnKeyType={multiline ? 'default' : 'done'}
+        blurOnSubmit={!multiline}
       />
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
