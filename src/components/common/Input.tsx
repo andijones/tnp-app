@@ -32,28 +32,34 @@ export const Input: React.FC<InputProps> = ({
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <TextInput
-        style={[
-          styles.input,
-          isFocused && styles.inputFocused,
-          error && styles.inputError,
-          multiline && styles.multilineInput
-        ]}
-        placeholder={placeholder}
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        secureTextEntry={secureTextEntry}
-        multiline={multiline}
-        numberOfLines={numberOfLines}
-        autoCapitalize={autoCapitalize}
-        keyboardType={keyboardType}
-        placeholderTextColor={theme.colors.text.tertiary}
-        returnKeyType={multiline ? 'default' : 'done'}
-        blurOnSubmit={!multiline}
-      />
-      {error && <Text style={styles.error}>{error}</Text>}
+      <View style={[
+        styles.inputContainer,
+        isFocused && styles.inputContainerFocused,
+        error && styles.inputContainerError,
+      ]}>
+        <TextInput
+          style={[
+            styles.input,
+            multiline && styles.multilineInput,
+            error && styles.inputError,
+          ]}
+          placeholder={placeholder}
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          secureTextEntry={secureTextEntry}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          autoCapitalize={autoCapitalize}
+          keyboardType={keyboardType}
+          placeholderTextColor="#A3A3A3"
+          returnKeyType={multiline ? 'default' : 'done'}
+          blurOnSubmit={!multiline}
+          textAlignVertical="center"
+        />
+      </View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
@@ -62,61 +68,68 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
   },
+
+  // Label - direct from Figma (no scaling)
   label: {
-    ...theme.typography.label,
-    color: '#1F5932', // Green-950
-    fontSize: 16, // 12px Figma × 1.33
-    fontWeight: '600',
-    lineHeight: 16, // normal line-height
-    marginBottom: 11, // 8px Figma × 1.33
+    fontSize: 11, // Figma 11px → 11pt RN
+    fontWeight: '500',
+    color: '#737373', // Neutral-500
+    letterSpacing: 0.33, // Figma 0.33px
+    textTransform: 'uppercase',
+    marginBottom: 6, // Figma 6px
   },
-  input: {
-    // Figma styles converted to our scale
-    paddingHorizontal: 21, // 16px Figma × 1.33
-    paddingVertical: 16, // Adjust vertical padding for better text clearance
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    borderRadius: 11, // 8px Figma × 1.33
-    borderWidth: 2, // Match focused state to prevent jumping
-    borderColor: '#FFFFFF', // White border for inactive state
+
+  // Input Container (handles border and background)
+  inputContainer: {
     backgroundColor: '#FFFFFF',
-
-    // Text styling
-    fontSize: theme.typography.body.fontSize,
-    fontFamily: 'System', // System font supports light weights better
-    fontWeight: '400', // Regular weight
-    lineHeight: theme.typography.body.lineHeight,
-    letterSpacing: theme.typography.body.letterSpacing,
-    color: theme.colors.text.primary,
-    height: 69, // 52px Figma × 1.33 scale factor
-    textAlignVertical: 'center', // Ensure proper vertical text alignment
-
-    // Remove shadows for clean design
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
+    borderRadius: 8, // Keep at 8px (design system standard)
+    borderWidth: 1,
+    borderColor: '#E5E5E5', // Neutral-200
+    shadowColor: 'rgba(112, 112, 112, 0.05)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 1,
   },
+
+  inputContainerFocused: {
+    borderColor: '#26733E', // Green-900 - Active state
+  },
+
+  inputContainerError: {
+    borderColor: '#FF2D55', // Error red
+  },
+
+  // Input Field - direct from Figma (no scaling)
+  input: {
+    paddingHorizontal: 16, // Figma 16px → 16pt RN
+    paddingTop: 16, // iOS needs explicit padding for vertical centering
+    paddingBottom: 16, // iOS needs explicit padding for vertical centering
+    fontSize: 15, // Figma 15px → 15pt RN
+    fontWeight: '400',
+    lineHeight: 22, // Figma 22px → 22pt RN
+    letterSpacing: -0.3, // Figma -0.3px
+    color: '#171717', // Neutral-900
+    height: 54, // Figma 54px → 54pt RN (fixed height, not minHeight)
+  },
+
   multilineInput: {
-    minHeight: 107, // 80px Figma × 1.33
+    minHeight: 100, // Figma 100px → 100pt RN
     textAlignVertical: 'top',
-    paddingTop: 21, // Maintain consistent padding
+    paddingTop: 16,
   },
-  inputFocused: {
-    borderRadius: 11, // 8px Figma × 1.33 (var(--Spacing-8, 8px))
-    borderWidth: 2, // 2px solid from Figma
-    borderColor: '#26733E', // var(--Green-900, #26733E)
-    backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
-  },
+
   inputError: {
-    borderColor: theme.colors.error,
-    backgroundColor: '#fef2f2',
+    color: '#FF2D55', // Error text color
   },
-  error: {
-    ...theme.typography.caption,
-    color: theme.colors.error,
-    marginTop: 5, // 4px Figma × 1.33
+
+  // Error Message - direct from Figma (no scaling)
+  errorText: {
+    fontSize: 12, // Figma 12px → 12pt RN
+    fontWeight: '400',
+    lineHeight: 16, // Figma 16px → 16pt RN
+    letterSpacing: -0.24, // Figma -0.24px
+    color: '#FF2D55',
+    marginTop: 6, // Figma 6px
   },
 });

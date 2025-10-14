@@ -129,7 +129,7 @@ heading: {
 
 // Subtitle (21px) - Semibold
 subtitle: {
-  fontSize: 21,          // 16px Figma × 1.33 scale
+  fontSize: 21,          // Existing size (legacy components use this)
   fontFamily: 'System',  // semibold weight (600)
   fontWeight: '600',
   lineHeight: 25,        // 1.19712 ratio
@@ -155,7 +155,7 @@ cardTitle: {
 
 // Body (20px) - Regular
 body: {
-  fontSize: 20,          // 15px Figma × 1.33
+  fontSize: 20,          // Existing size (legacy components use this)
   fontFamily: 'System',
   fontWeight: '400',
   lineHeight: 28,        // 140% of font size
@@ -164,7 +164,7 @@ body: {
 
 // Body Medium (20px) - Medium
 bodyMedium: {
-  fontSize: 20,
+  fontSize: 20,          // Existing size (legacy components use this)
   fontFamily: 'System',
   fontWeight: '500',
   lineHeight: 28,
@@ -173,7 +173,7 @@ bodyMedium: {
 
 // Body Semibold (20px) - Semibold
 bodySemibold: {
-  fontSize: 20,
+  fontSize: 20,          // Existing size (legacy components use this)
   fontFamily: 'System',
   fontWeight: '600',
   lineHeight: 28,
@@ -236,16 +236,21 @@ labelNew: {
 }
 ```
 
-**Figma Scale Factor**: The app uses a **1.33× scale factor** from Figma designs to React Native:
-- 15px in Figma → 20px in React Native
-- 16px in Figma → 21px in React Native
-- 8px in Figma → 11px in React Native (spacing/border radius stay at 8px though)
+**Figma Artboard Size**: Design at **390 × 844** (iPhone 14 Pro base size)
 
-**Important**: When converting Figma designs:
-1. Multiply font sizes by 1.33 (or 1.2-1.33 depending on component)
-2. Keep spacing at 8px increments (don't scale)
-3. Keep border radius at 8px (don't scale)
-4. Line heights often use 1.19712 ratio for headings
+**Figma-to-React Native Mapping**: Use **1:1 mapping** (no scaling needed)
+- 15px in Figma → 15pt in React Native
+- 16px in Figma → 16pt in React Native
+- 48px in Figma → 48pt in React Native
+
+**Important**: When converting Figma designs at 390×844:
+1. Use direct 1:1 mapping - no multiplication needed
+2. Font sizes: Figma px → React Native pt (same number)
+3. Spacing: Figma px → React Native pt (same number)
+4. Heights/widths: Figma px → React Native pt (same number)
+5. Border radius stays at 8px (design system standard)
+
+**Why 1:1 works**: React Native uses density-independent pixels (points) that match Figma pixels when designing at standard device sizes (390×844).
 
 #### Shadow Tokens
 
@@ -553,7 +558,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   card: {
-    padding: 11,  // 8px Figma × 1.33
+    padding: 16,  // Figma 16px → 16pt RN (1:1 mapping)
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#000000',
@@ -805,11 +810,11 @@ screens/
 
 ### Step 1: Analyze Figma Design
 
-When you receive a Figma design URL:
+When you receive a Figma design URL (designed at 390×844):
 
 1. **Extract design tokens**:
    - Colors (check if they match existing green palette or neutral palette)
-   - Font sizes (multiply by 1.33× for RN scale, or check existing typography tokens)
+   - Font sizes (use 1:1 mapping from Figma px to React Native pt)
    - Spacing (use multiples of 8: xs=4, sm=8, md=16, lg=24, xl=32, xxl=48)
    - Border radius (default 8px unless specified)
 
@@ -914,30 +919,34 @@ backgroundColor: '#44DB6D'  // Use theme instead
 
 #### Typography
 - Use theme typography tokens
-- Scale Figma font sizes by 1.33× if needed
+- Use 1:1 mapping from Figma (no scaling needed)
 
 ```typescript
 // ✅ Good - Use existing typography token
 ...theme.typography.headline
 
-// ✅ Also good - Create custom with theme values
-fontSize: 20,  // 15px Figma × 1.33
+// ✅ Also good - Create custom with direct Figma values
+fontSize: 16,  // Figma 16px → 16pt RN (1:1 mapping)
 fontFamily: 'System',
 fontWeight: '600',
-lineHeight: 28,
-letterSpacing: -0.2,
+lineHeight: 19,  // Figma 19px → 19pt RN
+letterSpacing: -0.48,  // Figma -0.48px → -0.48 RN
 ```
 
 #### Spacing
 - Use theme.spacing tokens
 - Figma spacing should align with 8px grid
+- Use 1:1 mapping from Figma
 
 ```typescript
-// ✅ Good
+// ✅ Good - Use theme token
 marginBottom: theme.spacing.md  // 16px
 
-// ⚠️ Acceptable for exact Figma specs
-marginBottom: 11  // 8px Figma × 1.33 (document why scaled)
+// ✅ Also good - Direct from Figma
+marginBottom: 16  // Figma 16px → 16pt RN (1:1 mapping)
+
+// ✅ For exact Figma specs
+paddingTop: 24  // Figma 24px → 24pt RN (no scaling)
 ```
 
 #### Shadows
@@ -1378,14 +1387,15 @@ interface UserProfile {
 
 ## 12. Figma Integration Checklist
 
-When converting a Figma design to React Native:
+When converting a Figma design (at 390×844) to React Native:
 
+- [ ] **Verify Figma artboard size**: Must be 390×844 for 1:1 mapping
 - [ ] **Analyze design tokens**: Colors, fonts, spacing, shadows
 - [ ] **Check for existing components**: Reuse before creating new
-- [ ] **Scale font sizes**: Multiply by 1.33× (or check existing tokens)
+- [ ] **Use 1:1 mapping**: Figma px = React Native pt (no multiplication)
 - [ ] **Use theme colors**: Reference `theme.colors.*` not hardcoded hex
 - [ ] **Use theme spacing**: Reference `theme.spacing.*` not raw numbers
-- [ ] **Use theme typography**: Spread `...theme.typography.*` tokens
+- [ ] **Use theme typography**: Spread `...theme.typography.*` tokens or use direct values
 - [ ] **Apply shadows for both platforms**: iOS `shadow*` + Android `elevation`
 - [ ] **Simplify complex effects**: Gradients, inset shadows not supported
 - [ ] **Use Ionicons**: Find closest match to Figma icon
@@ -1408,20 +1418,24 @@ When converting a Figma design to React Native:
 - **Supabase backend** (auth, database, storage)
 - **Bottom tab navigation** with floating glassmorphism design
 - **NOVA food classification** for processing level indicators
-- **1.33× Figma scale factor** for font sizes
+- **1:1 Figma-to-React Native mapping** (design at 390×844, no scaling)
 
 **Key principles for Figma integration**:
-1. Reuse existing components and theme tokens
-2. Follow React Native StyleSheet patterns
-3. Account for platform differences (iOS vs Android)
-4. Simplify complex CSS effects not supported in React Native
-5. Use TypeScript for type safety
-6. Test on both iOS and Android
+1. Design Figma artboards at **390 × 844** (iPhone 14 Pro base size)
+2. Use **1:1 mapping** - Figma px = React Native pt (no multiplication)
+3. Reuse existing components and theme tokens
+4. Follow React Native StyleSheet patterns
+5. Account for platform differences (iOS vs Android)
+6. Simplify complex CSS effects not supported in React Native
+7. Use TypeScript for type safety
+8. Test on both iOS and Android
 
-**When generating code from Figma**:
+**When generating code from Figma (at 390×844)**:
+- Design at 390×844 artboard size
 - Extract colors → map to theme
-- Extract typography → map to theme tokens or scale by 1.33×
-- Extract spacing → use 8px grid (theme.spacing)
+- Extract typography → use 1:1 mapping (16px Figma = 16pt RN)
+- Extract spacing → use 1:1 mapping (16px Figma = 16pt RN)
+- Extract dimensions → use 1:1 mapping (48px Figma = 48pt RN)
 - Extract shadows → convert to iOS + Android shadow props
 - Identify icons → use Ionicons
 - Create TypeScript component with props interface

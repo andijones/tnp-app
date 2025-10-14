@@ -33,12 +33,13 @@ export const Button: React.FC<ButtonProps> = ({
       ]}
       onPress={onPress}
       disabled={disabled}
+      activeOpacity={0.8}
     >
       {hasIcons ? (
         <View style={styles.content}>
-          {leftIcon && <View style={[styles.leftIcon, styles[`${variant}Icon`]]}>{leftIcon}</View>}
+          {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
           <Text style={[styles.buttonText, styles[`${variant}Text`]]}>{title}</Text>
-          {rightIcon && <View style={[styles.rightIcon, styles[`${variant}Icon`]]}>{rightIcon}</View>}
+          {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
         </View>
       ) : (
         <Text style={[styles.buttonText, styles[`${variant}Text`]]}>{title}</Text>
@@ -49,94 +50,85 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 11, // 8px Figma size × 1.33 (will be overridden for secondary)
+    height: 48, // Figma 48px → 48pt RN (no scaling needed)
+    borderRadius: 8, // Keep at 8px (design system standard)
     alignItems: 'center',
     justifyContent: 'center',
-    height: 56,
     paddingHorizontal: 24,
     width: '100%',
   },
-  
-  // Variants
+
+  // Primary: Bright green button
   primary: {
     backgroundColor: '#44DB6D',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#3CC161',
-    shadowColor: '#9C9C9C',
+    shadowColor: 'rgba(90, 82, 34, 0.1)',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOpacity: 1,
+    shadowRadius: 3,
     elevation: 2,
   },
+
+  // Secondary: Dark green button
   secondary: {
-    backgroundColor: '#1F5932', // var(--Green-950, #1F5932)
-    borderRadius: 8, // var(--Spacing-8, 8px) - exact Figma value
-    borderWidth: 1,
-    borderColor: '#144925', // border: 1px solid #144925
-    shadowColor: '#000000',
+    backgroundColor: '#1F5932',
+    borderWidth: 0.5,
+    borderColor: '#043614',
+    shadowColor: 'rgba(90, 82, 34, 0.1)',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, // 0 1px 4px 0 rgba(0, 0, 0, 0.10)
-    shadowRadius: 4,
+    shadowOpacity: 1,
+    shadowRadius: 3,
     elevation: 2,
-    // Note: The Figma design includes a linear gradient and inset shadow:
-    // background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 50%, rgba(0, 0, 0, 0.10) 100%), var(--Green-950, #1F5932);
-    // box-shadow: 0 1px 0 0 rgba(38, 106, 60, 0.50) inset, 0 1px 4px 0 rgba(0, 0, 0, 0.10);
-    // These effects are not natively supported in React Native
   },
+
+  // Tertiary (Outline): Light neutral button
   tertiary: {
     backgroundColor: '#FAFAFA',
-    borderWidth: 1,
-    borderColor: '#D4D4D4',
+    borderWidth: 0.5,
+    borderColor: 'rgba(161, 153, 105, 0.3)',
+    shadowColor: 'rgba(90, 82, 34, 0.1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 2,
   },
+
+  // Text: Border-only button
   text: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#1F5932',
   },
-  
-  
+
   disabled: {
     opacity: 0.4,
   },
-  
-  // Text styles
+
+  // Text styles - direct from Figma (no scaling)
   buttonText: {
-    fontFamily: 'Inter',
-    fontSize: 19, // 16px * 1.2 scale factor
+    fontFamily: 'System',
+    fontSize: 16, // Figma 16px → 16pt RN
     fontWeight: '600',
-    lineHeight: Math.round(19 * 1.19712), // 119.712% of 19px = 22.75px rounded to 23
-    letterSpacing: -0.58, // -0.48px * 1.2 scale factor
+    lineHeight: 19, // Figma 19.15px → 19pt
+    letterSpacing: -0.48, // Figma -0.48px
     textAlign: 'center',
   },
+
   primaryText: {
-    color: '#1F5932', // Green-950
-  },
-  secondaryText: {
-    color: '#FFFFFF',
-  },
-  tertiaryText: {
-    color: theme.colors.text.primary,
-  },
-  textText: {
-    color: '#1F5932',
+    color: '#1F5932', // Dark green text on bright green background
   },
 
-  // Icon color styles (same as text colors but with 50% opacity)
-  primaryIcon: {
-    color: '#1F5932',
-    opacity: 0.5,
+  secondaryText: {
+    color: '#FFFFFF', // White text on dark green background
   },
-  secondaryIcon: {
-    color: '#FFFFFF',
-    opacity: 0.5,
+
+  tertiaryText: {
+    color: '#404040', // Neutral-700
   },
-  tertiaryIcon: {
-    color: theme.colors.text.primary,
-    opacity: 0.5,
-  },
-  textIcon: {
-    color: '#1F5932',
-    opacity: 0.5,
+
+  textText: {
+    color: '#1F5932', // Dark green text
   },
 
   content: {
@@ -146,10 +138,10 @@ const styles = StyleSheet.create({
   },
 
   leftIcon: {
-    marginRight: theme.spacing.sm,
+    marginRight: 8,
   },
 
   rightIcon: {
-    marginLeft: theme.spacing.sm,
+    marginLeft: 8,
   },
 });

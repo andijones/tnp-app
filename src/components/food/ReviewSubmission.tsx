@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -15,6 +14,7 @@ import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
 import { SectionHeader } from '../common/SectionHeader';
 import { Button } from '../common/Button';
+import { Input } from '../common/Input';
 
 interface ReviewSubmissionProps {
   foodId: string;
@@ -241,16 +241,13 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
 
         {/* Review Text */}
         <View style={styles.textSection}>
-          <Text style={styles.textLabel}>Review (Optional)</Text>
-          <TextInput
-            style={styles.textInput}
+          <Input
+            label="REVIEW (OPTIONAL)"
             placeholder="Share your thoughts about this product..."
-            placeholderTextColor={theme.colors.text.tertiary}
             multiline
             numberOfLines={4}
             value={reviewText}
             onChangeText={setReviewText}
-            maxLength={500}
           />
           <Text style={styles.characterCount}>
             {reviewText.length}/500
@@ -358,30 +355,14 @@ const styles = StyleSheet.create({
   },
 
   textSection: {
-    gap: theme.spacing.sm,
-  },
-
-  textLabel: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-  },
-
-  textInput: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.sm,
-    padding: theme.spacing.md,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    textAlignVertical: 'top',
-    minHeight: 100,
+    gap: 0, // Input component handles margins
   },
 
   characterCount: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.tertiary,
     textAlign: 'right',
+    marginTop: -18, // Adjust spacing after Input component
   },
 
   actionButtons: {

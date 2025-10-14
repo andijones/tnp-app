@@ -10,6 +10,7 @@ import {
   Alert,
   TouchableOpacity,
   Image,
+  ImageBackground,
 } from 'react-native';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
@@ -125,19 +126,23 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Background blur effect at bottom */}
+      <View style={styles.blurBackground} />
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <Image 
-              source={require('../../../assets/logo.png')} 
-              style={styles.logo} 
+            <Image
+              source={require('../../../assets/logo.png')}
+              style={styles.logo}
               resizeMode="contain"
             />
           </View>
@@ -151,33 +156,36 @@ export const AuthScreen: React.FC = () => {
 
                 <View style={styles.dividerContainer}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
+                  <Text style={styles.dividerText}>OR</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
-                <Input
-                  label="EMAIL ADDRESS"
-                  placeholder="Enter email address"
-                  value={email}
-                  onChangeText={setEmail}
-                  error={errors.email}
-                />
+                <View style={styles.inputsContainer}>
+                  <Input
+                    label="EMAIL ADDRESS"
+                    placeholder="Enter email address"
+                    value={email}
+                    onChangeText={setEmail}
+                    error={errors.email}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
 
-                <Input
-                  label="PASSWORD"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  error={errors.password}
-                />
+                  <Input
+                    label="PASSWORD"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    error={errors.password}
+                  />
+                </View>
 
                 <Button
                   title={loading ? 'Signing In...' : 'Sign In'}
                   onPress={handleAuth}
                   disabled={loading}
-                  variant="primary"
-                  style={styles.signInButton}
+                  variant="secondary"
                 />
 
                 <TouchableOpacity
@@ -187,12 +195,16 @@ export const AuthScreen: React.FC = () => {
                   <Text style={styles.forgotPasswordText}>Forgot Password</Text>
                 </TouchableOpacity>
 
-                <Button
-                  title="Create Account"
-                  onPress={toggleMode}
-                  variant="tertiary"
-                  style={styles.createAccountButton}
-                />
+                {/* Create Account Button */}
+                <View style={styles.createAccountSection}>
+                  <TouchableOpacity
+                    style={styles.createAccountButton}
+                    onPress={toggleMode}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.createAccountButtonText}>Create Account</Text>
+                  </TouchableOpacity>
+                </View>
               </>
             ) : (
               <>
@@ -201,49 +213,58 @@ export const AuthScreen: React.FC = () => {
 
                 <View style={styles.dividerContainer}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
+                  <Text style={styles.dividerText}>OR</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
-                <Input
-                  label="FULL NAME"
-                  placeholder="Enter your full name"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  error={errors.fullName}
-                />
+                <View style={styles.inputsContainer}>
+                  <Input
+                    label="FULL NAME"
+                    placeholder="Enter your full name"
+                    value={fullName}
+                    onChangeText={setFullName}
+                    error={errors.fullName}
+                  />
 
-                <Input
-                  label="EMAIL ADDRESS"
-                  placeholder="Enter email address"
-                  value={email}
-                  onChangeText={setEmail}
-                  error={errors.email}
-                />
+                  <Input
+                    label="EMAIL ADDRESS"
+                    placeholder="Enter email address"
+                    value={email}
+                    onChangeText={setEmail}
+                    error={errors.email}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
 
-                <Input
-                  label="PASSWORD"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  error={errors.password}
-                />
+                  <Input
+                    label="PASSWORD"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    error={errors.password}
+                  />
+                </View>
 
                 <Button
                   title={loading ? 'Creating Account...' : 'Create Account'}
                   onPress={handleAuth}
                   disabled={loading}
-                  variant="primary"
-                  style={styles.signInButton}
+                  variant="secondary"
                 />
 
-                <TouchableOpacity
-                  style={styles.backToLoginContainer}
-                  onPress={toggleMode}
-                >
-                  <Text style={styles.backToLoginText}>Already have an account? Sign In</Text>
-                </TouchableOpacity>
+                {/* Back to Login */}
+                <View style={styles.createAccountSection}>
+                  <TouchableOpacity
+                    style={styles.createAccountButton}
+                    onPress={toggleMode}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.createAccountButtonText}>
+                      Already have an account? Sign In
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </>
             )}
           </View>
@@ -256,87 +277,98 @@ export const AuthScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f4f0',
+    backgroundColor: '#F7F6F0', // Warm background from Figma
   },
-  
+  blurBackground: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    backgroundColor: 'rgba(224, 255, 231, 0.3)', // Light green blur effect
+  },
   keyboardView: {
     flex: 1,
   },
-  
   scrollContainer: {
     flexGrow: 1,
-    paddingHorizontal: 30,
-    justifyContent: 'center',
-    paddingTop: 100,
+    paddingHorizontal: 28,
+    paddingTop: 98.5,
     paddingBottom: 40,
   },
-  
   logoContainer: {
     alignItems: 'center',
     marginBottom: 80,
   },
-  
   logo: {
-    height: 80,
-    width: 240,
+    height: 64,
+    width: 107.567,
   },
-  
   formContainer: {
     width: '100%',
   },
-  
-  signInButton: {
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  
-  forgotPasswordContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  
-  forgotPasswordText: {
-    color: '#4CAF50',
-    fontSize: theme.typography.subtitle.fontSize,
-    fontFamily: theme.typography.subtitle.fontFamily,
-    lineHeight: theme.typography.subtitle.lineHeight,
-    letterSpacing: theme.typography.subtitle.letterSpacing,
-    textDecorationLine: 'underline',
-  },
-  
-  createAccountButton: {
-    marginTop: 16,
-  },
-  
-  backToLoginContainer: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  
-  backToLoginText: {
-    color: '#666',
-    fontSize: theme.typography.subtitle.fontSize,
-    fontFamily: theme.typography.subtitle.fontFamily,
-    lineHeight: theme.typography.subtitle.lineHeight,
-    letterSpacing: theme.typography.subtitle.letterSpacing,
-  },
 
+  // Divider
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 24,
   },
-
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#dadce0',
+    backgroundColor: '#E5E5E5',
   },
-
   dividerText: {
     marginHorizontal: 16,
-    color: '#666',
-    fontSize: 14,
-    fontFamily: theme.typography.subtitle.fontFamily,
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#A3A3A3', // Neutral-400
+    letterSpacing: 0.33,
+    textTransform: 'uppercase',
+  },
+
+  // Inputs
+  inputsContainer: {
+    gap: 12,
+    marginBottom: 24,
+  },
+
+  // Forgot Password
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  forgotPasswordText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#26733E', // Green-900
+    textDecorationLine: 'underline',
+    letterSpacing: -0.48,
+  },
+
+  // Create Account Section
+  createAccountSection: {
+    marginTop: 80,
+  },
+  createAccountButton: {
+    height: 48,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(161, 153, 105, 0.3)',
+    shadowColor: 'rgba(90, 82, 34, 0.1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createAccountButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#404040', // Neutral-700
+    letterSpacing: -0.48,
   },
 });
