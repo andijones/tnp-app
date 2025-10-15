@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -98,15 +99,12 @@ export const UnifiedScannerScreen: React.FC = () => {
       const product = await fetchProductByBarcode(barcode);
 
       if (!product) {
-        console.log('❌ Product not found in Open Food Facts');
-        Alert.alert(
-          'Product Not Found',
-          'This barcode was not found in our database. You can scan ingredients manually using the ingredient scanner.',
-          [
-            { text: 'Try Again', onPress: () => resetScanner() },
-            { text: 'Cancel', style: 'cancel', onPress: () => resetScanner() }
-          ]
-        );
+        console.log('❌ Product not found in Open Food Facts - navigating to ingredient scanner');
+        resetScanner();
+        const parentNav = navigation.getParent();
+        if (parentNav) {
+          (parentNav as any).navigate('IngredientScanner');
+        }
         setIsProcessing(false);
         return;
       }
@@ -212,76 +210,30 @@ export const UnifiedScannerScreen: React.FC = () => {
 
   const renderIntro = () => (
     <View style={styles.introContainer}>
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
-        <View style={styles.scannerIconWrapper}>
-          <View style={styles.scannerPulse} />
-          <View style={styles.scannerIconContainer}>
-            <Ionicons name="scan" size={48} color={theme.colors.green[950]} />
-          </View>
-        </View>
-
-        <Text style={styles.heroTitle}>Product Scanner</Text>
-        <Text style={styles.heroSubtitle}>
-          Scan any product barcode to discover if it belongs in your pantry
-        </Text>
-      </View>
-
-      {/* Feature Cards */}
-      <View style={styles.featuresSection}>
-        <View style={styles.featureCard}>
-          <View style={[styles.featureIconCircle, { backgroundColor: 'rgba(68, 219, 109, 0.15)' }]}>
-            <Ionicons name="barcode-outline" size={20} color={theme.colors.green[950]} />
-          </View>
-          <View style={styles.featureContent}>
-            <Text style={styles.featureTitle}>Instant Lookup</Text>
-            <Text style={styles.featureDescription}>
-              Scan barcodes for instant product information
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.featureCard}>
-          <View style={[styles.featureIconCircle, { backgroundColor: 'rgba(132, 204, 22, 0.15)' }]}>
-            <Ionicons name="nutrition-outline" size={20} color="#84cc16" />
-          </View>
-          <View style={styles.featureContent}>
-            <Text style={styles.featureTitle}>Processing Level</Text>
-            <Text style={styles.featureDescription}>
-              See if food is whole, extracted, or lightly processed
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.featureCard}>
-          <View style={[styles.featureIconCircle, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-            <Ionicons name="add-circle-outline" size={20} color="#f59e0b" />
-          </View>
-          <View style={styles.featureContent}>
-            <Text style={styles.featureTitle}>Contribute</Text>
-            <Text style={styles.featureDescription}>
-              Add new products to help the community
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* CTA Button */}
-      <View style={styles.ctaContainer}>
-        <Button
-          title="Start Scanning"
-          onPress={() => setCurrentMode('barcode')}
-          variant="primary"
-          leftIcon={<Ionicons name="scan-outline" size={20} color="white" />}
+      {/* Product Illustration */}
+      <View style={styles.illustrationContainer}>
+        <Image
+          source={require('../../../assets/Scan.png')}
+          style={styles.scanImage}
+          resizeMode="contain"
         />
       </View>
 
-      {/* Trust Badge */}
-      <View style={styles.trustBadge}>
-        <Ionicons name="shield-checkmark" size={14} color={theme.colors.green[950]} />
-        <Text style={styles.trustText}>
-          Powered by Open Food Facts
-        </Text>
+      {/* Title */}
+      <Text style={styles.title}>Scan an item</Text>
+
+      {/* Subtitle */}
+      <Text style={styles.subtitle}>
+        You can check if an item is processed or not by simply scanning the barcode.
+      </Text>
+
+      {/* Open Camera Button */}
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Open Camera"
+          onPress={() => setCurrentMode('barcode')}
+          variant="secondary"
+        />
       </View>
     </View>
   );
@@ -416,101 +368,37 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     paddingHorizontal: 24,
     justifyContent: 'center',
-    paddingBottom: 120,
-  },
-  heroSection: {
     alignItems: 'center',
+    paddingBottom: 120, // Account for tab bar
+  },
+  illustrationContainer: {
     marginBottom: 32,
-  },
-  scannerIconWrapper: {
-    position: 'relative',
-    marginBottom: 20,
-  },
-  scannerPulse: {
-    position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(68, 219, 109, 0.15)',
-    top: -8,
-    left: -8,
-  },
-  scannerIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(68, 219, 109, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: theme.colors.green[950],
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: -0.5,
+  scanImage: {
+    width: 160,
+    height: 160,
   },
-  heroSubtitle: {
-    fontSize: 15,
+  title: {
+    fontSize: 22, // Figma title size
+    fontWeight: 'bold',
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 15, // Figma body size
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
-    paddingHorizontal: 20,
+    paddingHorizontal: 32,
+    marginBottom: 32,
   },
-  featuresSection: {
-    marginBottom: 24,
-    gap: 10,
-  },
-  featureCard: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  featureIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  featureContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  featureTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: theme.colors.green[950],
-    marginBottom: 2,
-  },
-  featureDescription: {
-    fontSize: 13,
-    color: theme.colors.text.secondary,
-    lineHeight: 18,
-  },
-  ctaContainer: {
-    marginBottom: 24,
-  },
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  trustText: {
-    fontSize: 12,
-    color: theme.colors.text.secondary,
-    fontWeight: '500',
+  buttonContainer: {
+    width: '100%',
+    paddingHorizontal: 24,
   },
   cameraContainer: {
     flex: 1,

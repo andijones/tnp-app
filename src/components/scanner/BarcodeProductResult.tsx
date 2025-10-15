@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { TransformedProduct } from '../../services/openFoodFacts';
-import { getProcessingLevel } from '../../utils/processingLevel';
+import { ProcessingLevelCard } from '../common/ProcessingLevelCard';
 
 interface BarcodeProductResultProps {
   product: TransformedProduct;
@@ -35,23 +35,12 @@ export const BarcodeProductResult: React.FC<BarcodeProductResultProps> = ({
   const isUltraProcessed = product.novaGroup === 4;
   const isUnknown = product.novaGroup === undefined;
 
-  // Get processing level info
-  const level = getProcessingLevel(product.novaGroup);
-
   return (
     <ScrollView style={styles.container}>
-      {/* Processing Level Badge - Hero Element */}
+      {/* Processing Level Card */}
       {product.novaGroup && (
         <View style={styles.levelSection}>
-          <View style={[styles.levelBadge, { backgroundColor: level.lightBg }]}>
-            <View style={[styles.levelIconContainer, { backgroundColor: level.color }]}>
-              <Ionicons name={level.icon as any} size={32} color="white" />
-            </View>
-            <Text style={[styles.levelLabel, { color: level.color }]}>
-              {level.label}
-            </Text>
-            <Text style={styles.levelDescription}>{level.description}</Text>
-          </View>
+          <ProcessingLevelCard level={product.novaGroup} />
         </View>
       )}
 
@@ -292,30 +281,6 @@ const styles = StyleSheet.create({
   levelSection: {
     padding: theme.spacing.lg,
     paddingTop: theme.spacing.md,
-  },
-  levelBadge: {
-    padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    alignItems: 'center',
-  },
-  levelIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  levelLabel: {
-    fontSize: 24,
-    fontWeight: '700',
-    fontFamily: 'System',
-    marginBottom: theme.spacing.xs,
-  },
-  levelDescription: {
-    fontSize: 14,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
   },
   statusCard: {
     flexDirection: 'row',

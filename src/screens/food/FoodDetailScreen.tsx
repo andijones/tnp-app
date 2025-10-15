@@ -31,6 +31,7 @@ import { ReviewSubmission } from '../../components/food/ReviewSubmission';
 import { useFavorites } from '../../hooks/useFavorites';
 import { NovaRatingBanner } from '../../components/food/NovaRatingBanner';
 import { ProcessingLevelBanner } from '../../components/food/ProcessingLevelBanner';
+import { ProcessingLevelCard } from '../../components/common/ProcessingLevelCard';
 import { ImprovedNutritionPanel } from '../../components/food/ImprovedNutritionPanel';
 import { ImprovedIngredientsList } from '../../components/food/ImprovedIngredientsList';
 import { RelatedFoodsSection } from '../../components/food/RelatedFoodsSection';
@@ -351,12 +352,9 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
           {/* Content Container with Card Layout */}
           <View style={styles.contentContainer}>
-            {/* Processing Level Banner */}
+            {/* Processing Level Card */}
             {food.nova_group && (
-              <ProcessingLevelBanner
-                novaGroup={food.nova_group}
-                style={{ marginBottom: theme.spacing.md }}
-              />
+              <ProcessingLevelCard level={food.nova_group} />
             )}
 
             {/* Info Card */}

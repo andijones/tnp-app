@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
+import { ProcessingLevelCard } from '../../components/common/ProcessingLevelCard';
 import { supabase } from '../../services/supabase/config';
 import { classifyFoodByIngredients, type NovaClassificationResult } from '../../utils/enhancedNovaClassifier';
 
@@ -351,98 +352,37 @@ export const IngredientScannerScreen: React.FC = () => {
     setScanResult(null);
   };
 
-  const getNovaColor = (novaGroup: number): string => {
-    switch (novaGroup) {
-      case 1: return theme.colors.nova.group1;
-      case 2: return theme.colors.nova.group2;
-      case 3: return theme.colors.nova.group3;
-      case 4: return theme.colors.nova.group4;
-      default: return theme.colors.text.secondary;
-    }
-  };
-
-  const getNovaLabel = (novaGroup: number): string => {
-    switch (novaGroup) {
-      case 1: return 'Unprocessed';
-      case 2: return 'Processed Culinary';
-      case 3: return 'Processed';
-      case 4: return 'Ultra-processed';
-      default: return 'Unknown';
-    }
-  };
-
   const renderIntro = () => (
     <View style={styles.introContainer}>
-      {/* Hero Section with Camera Icon */}
-      <View style={styles.heroSection}>
-        <View style={styles.scannerIconWrapper}>
-          <View style={styles.scannerPulse} />
-          <View style={styles.scannerIconContainer}>
-            <Ionicons name="camera" size={48} color={theme.colors.primary} />
-          </View>
-        </View>
-
-        <Text style={styles.heroTitle}>Scan Ingredients</Text>
-        <Text style={styles.heroSubtitle}>
-          Point your camera at any ingredient label for instant AI analysis
-        </Text>
-      </View>
-
-      {/* Feature Cards */}
-      <View style={styles.featuresSection}>
-        <View style={styles.featureCard}>
-          <View style={styles.featureIconCircle}>
-            <Ionicons name="flash" size={20} color="#FFB800" />
-          </View>
-          <View style={styles.featureContent}>
-            <Text style={styles.featureTitle}>Instant Results</Text>
-            <Text style={styles.featureDescription}>
-              AI analyzes ingredients in seconds
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.featureCard}>
-          <View style={[styles.featureIconCircle, { backgroundColor: 'rgba(68, 219, 109, 0.15)' }]}>
-            <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
-          </View>
-          <View style={styles.featureContent}>
-            <Text style={styles.featureTitle}>NOVA Score</Text>
-            <Text style={styles.featureDescription}>
-              Get food processing classification
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.featureCard}>
-          <View style={[styles.featureIconCircle, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
-            <Ionicons name="warning" size={20} color="#EF4444" />
-          </View>
-          <View style={styles.featureContent}>
-            <Text style={styles.featureTitle}>Detect Additives</Text>
-            <Text style={styles.featureDescription}>
-              Find seed oils and harmful ingredients
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* CTA Button */}
-      <View style={styles.ctaContainer}>
-        <Button
-          title="Open Camera"
-          onPress={() => setCurrentStep('ingredients')}
-          variant="primary"
-          leftIcon={<Ionicons name="camera-outline" size={20} color="#1F5932" />}
+      {/* Product Illustration */}
+      <View style={styles.illustrationContainer}>
+        <Image
+          source={require('../../../assets/Ingredients.png')}
+          style={styles.ingredientsImage}
+          resizeMode="contain"
         />
       </View>
 
-      {/* Trust Badge */}
-      <View style={styles.trustBadge}>
-        <Ionicons name="shield-checkmark" size={14} color={theme.colors.primary} />
-        <Text style={styles.trustText}>
-          Powered by GPT-4 Vision
-        </Text>
+      {/* Title */}
+      <Text style={styles.title}>Scan Ingredients</Text>
+
+      {/* Subtitle */}
+      <Text style={styles.subtitle}>
+        We couldn't find that barcode, but no worries, we can still help. Just point your camera at the ingredients list and snap it
+      </Text>
+
+      {/* CTA Buttons */}
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Scan Ingredients"
+          onPress={() => setCurrentStep('ingredients')}
+          variant="secondary"
+        />
+        <Button
+          title="Return Home"
+          onPress={() => navigation.goBack()}
+          variant="tertiary"
+        />
       </View>
     </View>
   );
@@ -641,28 +581,22 @@ export const IngredientScannerScreen: React.FC = () => {
     if (!scanResult) return null;
 
     const { novaClassification, extractedText, productName } = scanResult;
-    const novaColor = getNovaColor(novaClassification.nova_group);
 
     return (
       <ScrollView style={styles.resultsContainer}>
         <View style={styles.resultsHeader}>
           <Text style={styles.resultsTitle}>Scan Results</Text>
           <Text style={styles.productName}>{productName}</Text>
-          
-          <View style={[styles.novaCard, { borderColor: novaColor }]}>
-            <View style={[styles.novaBadge, { backgroundColor: novaColor }]}>
-              <Text style={styles.novaNumber}>NOVA {novaClassification.nova_group}</Text>
+
+          {/* Processing Level Card */}
+          <ProcessingLevelCard level={novaClassification.nova_group as 1 | 2 | 3 | 4} />
+
+          {novaClassification.contains_seed_oils && (
+            <View style={styles.warningBox}>
+              <Ionicons name="warning" size={16} color={theme.colors.warning} />
+              <Text style={styles.warningText}>Contains seed oils</Text>
             </View>
-            <Text style={styles.novaLabel}>{getNovaLabel(novaClassification.nova_group)}</Text>
-            <Text style={styles.novaExplanation}>{novaClassification.explanation}</Text>
-            
-            {novaClassification.contains_seed_oils && (
-              <View style={styles.warningBox}>
-                <Ionicons name="warning" size={16} color={theme.colors.warning} />
-                <Text style={styles.warningText}>Contains seed oils</Text>
-              </View>
-            )}
-          </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -799,110 +733,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F6F0',
     paddingHorizontal: 24,
     justifyContent: 'center',
-    paddingBottom: 120, // Extra padding for floating tab bar
-  },
-
-  // Hero Section
-  heroSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    paddingBottom: 120, // Account for tab bar
   },
-  scannerIconWrapper: {
-    position: 'relative',
-    marginBottom: 20,
-  },
-  scannerPulse: {
-    position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(68, 219, 109, 0.15)',
-    top: -8,
-    left: -8,
-  },
-  scannerIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(68, 219, 109, 0.1)',
+  illustrationContainer: {
+    marginBottom: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1F5932',
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: -0.5,
+  ingredientsImage: {
+    width: 160,
+    height: 160,
   },
-  heroSubtitle: {
-    fontSize: 15,
-    color: '#737373',
+  title: {
+    fontSize: 22, // Figma title size
+    fontWeight: 'bold',
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 15, // Figma body size
+    color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
-    paddingHorizontal: 20,
+    paddingHorizontal: 32,
+    marginBottom: 32,
   },
-
-  // Features Section
-  featuresSection: {
-    marginBottom: 24,
-    gap: 10,
-  },
-  featureCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  featureIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 184, 0, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  featureContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  featureTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1F5932',
-    marginBottom: 2,
-  },
-  featureDescription: {
-    fontSize: 13,
-    color: '#737373',
-    lineHeight: 18,
-  },
-
-  // CTA Container
-  ctaContainer: {
-    marginBottom: 24,
-  },
-
-  // Trust Badge
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  trustText: {
-    fontSize: 12,
-    color: '#737373',
-    fontWeight: '500',
+  buttonContainer: {
+    width: '100%',
+    paddingHorizontal: 24,
+    gap: 12,
   },
   cameraContainer: {
     flex: 1,
@@ -1164,45 +1026,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
-  },
-  novaCard: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
-    width: '100%',
-    alignItems: 'center',
-  },
-  novaBadge: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    marginBottom: theme.spacing.sm,
-  },
-  novaNumber: {
-    color: 'white',
-    fontWeight: theme.typography.fontWeight.bold,
-    fontSize: theme.typography.fontSize.md,
-  },
-  novaLabel: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  novaExplanation: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 22,
   },
   warningBox: {
     flexDirection: 'row',

@@ -14,6 +14,7 @@ import { AisleMenuView } from '../screens/aisles/AisleMenuScreen';
 import { AisleDetailView } from '../screens/aisles/AisleDetailScreen';
 import { FoodDetailScreen } from '../screens/food/FoodDetailScreen';
 import { UnifiedScannerScreen } from '../screens/scanner/UnifiedScannerScreen';
+import { IngredientScannerScreen } from '../screens/scanner/IngredientScannerScreen';
 import { SubmissionScreen } from '../screens/scanner/SubmissionScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { UserReviewsScreen } from '../screens/profile/UserReviewsScreen';
@@ -208,6 +209,23 @@ function TabNavigator() {
       }}
     >
       <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: 'All Foods',
+          tabBarIcon: ({ focused, color }) => (
+            <AnimatedTabIcon
+              name="nutrition-outline"
+              focusedName="nutrition"
+              focused={focused}
+              color={color}
+              size={28}
+              customIcon="tnp-logo"
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Scanner"
         component={UnifiedScannerScreen}
         options={({ route }) => ({
@@ -244,23 +262,6 @@ function TabNavigator() {
             paddingBottom: 12,
           },
         })}
-      />
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          title: 'All Foods',
-          tabBarIcon: ({ focused, color }) => (
-            <AnimatedTabIcon
-              name="nutrition-outline"
-              focusedName="nutrition"
-              focused={focused}
-              color={color}
-              size={28}
-              customIcon="tnp-logo"
-            />
-          ),
-        }}
       />
       <Tab.Screen
         name="Submit"
@@ -343,6 +344,10 @@ export function RootNavigator() {
       <Stack.Screen
         name="UserContributions"
         component={UserContributionsScreen}
+      />
+      <Stack.Screen
+        name="IngredientScanner"
+        component={IngredientScannerScreen}
       />
     </Stack.Navigator>
   );
