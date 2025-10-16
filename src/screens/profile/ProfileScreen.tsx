@@ -579,7 +579,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
               <Button
                 title="Cancel"
                 onPress={handleCancel}
-                variant="tertiary"
+                variant="outline"
                 style={{ flex: 1, marginRight: theme.spacing.sm }}
               />
               <Button
@@ -597,7 +597,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                 <Button
                   title="Sign Out"
                   onPress={handleSignOut}
-                  variant="tertiary"
+                  variant="outline"
                 />
 
                 <View style={styles.appInfo}>

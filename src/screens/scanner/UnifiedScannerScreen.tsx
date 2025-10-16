@@ -43,7 +43,7 @@ export const UnifiedScannerScreen: React.FC = () => {
 
   // Hide/show tab bar based on mode
   useEffect(() => {
-    const shouldHideTabBar = currentMode === 'barcode';
+    const shouldHideTabBar = currentMode === 'barcode' || currentMode === 'barcodeResult';
     navigation.setParams({ hideTabBar: shouldHideTabBar } as any);
   }, [currentMode, navigation]);
 

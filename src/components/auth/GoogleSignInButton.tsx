@@ -62,7 +62,7 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 
   const GoogleIcon = () => (
     <View style={styles.googleIconContainer}>
-      <Svg width="18" height="18" viewBox="0 0 18 18">
+      <Svg width="20" height="20" viewBox="0 0 18 18">
         <G>
           {/* Blue */}
           <Path
@@ -91,23 +91,19 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 
   return (
     <Button
-      title={loading ? 'Signing in...' : 'Continue with Google'}
+      title={loading ? 'Signing in...' : 'Sign in with Google'}
       onPress={handleGoogleSignIn}
       disabled={loading}
-      variant="tertiary"
+      variant="outline"
       leftIcon={loading ? <ActivityIndicator size="small" color="#4285f4" /> : <GoogleIcon />}
-      style={styles.customButtonStyle}
     />
   );
 };
 
 const styles = StyleSheet.create({
-  customButtonStyle: {
-    marginVertical: 8,
-  },
   googleIconContainer: {
-    width: 18,
-    height: 18,
+    width: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -14,6 +14,7 @@ export interface OpenFoodFactsProduct {
     'energy-kcal_100g'?: number;
     proteins_100g?: number;
     fat_100g?: number;
+    'saturated-fat_100g'?: number;
     carbohydrates_100g?: number;
     sugars_100g?: number;
     fiber_100g?: number;
@@ -25,6 +26,28 @@ export interface OpenFoodFactsProduct {
   image_ingredients_url?: string;
   image_nutrition_url?: string;
   ingredients_analysis_tags?: string[];
+  // Allergens
+  allergens?: string;
+  allergens_tags?: string[];
+  allergens_en?: string;
+  traces?: string;
+  traces_tags?: string[];
+  traces_en?: string;
+  // Nutritional scores
+  nutrition_grade_fr?: string; // Nutri-Score (A, B, C, D, E)
+  nutrition_score_fr_100g?: number;
+  ecoscore_grade?: string; // Eco-Score (A-E)
+  ecoscore_score?: number;
+  // Labels and certifications
+  labels?: string;
+  labels_tags?: string[];
+  labels_en?: string;
+  // Stores
+  stores?: string;
+  stores_tags?: string[];
+  // Vitamins and minerals
+  vitamins_tags?: string[];
+  minerals_tags?: string[];
 }
 
 export interface TransformedProduct {
@@ -39,6 +62,7 @@ export interface TransformedProduct {
     calories: number;
     protein: number;
     fat: number;
+    saturatedFat?: number;
     carbs: number;
     sugar?: number;
     fiber?: number;
@@ -50,6 +74,18 @@ export interface TransformedProduct {
   imageNutrition?: string;
   categories: string[];
   hasPalmOil: boolean;
+  // New fields
+  allergens: string[];
+  traces: string[];
+  nutriScore?: string; // A, B, C, D, E
+  ecoScore?: string; // A, B, C, D, E
+  labels: string[];
+  stores: string[];
+  isVegan?: boolean;
+  isVegetarian?: boolean;
+  veganStatus: 'vegan' | 'non-vegan' | 'vegetarian' | 'non-vegetarian' | 'unknown';
+  vitamins: string[];
+  minerals: string[];
 }
 
 /**
@@ -82,6 +118,18 @@ export const fetchProductByBarcode = async (barcode: string): Promise<OpenFoodFa
 };
 
 /**
+ * Clean and format tag strings (remove 'en:' prefix and format)
+ */
+const cleanTag = (tag: string): string => {
+  return tag
+    .replace(/^en:/i, '') // Remove 'en:' prefix
+    .replace(/-/g, ' ') // Replace hyphens with spaces
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize
+    .join(' ');
+};
+
+/**
  * Transform Open Food Facts product to our app's format
  */
 export const transformToFoodData = (product: OpenFoodFactsProduct): TransformedProduct => {
@@ -96,6 +144,7 @@ export const transformToFoodData = (product: OpenFoodFactsProduct): TransformedP
     calories: product.nutriments['energy-kcal_100g'] || 0,
     protein: product.nutriments.proteins_100g || 0,
     fat: product.nutriments.fat_100g || 0,
+    saturatedFat: product.nutriments['saturated-fat_100g'],
     carbs: product.nutriments.carbohydrates_100g || 0,
     sugar: product.nutriments.sugars_100g,
     fiber: product.nutriments.fiber_100g,
@@ -105,8 +154,42 @@ export const transformToFoodData = (product: OpenFoodFactsProduct): TransformedP
 
   // Check for palm oil
   const hasPalmOil = product.ingredients_analysis_tags?.some(
-    (tag: string) => tag.includes('palm-oil')
+    (tag: string) => tag.includes('palm-oil') && !tag.includes('palm-oil-free')
   ) || false;
+
+  // Extract allergens
+  const allergens = product.allergens_tags?.map(cleanTag) || [];
+
+  // Extract traces
+  const traces = product.traces_tags?.map(cleanTag) || [];
+
+  // Extract labels (organic, vegan, gluten-free, etc.)
+  const labels = product.labels_tags?.map(cleanTag) || [];
+
+  // Extract stores
+  const stores = product.stores_tags?.map(cleanTag) || [];
+
+  // Determine vegan/vegetarian status from ingredients_analysis_tags
+  const analysisiTags = product.ingredients_analysis_tags || [];
+  const isVegan = analysisiTags.some(tag => tag === 'en:vegan');
+  const isNonVegan = analysisiTags.some(tag => tag === 'en:non-vegan');
+  const isVegetarian = analysisiTags.some(tag => tag === 'en:vegetarian');
+  const isNonVegetarian = analysisiTags.some(tag => tag === 'en:non-vegetarian');
+
+  let veganStatus: 'vegan' | 'non-vegan' | 'vegetarian' | 'non-vegetarian' | 'unknown' = 'unknown';
+  if (isVegan) {
+    veganStatus = 'vegan';
+  } else if (isNonVegan) {
+    veganStatus = 'non-vegan';
+  } else if (isVegetarian) {
+    veganStatus = 'vegetarian';
+  } else if (isNonVegetarian) {
+    veganStatus = 'non-vegetarian';
+  }
+
+  // Extract vitamins and minerals
+  const vitamins = product.vitamins_tags?.map(cleanTag) || [];
+  const minerals = product.minerals_tags?.map(cleanTag) || [];
 
   return {
     name: product.product_name || 'Unknown Product',
@@ -122,6 +205,18 @@ export const transformToFoodData = (product: OpenFoodFactsProduct): TransformedP
     imageNutrition: product.image_nutrition_url,
     categories: product.categories?.split(',').map((c: string) => c.trim()) || [],
     hasPalmOil,
+    // New fields
+    allergens,
+    traces,
+    nutriScore: product.nutrition_grade_fr?.toUpperCase(),
+    ecoScore: product.ecoscore_grade?.toUpperCase(),
+    labels,
+    stores,
+    isVegan: isVegan || undefined,
+    isVegetarian: isVegetarian || undefined,
+    veganStatus,
+    vitamins,
+    minerals,
   };
 };
 

@@ -271,7 +271,7 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
               setRating(0);
               setReviewText('');
             }}
-            variant="tertiary"
+            variant="outline"
             disabled={isSubmitting}
             style={styles.cancelButtonStyle}
           />

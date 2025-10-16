@@ -48,7 +48,7 @@ export const IngredientScannerScreen: React.FC = () => {
 
   // Hide/show tab bar based on scan step using route params
   useEffect(() => {
-    const shouldHideTabBar = currentStep === 'ingredients' || currentStep === 'front' || currentStep === 'processing';
+    const shouldHideTabBar = currentStep === 'ingredients' || currentStep === 'front' || currentStep === 'processing' || currentStep === 'results';
 
     navigation.setParams({ hideTabBar: shouldHideTabBar } as any);
   }, [currentStep, navigation]);
@@ -381,7 +381,7 @@ export const IngredientScannerScreen: React.FC = () => {
         <Button
           title="Return Home"
           onPress={() => navigation.goBack()}
-          variant="tertiary"
+          variant="outline"
         />
       </View>
     </View>
@@ -580,35 +580,48 @@ export const IngredientScannerScreen: React.FC = () => {
   const renderResults = () => {
     if (!scanResult) return null;
 
-    const { novaClassification, extractedText, productName } = scanResult;
+    const { novaClassification, extractedText } = scanResult;
+    const isUltraProcessed = novaClassification.nova_group === 4;
 
     return (
-      <ScrollView style={styles.resultsContainer}>
-        <View style={styles.resultsHeader}>
-          <Text style={styles.resultsTitle}>Scan Results</Text>
-          <Text style={styles.productName}>{productName}</Text>
+      <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.resultsContent}>
+        {/* Page Title */}
+        <Text style={styles.pageTitle}>Scan Results</Text>
 
-          {/* Processing Level Card */}
+        {/* Processing Level Card */}
+        <View style={styles.processingLevelContainer}>
           <ProcessingLevelCard level={novaClassification.nova_group as 1 | 2 | 3 | 4} />
-
-          {novaClassification.contains_seed_oils && (
-            <View style={styles.warningBox}>
-              <Ionicons name="warning" size={16} color={theme.colors.warning} />
-              <Text style={styles.warningText}>Contains seed oils</Text>
-            </View>
-          )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Extracted Ingredients</Text>
-          <View style={styles.ingredientsBox}>
-            <Text style={styles.ingredientsText}>{extractedText}</Text>
+        {/* Captured Images Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionCardTitle}>Captured Images</Text>
+          <View style={styles.capturedImagesRow}>
+            {scanResult.frontImage && (
+              <View style={styles.capturedImageWrapper}>
+                <Image source={{ uri: scanResult.frontImage }} style={styles.capturedImage} />
+              </View>
+            )}
+            {scanResult.ingredientsImage && (
+              <View style={styles.capturedImageWrapper}>
+                <Image source={{ uri: scanResult.ingredientsImage }} style={styles.capturedImage} />
+              </View>
+            )}
           </View>
         </View>
 
-        {novaClassification.nova_details.foundIndicators.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ultra-processed Indicators Found</Text>
+        {/* Extracted Ingredients Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionCardTitle}>Extracted Ingredients</Text>
+          <Text style={styles.ingredientsText}>{extractedText}</Text>
+        </View>
+
+        {/* Reasons this food is UPF - Only for ultra-processed */}
+        {isUltraProcessed && novaClassification.nova_details.foundIndicators.length > 0 && (
+          <View style={styles.sectionCard}>
+            <Text style={[styles.sectionCardTitle, styles.upfTitle]}>
+              Reasons this food is UPF
+            </Text>
             <View style={styles.indicatorsContainer}>
               {novaClassification.nova_details.foundIndicators.map((indicator, index) => (
                 <View key={index} style={styles.indicatorChip}>
@@ -619,80 +632,30 @@ export const IngredientScannerScreen: React.FC = () => {
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Captured Images</Text>
-          <View style={styles.resultImages}>
-            {scanResult.frontImage && (
-              <View style={styles.resultImageContainer}>
-                <Image source={{ uri: scanResult.frontImage }} style={styles.resultImage} />
-                <Text style={styles.resultImageLabel}>Product</Text>
-              </View>
-            )}
-            {scanResult.ingredientsImage && (
-              <View style={styles.resultImageContainer}>
-                <Image source={{ uri: scanResult.ingredientsImage }} style={styles.resultImage} />
-                <Text style={styles.resultImageLabel}>Ingredients</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {novaClassification.nova_group === 4 ? (
-          // NOVA 4 (Ultra-processed) - Don't allow saving
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.scanAnotherButton]}
-              onPress={resetScanner}
-            >
-              <Ionicons name="scan" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
-              <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
-                Scan Another Product
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.returnHomeButton]}
-              onPress={() => (navigation as any).navigate('Home')}
-            >
-              <Ionicons name="home-outline" size={20} color={theme.colors.text.secondary} style={{ marginRight: 8 }} />
-              <Text style={[styles.actionButtonText, { color: theme.colors.text.secondary }]}>
-                Return Home
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* Ultra-processed message or submit button */}
+        {isUltraProcessed ? (
+          <Text style={styles.ultraProcessedMessage}>
+            Cannot submit to our database as it's{'\n'}ultra processed.
+          </Text>
         ) : (
-          // NOVA 1-3 - Allow saving
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.saveButton]}
+          <View style={styles.submitButtonContainer}>
+            <Button
+              title="Submit food to app"
               onPress={saveToDatabase}
+              variant="secondary"
               disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <>
-                  <Ionicons name="save" size={20} color="white" style={{ marginRight: 8 }} />
-                  <Text style={styles.actionButtonText}>Save to Database</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.scanAnotherButton]}
-              onPress={resetScanner}
-            >
-              <Ionicons name="scan" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
-              <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
-                Scan Another Product
-              </Text>
-            </TouchableOpacity>
+            />
           </View>
         )}
 
-        <Text style={styles.resultDisclaimer}>
-          This analysis is automated and for reference only. Results may vary based on image quality and OCR accuracy.
-        </Text>
+        {/* Scan Another Button */}
+        <View style={styles.scanAnotherButtonContainer}>
+          <Button
+            title={isUltraProcessed ? "Scan another food" : "Scan another product"}
+            onPress={resetScanner}
+            variant="outline"
+          />
+        </View>
       </ScrollView>
     );
   };
@@ -1010,142 +973,101 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
-  resultsHeader: {
-    padding: theme.spacing.lg,
-    alignItems: 'center',
+  resultsContent: {
+    padding: 24,
+    paddingBottom: 120, // Account for floating tab bar
   },
-  resultsTitle: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: '700',
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  productName: {
-    fontSize: theme.typography.fontSize.lg,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.lg,
     textAlign: 'center',
+    marginBottom: 24,
+    letterSpacing: -0.3,
   },
-  warningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    backgroundColor: `${theme.colors.warning}20`,
-    borderRadius: theme.borderRadius.sm,
+  processingLevelContainer: {
+    marginBottom: 16,
   },
-  warningText: {
-    marginLeft: theme.spacing.xs,
-    color: theme.colors.warning,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  section: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  ingredientsBox: {
+  sectionCard: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E5E5',
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    marginBottom: 12,
+    letterSpacing: -0.48,
+  },
+  upfTitle: {
+    color: theme.colors.error,
+  },
+  capturedImagesRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  capturedImageWrapper: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.neutral[100],
+  },
+  capturedImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   ingredientsText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: 14,
+    fontWeight: '400',
     color: theme.colors.text.primary,
     lineHeight: 20,
+    letterSpacing: 0,
   },
   indicatorsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   indicatorChip: {
-    backgroundColor: `${theme.colors.error}20`,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: theme.colors.error,
   },
   indicatorText: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: 13,
+    fontWeight: '400',
     color: theme.colors.error,
-    fontWeight: theme.typography.fontWeight.medium,
+    letterSpacing: -0.13,
   },
-  resultImages: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  resultImageContainer: {
-    alignItems: 'center',
-  },
-  resultImage: {
-    width: 100,
-    height: 100,
-    borderRadius: theme.borderRadius.md,
-  },
-  resultImageLabel: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.sm,
-  },
-  actionButtons: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.sm,
-  },
-  actionButton: {
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  saveButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  scanAnotherButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-  },
-  returnHomeButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  actionButtonText: {
-    fontSize: theme.typography.subtitle.fontSize,
-    fontFamily: theme.typography.subtitle.fontFamily,
-    lineHeight: theme.typography.subtitle.lineHeight,
-    letterSpacing: theme.typography.subtitle.letterSpacing,
-    color: 'white',
-  },
-  resultDisclaimer: {
-    fontSize: theme.typography.fontSize.xs,
+  ultraProcessedMessage: {
+    fontSize: 15,
+    fontWeight: '400',
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: 120, // Extra padding for floating tab bar
-    paddingHorizontal: theme.spacing.lg,
-    lineHeight: 16,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  submitButtonContainer: {
+    marginBottom: 12,
+  },
+  scanAnotherButtonContainer: {
+    marginBottom: 16,
   },
   permissionContainer: {
     flex: 1,

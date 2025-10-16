@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Image,
   ImageBackground,
+  Keyboard,
 } from 'react-native';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
@@ -126,17 +127,14 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Background blur effect at bottom */}
-      <View style={styles.blurBackground} />
-
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <TouchableOpacity
+          style={styles.contentContainer}
+          activeOpacity={1}
+          onPress={() => Keyboard.dismiss()}
         >
           {/* Logo */}
           <View style={styles.logoContainer}>
@@ -268,7 +266,7 @@ export const AuthScreen: React.FC = () => {
               </>
             )}
           </View>
-        </ScrollView>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -279,26 +277,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F6F0', // Warm background from Figma
   },
-  blurBackground: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 300,
-    backgroundColor: 'rgba(224, 255, 231, 0.3)', // Light green blur effect
-  },
   keyboardView: {
     flex: 1,
   },
-  scrollContainer: {
-    flexGrow: 1,
-    paddingHorizontal: 28,
-    paddingTop: 98.5,
-    paddingBottom: 40,
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 28.5, // (393 - 336) / 2 = 28.5px from Figma
+    paddingTop: 48,
+    paddingBottom: 32,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 80,
+    marginBottom: 32,
   },
   logo: {
     height: 64,
@@ -312,7 +302,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 16,
   },
   dividerLine: {
     flex: 1,
@@ -330,14 +320,14 @@ const styles = StyleSheet.create({
 
   // Inputs
   inputsContainer: {
-    gap: 12,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 16,
   },
 
   // Forgot Password
   forgotPasswordContainer: {
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 16,
   },
   forgotPasswordText: {
     fontSize: 16,
@@ -349,26 +339,19 @@ const styles = StyleSheet.create({
 
   // Create Account Section
   createAccountSection: {
-    marginTop: 80,
+    marginTop: 32,
   },
   createAccountButton: {
-    height: 48,
-    backgroundColor: '#FAFAFA',
-    borderRadius: 8,
-    borderWidth: 0.5,
-    borderColor: 'rgba(161, 153, 105, 0.3)',
-    shadowColor: 'rgba(90, 82, 34, 0.1)',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
-    shadowRadius: 3,
-    elevation: 2,
+    height: 52, // Match Figma height
+    backgroundColor: '#EBEAE4', // Neutral-BG2 from Figma
+    borderRadius: 9999, // Fully rounded pill shape
     alignItems: 'center',
     justifyContent: 'center',
   },
   createAccountButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#404040', // Neutral-700
+    fontWeight: '700', // Bold from Figma
+    color: '#525252', // Neutral-600
     letterSpacing: -0.48,
   },
 });

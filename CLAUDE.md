@@ -89,14 +89,14 @@ spacing: {
 
 ```typescript
 borderRadius: {
-  sm: 8,    // var(--Spacing-8, 8px) - all components use 8px
+  sm: 8,    // var(--Spacing-8, 8px) - cards and inputs use 8px
   md: 8,
   lg: 8,
-  full: 9999,  // For circular elements
+  full: 9999,  // For circular elements and buttons
 }
 ```
 
-**Note**: The design system uses a consistent 8px border radius across all components (cards, inputs, buttons).
+**Note**: The design system uses a consistent 8px border radius for cards and inputs. Buttons use `borderRadius: 9999` for fully rounded (pill-shaped) design.
 
 #### Typography Tokens
 
@@ -248,7 +248,7 @@ labelNew: {
 2. Font sizes: Figma px → React Native pt (same number)
 3. Spacing: Figma px → React Native pt (same number)
 4. Heights/widths: Figma px → React Native pt (same number)
-5. Border radius stays at 8px (design system standard)
+5. Border radius: 8px for cards/inputs, 9999 for fully rounded buttons (design system standard)
 
 **Why 1:1 works**: React Native uses density-independent pixels (points) that match Figma pixels when designing at standard device sizes (390×844).
 
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
 const styles = StyleSheet.create({
   button: {
     height: 56,
-    borderRadius: 8,
+    borderRadius: 9999,  // Fully rounded (pill-shaped)
   },
   primaryButton: {
     backgroundColor: theme.colors.green[500],
@@ -969,11 +969,16 @@ elevation: 4,  // Android
 - Linear gradients (requires `react-native-linear-gradient` library)
 
 #### Border Radius
-- Default to 8px unless Figma specifies otherwise
+- Cards and inputs use 8px
+- Buttons use `theme.borderRadius.full` (9999) for fully rounded (pill-shaped) design
 - Use `theme.borderRadius.full` (9999) for circles
 
 ```typescript
+// For cards and inputs
 borderRadius: theme.borderRadius.md  // 8px
+
+// For buttons
+borderRadius: theme.borderRadius.full  // 9999 (fully rounded)
 ```
 
 ### Step 4: Handle Images and Assets
@@ -1399,7 +1404,7 @@ When converting a Figma design (at 390×844) to React Native:
 - [ ] **Apply shadows for both platforms**: iOS `shadow*` + Android `elevation`
 - [ ] **Simplify complex effects**: Gradients, inset shadows not supported
 - [ ] **Use Ionicons**: Find closest match to Figma icon
-- [ ] **Set border radius**: Default 8px unless specified
+- [ ] **Set border radius**: 8px for cards/inputs, 9999 for buttons (fully rounded)
 - [ ] **Add TypeScript types**: Define interface for component props
 - [ ] **Handle touch states**: Use `TouchableOpacity` with `activeOpacity={0.8}`
 - [ ] **Account for safe areas**: Use `SafeAreaView` or padding for tab bar
@@ -1412,7 +1417,7 @@ When converting a Figma design (at 390×844) to React Native:
 ## Summary
 
 **The Naked Pantry** is a React Native + Expo app with:
-- **Clean, minimal design system** (green palette, 8px border radius, System fonts)
+- **Clean, minimal design system** (green palette, fully rounded buttons, 8px radius for cards/inputs, System fonts)
 - **StyleSheet API styling** (no styled-components)
 - **Component-based architecture** (atomic design, reusable components)
 - **Supabase backend** (auth, database, storage)

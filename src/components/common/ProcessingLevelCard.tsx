@@ -11,31 +11,31 @@ interface ProcessingLevelCardProps {
 const PROCESSING_CONFIG = {
   1: {
     image: require('../../../assets/wf.png'),
-    title: 'Whole Food',
-    description: 'Foods just as nature made them. Fresh, whole, and unprocessed',
-    backgroundColor: '#E6F9F0',
-    borderColor: '#22C55E',
+    title: 'Whole Foods',
+    description: 'Foods just as nature made them.\nFresh, simple, and untouched.',
+    backgroundColor: 'rgba(76, 255, 48, 0.2)',
+    titleColor: '#26733E',
   },
   2: {
     image: require('../../../assets/ef.png'),
     title: 'Extracted Foods',
-    description: 'Single-ingredient foods made by extracting or pressing from nature sources',
-    backgroundColor: '#F0F9E6',
-    borderColor: '#84CC16',
+    description: 'Single-ingredient foods made by separating or pressing from whole sources.',
+    backgroundColor: 'rgba(207, 255, 48, 0.2)',
+    titleColor: '#48561D',
   },
   3: {
     image: require('../../../assets/lp.png'),
     title: 'Lightly Processed',
-    description: 'Foods made by combining just a few simple ingredients, prepared without additives',
-    backgroundColor: '#FFF8E6',
-    borderColor: '#F59E0B',
+    description: 'Foods made by combining natural ingredients, prepared without additives.',
+    backgroundColor: 'rgba(250, 225, 203, 1)',
+    titleColor: '#AE611E',
   },
   4: {
     image: require('../../../assets/up.png'),
     title: 'Ultra Processed',
     description: 'Factory-made foods packed with additives and chemicals you\'d never use at home',
-    backgroundColor: '#FFE6E6',
-    borderColor: '#EF4444',
+    backgroundColor: 'rgba(255, 59, 48, 0.2)',
+    titleColor: '#9A2019',
   },
 };
 
@@ -43,45 +43,49 @@ export const ProcessingLevelCard: React.FC<ProcessingLevelCardProps> = ({ level 
   const config = PROCESSING_CONFIG[level];
 
   return (
-    <View style={[styles.card, { backgroundColor: config.backgroundColor, borderColor: config.borderColor }]}>
+    <View style={[styles.card, { backgroundColor: config.backgroundColor }]}>
       {/* Image */}
       <Image source={config.image} style={styles.image} resizeMode="contain" />
 
-      {/* Title */}
-      <Text style={styles.title}>{config.title}</Text>
+      {/* Text Content */}
+      <View style={styles.textContainer}>
+        {/* Title */}
+        <Text style={[styles.title, { color: config.titleColor }]}>{config.title}</Text>
 
-      {/* Description */}
-      <Text style={styles.description}>{config.description}</Text>
+        {/* Description */}
+        <Text style={styles.description}>{config.description}</Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 20,
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    gap: 12,
   },
   image: {
     width: 80,
     height: 80,
-    marginBottom: 12,
+  },
+  textContainer: {
+    flex: 1,
+    gap: 6,
   },
   title: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#171717',
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: -0.3,
+    lineHeight: 19.15, // 1.197 ratio
+    letterSpacing: -0.48,
   },
   description: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#525252',
-    textAlign: 'center',
-    lineHeight: 18,
+    color: theme.colors.neutral[600],
+    lineHeight: 17,
+    letterSpacing: -0.13,
   },
 });

@@ -390,7 +390,7 @@ export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
                 <Button
                   title="Search on Google"
                   onPress={handleGoogleSearch}
-                  variant="tertiary"
+                  variant="outline"
                 />
               </View>
             </View>

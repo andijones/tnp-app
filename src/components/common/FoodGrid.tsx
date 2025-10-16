@@ -63,6 +63,7 @@ export const FoodGrid = forwardRef<FlatList, FoodGridProps>(({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md, // Match horizontal spacing
     paddingBottom: 120, // Extra padding for floating tab bar
   },
 

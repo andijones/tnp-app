@@ -16,6 +16,7 @@ interface FilterBarProps {
   availableSupermarkets: string[];
   totalCount: number;
   filteredCount: number;
+  categoryChip?: React.ReactNode;
 }
 
 /**
@@ -29,6 +30,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   availableSupermarkets,
   totalCount,
   filteredCount,
+  categoryChip,
 }) => {
   const [foodGroupModalVisible, setFoodGroupModalVisible] = useState(false);
   const [supermarketModalVisible, setSupermarketModalVisible] = useState(false);
@@ -114,6 +116,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.chipsContainer}>
+        {/* Category Chip (optional, passed from parent) */}
+        {categoryChip}
+
         {/* Food Group Filter Chip */}
         <FilterChip
           label="Food Group"

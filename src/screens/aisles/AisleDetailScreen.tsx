@@ -20,6 +20,8 @@ import { useFavorites } from '../../hooks/useFavorites';
 import { FilterBar } from '../../components/common/FilterBar2';
 import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/filterUtils';
 import { Supermarket } from '../../types';
+import { FilterChip } from '../../components/common/FilterChip';
+import { BottomSheetModal } from '../../components/common/BottomSheetModal';
 
 interface AisleDetailViewProps {
   navigation: any;
@@ -48,6 +50,7 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
     supermarketIds: [],
   });
   const [availableSupermarkets, setAvailableSupermarkets] = useState<Supermarket[]>([]);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -113,25 +116,12 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
   };
 
   const navigateToChildAisle = (childAisle: Aisle) => {
-    navigation.push('AisleDetail', { 
-      slug: childAisle.slug, 
-      title: childAisle.name 
+    setCategoryModalVisible(false);
+    navigation.push('AisleDetail', {
+      slug: childAisle.slug,
+      title: childAisle.name
     });
   };
-
-  const renderChildAisle = ({ item }: { item: Aisle }) => (
-    <TouchableOpacity
-      style={styles.childAisleItem}
-      onPress={() => navigateToChildAisle(item)}
-    >
-      <Text style={styles.childAisleName}>{item.name}</Text>
-      <Ionicons 
-        name="chevron-forward" 
-        size={16} 
-        color={theme.colors.text.secondary} 
-      />
-    </TouchableOpacity>
-  );
 
 
   if (loading) {
@@ -197,13 +187,25 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
 
       {/* Filter Bar */}
       {!isSearchActive && (
-        <FilterBar
-          activeFilters={filters}
-          onFiltersChange={setFilters}
-          availableSupermarkets={availableSupermarkets}
-          totalCount={foods.length}
-          filteredCount={filteredFoods.length}
-        />
+        <View style={styles.filterSection}>
+          <FilterBar
+            activeFilters={filters}
+            onFiltersChange={setFilters}
+            availableSupermarkets={availableSupermarkets}
+            totalCount={foods.length}
+            filteredCount={filteredFoods.length}
+            categoryChip={
+              childAisles.length > 0 ? (
+                <FilterChip
+                  label="Category"
+                  icon="grid"
+                  active={false}
+                  onPress={() => setCategoryModalVisible(true)}
+                />
+              ) : null
+            }
+          />
+        </View>
       )}
 
       <FoodGrid
@@ -211,24 +213,6 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
         onFoodPress={navigateToFoodDetail}
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
-        ListHeaderComponent={() => (
-          <View>
-            {/* Child aisles section */}
-            {childAisles.length > 0 && !searchQuery && (
-              <View style={styles.childAislesSection}>
-                <Text style={styles.sectionTitle}>Shop by Category</Text>
-                <FlatList
-                  data={childAisles}
-                  renderItem={renderChildAisle}
-                  keyExtractor={(item) => item.id}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.childAislesList}
-                />
-              </View>
-            )}
-          </View>
-        )}
         ListEmptyComponent={() => (
           searchQuery ? (
             <View style={styles.emptyContainer}>
@@ -249,6 +233,49 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
           )
         )}
       />
+
+      {/* Category Bottom Sheet Modal */}
+      <BottomSheetModal
+        visible={categoryModalVisible}
+        onClose={() => setCategoryModalVisible(false)}
+        title="Shop by Category"
+        footerButtons={[
+          {
+            label: 'Done',
+            onPress: () => setCategoryModalVisible(false),
+            variant: 'primary',
+          },
+        ]}
+      >
+        <View style={styles.modalContent}>
+          {childAisles.map((childAisle) => (
+            <TouchableOpacity
+              key={childAisle.id}
+              style={styles.modalItem}
+              onPress={() => navigateToChildAisle(childAisle)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.modalItemLeft}>
+                <View style={styles.iconContainer}>
+                  <Ionicons
+                    name="grid"
+                    size={20}
+                    color={theme.colors.green[600]}
+                  />
+                </View>
+                <Text style={styles.modalItemText}>
+                  {childAisle.name}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.colors.text.secondary}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </BottomSheetModal>
       </View>
     </SafeAreaView>
   );
@@ -317,43 +344,46 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
 
-  childAislesSection: {
-    marginBottom: theme.spacing.lg,
+  filterSection: {
+    // No additional styling needed, FilterBar has its own container
   },
-  
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+
+  // Modal Content Styles
+  modalContent: {
+    paddingVertical: theme.spacing.xs,
   },
-  
-  childAislesList: {
-    marginBottom: theme.spacing.md,
+
+  modalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.neutral[100],
   },
-  
-  childAisleItem: {
+
+  modalItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.sm,
-    marginRight: theme.spacing.sm,
+    flex: 1,
   },
-  
-  childAisleName: {
-    fontSize: theme.typography.fontSize.sm,
+
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.green[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+
+  modalItemText: {
+    fontSize: 16,
     color: theme.colors.text.primary,
-    marginRight: theme.spacing.xs,
+    fontFamily: 'System',
+    fontWeight: '500',
   },
   
   emptyContainer: {
