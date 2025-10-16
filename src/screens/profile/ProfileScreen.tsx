@@ -58,9 +58,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
-    username: '',
-    instagram: '',
-    bio: '',
     avatar_url: '',
   });
   const [saving, setSaving] = useState(false);
@@ -103,9 +100,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
             setProfile(currentUserProfile);
             setFormData({
               full_name: currentUserProfile.full_name || '',
-              username: currentUserProfile.username || '',
-              instagram: currentUserProfile.instagram || '',
-              bio: currentUserProfile.bio || '',
               avatar_url: currentUserProfile.avatar_url || '',
             });
           } else {
@@ -348,9 +342,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
     if (profile) {
       setFormData({
         full_name: profile.full_name || '',
-        username: profile.username || '',
-        instagram: profile.instagram || '',
-        bio: profile.bio || '',
         avatar_url: profile.avatar_url || '',
       });
     }
@@ -446,16 +437,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
       )}
 
       <View style={styles.container}>
-        {/* Modern Profile Header */}
+        {/* Compact Profile Header */}
         <View style={styles.modernHeader}>
-          {/* Profile Picture Section */}
-          <View style={styles.profilePictureSection}>
+          <View style={styles.compactProfileRow}>
+            {/* Profile Picture */}
             <View style={styles.profilePictureContainer}>
               <ProfilePicture
                 imageUrl={editing && formData.avatar_url ? formData.avatar_url : profile?.avatar_url}
                 fullName={profile?.full_name}
                 email={user?.email}
-                size="xlarge"
+                size="medium"
                 style={styles.profilePicture}
               />
               {editing && (
@@ -466,66 +457,36 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                 >
                   <Ionicons
                     name="camera-outline"
-                    size={20}
+                    size={14}
                     color={theme.colors.background}
                   />
                 </TouchableOpacity>
               )}
             </View>
 
-            {!editing && isOwnProfile && (
-              <TouchableOpacity
-                style={styles.editProfileButton}
-                onPress={() => setEditing(true)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="create-outline" size={16} color={theme.colors.primary} />
-                <Text style={styles.editProfileText}>Edit Profile</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+            {/* User Info - Aligned to left next to picture */}
+            <View style={styles.compactUserInfo}>
+              <Text style={styles.displayName} numberOfLines={1}>
+                {(profile?.full_name && profile.full_name.trim() !== '') ? profile.full_name : 'User Profile'}
+              </Text>
 
-          {/* User Info Section */}
-          <View style={styles.userInfoSection}>
-            <Text style={styles.displayName}>
-              {(profile?.full_name && profile.full_name.trim() !== '') ? profile.full_name :
-               (profile?.username && profile.username.trim() !== '') ? profile.username :
-               'User Profile'}
-            </Text>
-
-            {profile?.username && profile.full_name && (
-              <Text style={styles.username}>@{profile.username}</Text>
-            )}
-
-            {profile?.bio && !editing && (
-              <Text style={styles.bio}>{profile.bio}</Text>
-            )}
-
-            {/* Meta Info */}
-            <View style={styles.metaInfo}>
+              {/* Meta Info */}
               {userStats.joinDate && (
                 <View style={styles.metaItem}>
-                  <Ionicons name="calendar-outline" size={16} color={theme.colors.text.secondary} />
+                  <Ionicons name="calendar-outline" size={14} color={theme.colors.text.secondary} />
                   <Text style={styles.metaText}>Joined {userStats.joinDate}</Text>
                 </View>
               )}
 
-              {profile?.instagram && (
+              {/* Edit Profile Button */}
+              {!editing && isOwnProfile && (
                 <TouchableOpacity
-                  style={styles.metaItem}
-                  onPress={async () => {
-                    const url = `https://instagram.com/${profile.instagram}`;
-                    const supported = await Linking.canOpenURL(url);
-                    if (supported) {
-                      await Linking.openURL(url);
-                    } else {
-                      Alert.alert('Error', 'Unable to open Instagram profile');
-                    }
-                  }}
+                  style={styles.editProfileButtonCompact}
+                  onPress={() => setEditing(true)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="logo-instagram" size={16} color={theme.colors.text.secondary} />
-                  <Text style={[styles.metaText, styles.instagramLink]}>@{profile.instagram}</Text>
+                  <Ionicons name="create-outline" size={14} color={theme.colors.green[950]} />
+                  <Text style={styles.editProfileTextCompact}>Edit Profile</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -547,31 +508,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                 placeholder="Enter your full name"
                 value={formData.full_name}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, full_name: text }))}
-              />
-
-              <Input
-                label="Bio"
-                placeholder="Tell us about your food journey..."
-                value={formData.bio}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, bio: text }))}
-                multiline
-              />
-            </View>
-
-            <View style={styles.editSection}>
-              <Text style={styles.editSectionTitle}>Social</Text>
-              <Input
-                label="Username"
-                placeholder="your_username"
-                value={formData.username}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, username: text }))}
-              />
-
-              <Input
-                label="Instagram"
-                placeholder="your_instagram"
-                value={formData.instagram}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, instagram: text }))}
               />
             </View>
 
@@ -844,85 +780,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Modern Profile Header
+  // Compact Profile Header
   modernHeader: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
   },
 
-  profilePictureSection: {
+  compactProfileRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
 
-  userInfoSection: {
-    alignItems: 'center',
+  compactUserInfo: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 6,
   },
 
   displayName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-    textAlign: 'center',
-  },
-
-  username: {
-    fontSize: 16,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
-    textAlign: 'center',
-  },
-
-  bio: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-    marginBottom: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-  },
-
-  metaInfo: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: theme.spacing.md,
   },
 
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    gap: 6,
   },
 
   metaText: {
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.text.secondary,
   },
 
-  instagramLink: {
-    color: theme.colors.primary,
-    fontWeight: '500',
-  },
-
-  editProfileButton: {
+  editProfileButtonCompact: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.primary + '10',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    marginTop: theme.spacing.md,
-    gap: theme.spacing.xs,
+    alignSelf: 'flex-start',
+    backgroundColor: theme.colors.neutral[100],
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+    marginTop: 2,
   },
 
-  editProfileText: {
-    fontSize: 14,
-    color: theme.colors.primary,
+  editProfileTextCompact: {
+    fontSize: 13,
     fontWeight: '600',
+    color: theme.colors.green[950],
   },
   
   profilePictureContainer: {
@@ -941,21 +851,21 @@ const styles = StyleSheet.create({
 
   editImageButton: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
+    bottom: 0,
+    right: 0,
     backgroundColor: theme.colors.primary,
-    borderRadius: 16,
-    width: 32,
-    height: 32,
+    borderRadius: 10,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowRadius: 3,
+    elevation: 3,
   },
 
   profileInfo: {
