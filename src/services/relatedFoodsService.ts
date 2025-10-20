@@ -87,7 +87,7 @@ class RelatedFoodsService {
           )
         )
       `)
-      .eq('status', 'approved')
+      .eq('status', 'approved') // Only show approved foods (RLS handles permissions)
       .neq('id', currentFoodId)
       .in('food_item_aisles.aisle_id', aisleIds)
       .or(categoryFilter.join(','))
@@ -118,7 +118,7 @@ class RelatedFoodsService {
           )
         )
       `)
-      .eq('status', 'approved')
+      .eq('status', 'approved') // Only show approved foods (RLS handles permissions)
       .neq('id', currentFoodId)
       .in('food_item_aisles.aisle_id', aisleIds)
       .limit(this.MAX_ITEMS * 2); // Get more than needed for deduplication
@@ -151,7 +151,7 @@ class RelatedFoodsService {
           )
         )
       `)
-      .eq('status', 'approved')
+      .eq('status', 'approved') // Only show approved foods (RLS handles permissions)
       .neq('id', currentFoodId)
       .or(categoryFilter.join(','))
       .limit(this.MAX_ITEMS * 2);

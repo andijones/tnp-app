@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -7,9 +7,13 @@ import {
   TouchableOpacity,
   ScrollView,
   TouchableWithoutFeedback,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface BottomSheetModalProps {
   visible: boolean;
@@ -25,7 +29,15 @@ interface BottomSheetModalProps {
 
 /**
  * Reusable bottom sheet modal component
- * Used for filter selections and other bottom-up overlays
+ * Updated to match Figma design specifications (node-id=2421:9830)
+ *
+ * Design specs:
+ * - Border radius: 16px (top corners only)
+ * - Padding: 16px horizontal, 20px vertical
+ * - Shadow: 0px -12px 24px rgba(16, 24, 40, 0.18)
+ * - Backdrop: rgba(23, 23, 23, 0.5)
+ * - Close icon: close-circle (24px)
+ * - Button height: 52px with fully rounded borders
  */
 export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
   visible,
@@ -34,70 +46,120 @@ export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
   children,
   footerButtons,
 }) => {
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 65,
+          friction: 11,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: SCREEN_HEIGHT,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
-      transparent={true}
-      animationType="slide"
+      transparent
+      animationType="none"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
       <View style={styles.overlay}>
+        {/* Backdrop */}
         <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.overlayTouchable} />
+          <Animated.View
+            style={[
+              styles.overlayTouchable,
+              {
+                opacity: fadeAnim,
+              },
+            ]}
+          />
         </TouchableWithoutFeedback>
-        <View style={styles.container}>
-          {/* Handle bar */}
-          <View style={styles.handleBar} />
 
-              {/* Header */}
-              <View style={styles.header}>
-                <Text style={styles.title}>{title}</Text>
+        {/* Bottom Sheet */}
+        <Animated.View
+          style={[
+            styles.container,
+            {
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>{title}</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close-circle" size={24} color={theme.colors.neutral[800]} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+
+          {/* Footer */}
+          {footerButtons && footerButtons.length > 0 && (
+            <View style={styles.footer}>
+              {footerButtons.map((button, index) => (
                 <TouchableOpacity
-                  onPress={onClose}
-                  style={styles.closeButton}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  key={index}
+                  style={[
+                    styles.footerButton,
+                    button.variant === 'primary'
+                      ? styles.footerButtonPrimary
+                      : styles.footerButtonSecondary,
+                  ]}
+                  onPress={button.onPress}
+                  activeOpacity={0.8}
                 >
-                  <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+                  <Text
+                    style={[
+                      styles.footerButtonText,
+                      button.variant === 'primary' && styles.footerButtonTextPrimary,
+                    ]}
+                  >
+                    {button.label}
+                  </Text>
                 </TouchableOpacity>
-              </View>
-
-              {/* Content */}
-              <ScrollView
-                style={styles.content}
-                contentContainerStyle={styles.contentContainer}
-                showsVerticalScrollIndicator={false}
-              >
-                {children}
-              </ScrollView>
-
-              {/* Footer */}
-              {footerButtons && footerButtons.length > 0 && (
-                <View style={styles.footer}>
-                  {footerButtons.map((button, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.footerButton,
-                        button.variant === 'primary'
-                          ? styles.footerButtonPrimary
-                          : styles.footerButtonSecondary,
-                      ]}
-                      onPress={button.onPress}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.footerButtonText,
-                          button.variant === 'primary' && styles.footerButtonTextPrimary,
-                        ]}
-                      >
-                        {button.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-        </View>
+              ))}
+            </View>
+          )}
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -110,97 +172,89 @@ const styles = StyleSheet.create({
   },
 
   overlayTouchable: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(23, 23, 23, 0.5)', // Figma backdrop color
   },
 
   container: {
     backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
+    borderTopLeftRadius: 16, // Figma spec: 16px
+    borderTopRightRadius: 16,
+    paddingHorizontal: 16, // Figma spec: 16px
+    paddingTop: 20, // Figma spec: 20px
+    paddingBottom: 20,
+    maxHeight: SCREEN_HEIGHT * 0.9,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-
-  handleBar: {
-    width: 36,
-    height: 4,
-    backgroundColor: theme.colors.neutral[300],
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 8,
+    shadowOffset: { width: 0, height: -12 }, // Figma spec
+    shadowOpacity: 0.18, // Figma spec
+    shadowRadius: 24, // Figma spec
+    elevation: 24,
   },
 
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    justifyContent: 'space-between',
+    paddingBottom: 24, // Figma spec: 24px
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.neutral[200],
+    borderBottomColor: theme.colors.neutral[100], // Figma spec
   },
 
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
+    flex: 1,
+    fontSize: 16, // Figma spec: 16px
+    fontWeight: 'bold',
+    lineHeight: 19, // Figma spec: 1.197 ratio
+    letterSpacing: -0.48, // Figma spec
+    color: theme.colors.neutral[800],
     fontFamily: 'System',
   },
 
-  closeButton: {
-    padding: 4,
-  },
-
   content: {
-    maxHeight: 400,
+    maxHeight: SCREEN_HEIGHT * 0.6,
   },
 
   contentContainer: {
+    paddingTop: 12, // Reduced spacing for better visual balance
     flexGrow: 1,
   },
 
   footer: {
     flexDirection: 'row',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    gap: 16, // Figma spec: 16px gap
+    paddingTop: 24, // Figma spec: 24px
     borderTopWidth: 1,
-    borderTopColor: theme.colors.neutral[200],
+    borderTopColor: theme.colors.neutral[100], // Figma spec
   },
 
   footerButton: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    height: 52, // Figma spec: 52px
+    borderRadius: 9999, // Figma spec: fully rounded (pill shape)
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   footerButtonPrimary: {
-    backgroundColor: theme.colors.green[600],
+    backgroundColor: theme.colors.green[950], // Figma spec: green-950
+    borderWidth: 1,
+    borderColor: '#043614', // Figma spec: darker green border
   },
 
   footerButtonSecondary: {
-    backgroundColor: theme.colors.neutral[100],
+    backgroundColor: theme.colors.neutral.BG2, // Figma spec: neutral-BG2 (#EBEAE4)
   },
 
   footerButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
+    fontSize: 16, // Figma spec: 16px
+    fontWeight: 'bold',
+    lineHeight: 19, // Figma spec: 1.197 ratio
+    letterSpacing: -0.48, // Figma spec
+    color: theme.colors.neutral[600], // Secondary button text
     fontFamily: 'System',
   },
 
   footerButtonTextPrimary: {
-    color: '#FFFFFF',
+    color: theme.colors.neutral.white, // Primary button text
   },
 });

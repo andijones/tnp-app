@@ -66,7 +66,7 @@ export const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    // Removed marginBottom - controlled by parent container gap
   },
 
   // Label - direct from Figma (no scaling)
@@ -103,14 +103,13 @@ const styles = StyleSheet.create({
   // Input Field - direct from Figma (no scaling)
   input: {
     paddingHorizontal: 16, // Figma 16px → 16pt RN
-    paddingTop: 16, // iOS needs explicit padding for vertical centering
-    paddingBottom: 16, // iOS needs explicit padding for vertical centering
-    fontSize: 15, // Figma 15px → 15pt RN
+    paddingVertical: 12, // Figma 12px spacing-12
+    fontSize: 13, // Figma Body 13px
     fontWeight: '400',
-    lineHeight: 22, // Figma 22px → 22pt RN
-    letterSpacing: -0.3, // Figma -0.3px
+    lineHeight: 17, // Figma Body lineHeight
+    letterSpacing: -0.13, // Figma Body letterSpacing
     color: '#171717', // Neutral-900
-    height: 54, // Figma 54px → 54pt RN (fixed height, not minHeight)
+    height: 52, // Figma 52px height for inputs
   },
 
   multilineInput: {

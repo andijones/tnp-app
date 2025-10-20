@@ -144,7 +144,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             onPress={clearAllFilters}
             activeOpacity={0.7}
           >
-            <Ionicons name="close-circle" size={16} color={theme.colors.text.secondary} />
             <Text style={styles.clearButtonText}>Clear All</Text>
           </TouchableOpacity>
         )}
@@ -273,27 +272,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                   onPress={() => toggleSupermarket(supermarket)}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.modalItemLeft}>
-                    <View style={styles.iconContainer}>
-                      <Ionicons
-                        name="storefront"
-                        size={20}
-                        color={
-                          isActive
-                            ? theme.colors.green[600]
-                            : theme.colors.text.secondary
-                        }
-                      />
-                    </View>
-                    <Text
-                      style={[
-                        styles.modalItemText,
-                        isActive && styles.modalItemTextActive,
-                      ]}
-                    >
-                      {supermarket}
-                    </Text>
-                  </View>
+                  <Text
+                    style={[
+                      styles.modalItemText,
+                      isActive && styles.modalItemTextActive,
+                    ]}
+                  >
+                    {supermarket}
+                  </Text>
                   {isActive && (
                     <Ionicons
                       name="checkmark-circle"
@@ -313,7 +299,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#F7F6F0', // Neutral-BG from Figma
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.neutral[200],
   },
@@ -328,20 +314,27 @@ const styles = StyleSheet.create({
   clearButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: theme.colors.neutral[100],
-    borderWidth: 1.5,
-    borderColor: theme.colors.neutral[200],
+    paddingHorizontal: 16, // Figma spacing-16
+    paddingVertical: 8, // Figma spacing-8
+    borderRadius: 1000, // Fully rounded pill
+    backgroundColor: '#EBEAE4', // Neutral-BG2 from Figma (different from filter pills!)
+    borderWidth: 0.5, // Figma 0.5px
+    borderColor: 'rgba(161, 153, 105, 0.3)', // Subtle warm border from Figma
+    // Shadow from Figma
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1, // Android shadow
   },
 
   clearButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.text.secondary,
+    color: '#171717', // Neutral-900 from Figma
     marginLeft: 4,
     fontFamily: 'System',
+    letterSpacing: -0.28, // Figma tracking
   },
 
   resultsBar: {
@@ -365,10 +358,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.neutral[100],
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    borderBottomWidth: 0,
   },
 
   modalItemLeft: {
@@ -392,8 +384,12 @@ const styles = StyleSheet.create({
   },
 
   modalItemText: {
+    flex: 1,
     fontSize: 16,
-    color: theme.colors.text.primary,
+    fontWeight: '500',
+    lineHeight: 19,
+    letterSpacing: -0.48,
+    color: theme.colors.neutral[800],
     fontFamily: 'System',
   },
 

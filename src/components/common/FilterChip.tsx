@@ -36,7 +36,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
           <Ionicons
             name={icon}
             size={14}
-            color={active ? theme.colors.green[950] : theme.colors.text.secondary}
+            color="#737373" // Neutral-500 - gray icons
             style={styles.icon}
           />
         )}
@@ -66,29 +66,31 @@ export const FilterChip: React.FC<FilterChipProps> = ({
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1.5,
-    borderColor: theme.colors.neutral[200],
+    paddingHorizontal: 16, // Figma spacing-16
+    paddingVertical: 8, // Figma spacing-8
+    borderRadius: 1000, // Fully rounded pill
+    backgroundColor: '#FAFAFA', // Neutral-50 base from Figma
+    borderWidth: 0.5, // Figma 0.5px
+    borderColor: 'rgba(161, 153, 105, 0.3)', // Subtle warm border from Figma
     marginRight: theme.spacing.sm,
-    // Subtle shadow
+    // Shadow from Figma
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1, // Android shadow
+  },
+
+  chipActive: {
+    backgroundColor: '#FAFAFA', // Same as inactive
+    borderColor: 'rgba(161, 153, 105, 0.3)', // Same subtle border
+    borderWidth: 0.5,
+    // Same shadow for active state
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
-  },
-
-  chipActive: {
-    backgroundColor: theme.colors.green[50],
-    borderColor: theme.colors.green[600],
-    borderWidth: 1.5,
-    // Stronger shadow when active
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
 
   chipContent: {
@@ -103,38 +105,43 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.text.secondary,
+    color: '#171717', // Neutral-900 from Figma
     fontFamily: 'System',
+    letterSpacing: -0.28, // Figma tracking -0.28px
   },
 
   chipTextActive: {
-    color: theme.colors.green[950],
-    fontWeight: '700',
+    color: '#171717', // Same color whether active or not
+    fontWeight: '600',
+    letterSpacing: -0.28,
   },
 
   countBadge: {
     marginLeft: 6,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: theme.colors.neutral[200],
+    minWidth: 16,
+    width: 16,
+    height: 16,
+    borderRadius: 8, // Perfect circle (16px / 2)
+    backgroundColor: '#1F5932', // Green-950 from Figma
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 5,
   },
 
   countBadgeActive: {
-    backgroundColor: theme.colors.green[600],
+    backgroundColor: '#1F5932', // Same whether active or not
   },
 
   countText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: theme.colors.text.secondary,
+    fontSize: 10,
+    fontWeight: '600', // Semibold from Figma
+    color: '#FFFFFF',
     fontFamily: 'System',
+    letterSpacing: -0.2, // Figma tracking -0.2px
   },
 
   countTextActive: {
     color: '#FFFFFF',
+    fontWeight: '600',
+    letterSpacing: -0.2,
   },
 });

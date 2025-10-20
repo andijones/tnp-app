@@ -46,10 +46,10 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         </View>
 
         <View style={styles.actionContainer}>
-          <Ionicons 
-            name="chevron-forward" 
-            size={16} 
-            color={theme.colors.text.secondary}
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color="#737373" // Neutral-500 from Figma (gray chevron)
           />
         </View>
       </View>
@@ -59,25 +59,21 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 6, // Figma: border-radius: 6px
-    marginVertical: 4,
-    borderWidth: 1,
-    borderColor: '#E5E5E5', // theme.colors.neutral[200]
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#FAFAFA', // Neutral-50 from Figma
+    borderRadius: 8, // Figma: 8px (spacing-8)
+    height: 52, // Fixed height from Figma
+    borderWidth: 0.5, // Figma: 0.5px
+    borderColor: 'rgba(161, 153, 105, 0.3)', // Subtle warm border from Figma
+    marginBottom: 8, // Gap between items (spacing-8)
   },
 
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.md,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16, // Figma: spacing-16
+    paddingVertical: 0, // Vertically centered
+    height: '100%',
   },
 
   textContainer: {
@@ -85,12 +81,16 @@ const styles = StyleSheet.create({
   },
 
   categoryName: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: '500',
-    color: theme.colors.text.primary,
+    fontSize: 14, // Figma: 14px
+    fontWeight: '600', // Semibold
+    color: '#171717', // Neutral-900 from Figma
+    letterSpacing: -0.28, // Figma tracking
+    fontFamily: 'System',
   },
 
   actionContainer: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },

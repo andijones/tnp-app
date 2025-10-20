@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
   TextInput,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -70,7 +71,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         .from('foods')
         .select('*')
         .in('id', favoriteIds)
-        .eq('status', 'approved');
+        .eq('status', 'approved'); // Only show approved foods (RLS handles permissions)
 
       if (foodError) {
         console.error('Error fetching foods:', foodError);
@@ -123,54 +124,59 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   if (loading) {
     return (
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <View style={[styles.safeArea, styles.safeAreaWhite, { paddingTop: insets.top }]}>
         <LoadingSpinner message="Loading favorites..." />
       </View>
     );
   }
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+    <View style={[styles.safeArea, styles.safeAreaWhite]}>
+      {/* White Safe Area Background */}
+      <View style={[styles.safeAreaBackground, { height: insets.top }]} />
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={styles.headerContainer}>
         {isSearchActive ? (
-          // Search active header
+          // Search active header - New Design
           <View style={styles.searchActiveHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 setIsSearchActive(false);
                 setSearchQuery('');
               }}
-              style={styles.backButton}
+              style={styles.searchBackButton}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color="#737373" />
             </TouchableOpacity>
-            <TextInput
-              style={styles.searchInputExpanded}
-              placeholder="Search favorites..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={theme.colors.text.tertiary}
-              autoFocus={true}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
-              </TouchableOpacity>
-            )}
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search Favourites"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#A3A3A3" // Neutral-400
+                autoFocus={true}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                  <Ionicons name="close" size={16} color="#737373" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         ) : (
           // Normal header
           <View style={styles.headerTopRow}>
             <View style={styles.spacer} />
             <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>My Favorites</Text>
+              <Text style={styles.headerTitle}>Favourites</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setIsSearchActive(true)}
               style={styles.searchButton}
             >
-              <Ionicons name="search" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="search" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
           </View>
         )}
@@ -183,34 +189,40 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         isFavorite={isFavorite}
         onToggleFavorite={handleToggleFavorite}
         ListHeaderComponent={() => (
-          <View>
-            {searchQuery ? (
-              <Text style={styles.resultsText}>
-                {filteredFoods.length} result{filteredFoods.length !== 1 ? 's' : ''} for "{searchQuery}"
-              </Text>
-            ) : (
-              <Text style={styles.foodCountText}>
-                {favoritesFoods.length} saved food{favoritesFoods.length !== 1 ? 's' : ''}
-              </Text>
-            )}
-          </View>
+          searchQuery ? (
+            <Text style={styles.resultsText}>
+              {filteredFoods.length} result{filteredFoods.length !== 1 ? 's' : ''} for "{searchQuery}"
+            </Text>
+          ) : null
         )}
         ListEmptyComponent={
           searchQuery ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
-              <Text style={styles.emptyText}>No favorites found</Text>
-              <Text style={styles.emptySubtext}>
-                Try adjusting your search terms
-              </Text>
+            <View style={styles.emptyStateContainer}>
+              <Image
+                source={require('../../../assets/NoFoodFound.png')}
+                style={styles.emptyStateImage}
+                resizeMode="contain"
+              />
+              <View style={styles.emptyStateTextContainer}>
+                <Text style={styles.emptyStateHeading}>No foods found</Text>
+                <Text style={styles.emptyStateBody}>
+                  We couldn't find any foods matching your search. Please try a different term.
+                </Text>
+              </View>
             </View>
           ) : (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="heart-outline" size={48} color={theme.colors.text.tertiary} />
-              <Text style={styles.emptyText}>No favorites yet</Text>
-              <Text style={styles.emptySubtext}>
-                Start adding foods to your favorites by tapping the heart icon
-              </Text>
+            <View style={styles.noFavoritesContainer}>
+              <Image
+                source={require('../../../assets/NoFav.png')}
+                style={styles.noFavoritesImage}
+                resizeMode="contain"
+              />
+              <View style={styles.noFavoritesTextContainer}>
+                <Text style={styles.noFavoritesHeading}>No Favourites</Text>
+                <Text style={styles.noFavoritesBody}>
+                  You haven't saved any foods to your favourites yet. Just simply tap the heart icon on a food.
+                </Text>
+              </View>
             </View>
           )
         }
@@ -223,65 +235,110 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F7F6F0', // Neutral-BG
   },
-  
+
+  safeAreaWhite: {
+    backgroundColor: '#FFFFFF', // White for header area
+  },
+
+  // White Safe Area Background
+  safeAreaBackground: {
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+  },
+
   container: {
     flex: 1,
-    backgroundColor: '#F7F6F0',
+    backgroundColor: '#F7F6F0', // Neutral-BG content area
   },
-  
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
+
+  headerContainer: {
+    backgroundColor: '#FFFFFF', // White from Figma
+    paddingHorizontal: 24, // Figma 24px
+    paddingTop: 20, // Padding after safe area - nudge content down
+    paddingBottom: 23, // Figma 23px gap
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: '#E5E5E5',
+    // Shadow for elevation
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  
+
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   searchActiveHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40, // Figma height
+    gap: 16, // Figma spacing-16
   },
   
-  backButton: {
-    padding: 4,
-    marginRight: theme.spacing.sm,
-  },
-  
-  
+
+
   searchButton: {
     padding: 4,
     width: 32,
     alignItems: 'center',
   },
-  
+
   headerContent: {
     flex: 1,
     alignItems: 'center',
   },
-  
+
   headerTitle: {
-    ...theme.typography.heading,
-    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
-    color: theme.colors.green[950],
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#0A0A0A', // Neutral-950 from Figma
+    letterSpacing: -0.44,
   },
-  
+
   spacer: {
     width: 32,
   },
-  
-  searchInputExpanded: {
+
+  // Search Active Header Components
+  searchBackButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  searchInputContainer: {
     flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginRight: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F6F0', // Neutral-BG from Figma
+    borderRadius: 8, // Figma spacing-8
+    paddingHorizontal: 16, // Figma spacing-16
+    paddingVertical: 12, // Figma spacing-12
+    gap: 8,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#0A0A0A', // Neutral-950
+    letterSpacing: -0.15,
+    padding: 0, // Remove default padding
+  },
+
+  clearButton: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   resultsText: {
@@ -298,23 +355,81 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   
-  emptyContainer: {
+  // Figma Empty State - No Foods Found (for search)
+  emptyStateContainer: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xxl,
+    paddingTop: 160, // Figma 160px top padding for vertical centering
+    paddingHorizontal: 16, // Figma 16px horizontal padding
+    maxWidth: 300, // Figma 300px max width for content
+    alignSelf: 'center',
   },
-  
-  emptyText: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.md,
+
+  emptyStateImage: {
+    width: 160, // Figma 160px
+    height: 160, // Figma 160px
+    marginBottom: 8, // Figma 8px gap to text
   },
-  
-  emptySubtext: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
+
+  emptyStateTextContainer: {
+    gap: 4, // Figma 4px gap between heading and body
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  emptyStateHeading: {
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#262626', // Neutral-800
+    letterSpacing: -0.44,
     textAlign: 'center',
-    marginTop: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
+  },
+
+  emptyStateBody: {
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#737373', // Neutral-500
+    letterSpacing: -0.15,
+    textAlign: 'center',
+  },
+
+  // No Favorites State - Separate from search empty state
+  noFavoritesContainer: {
+    alignItems: 'center',
+    paddingTop: 200, // Figma 200px top padding for vertical centering
+    paddingHorizontal: 16, // Figma 16px horizontal padding
+    maxWidth: 300, // Figma 300px max width for content
+    alignSelf: 'center',
+  },
+
+  noFavoritesImage: {
+    width: 160, // Figma 160px
+    height: 160, // Figma 160px
+    marginBottom: 4, // Figma 4px gap to text
+  },
+
+  noFavoritesTextContainer: {
+    gap: 8, // Figma 8px gap between heading and body
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  noFavoritesHeading: {
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#262626', // Neutral-800
+    letterSpacing: -0.44,
+    textAlign: 'center',
+  },
+
+  noFavoritesBody: {
+    fontSize: 13, // Figma Body
+    fontWeight: '400',
+    lineHeight: 17,
+    color: '#737373', // Neutral-500
+    letterSpacing: -0.13,
+    textAlign: 'center',
   },
 });

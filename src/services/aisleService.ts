@@ -154,7 +154,7 @@ class AisleService {
           food_supermarkets(supermarket)
         `)
         .in('id', foodIds)
-        .eq('status', 'approved')
+        .eq('status', 'approved') // Only show approved foods (RLS handles permissions)
         .order('created_at', { ascending: false });
 
       if (foodsError) {
@@ -187,7 +187,7 @@ class AisleService {
           *,
           food_supermarkets(supermarket)
         `)
-        .eq('status', 'approved')
+        .eq('status', 'approved') // Only show approved foods (RLS handles permissions)
         .order('created_at', { ascending: false });
 
       if (error) {

@@ -224,6 +224,22 @@ function TabNavigator() {
             />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            // Get the current route state
+            const state = navigation.getState();
+            const currentRoute = state.routes[state.index];
+
+            // Check if we're already on the Home tab
+            if (currentRoute.name === 'Home') {
+              // Prevent default navigation
+              e.preventDefault();
+
+              // Trigger scroll to top on HomeScreen
+              navigation.navigate('Home', { scrollToTop: true });
+            }
+          },
+        })}
       />
       <Tab.Screen
         name="Scanner"

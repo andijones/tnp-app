@@ -142,105 +142,108 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, styles.safeAreaWhite]}>
         <LoadingSpinner message="Loading aisles..." />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, styles.safeAreaWhite]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header with SafeArea combined */}
+      <View style={styles.headerContainer}>
         {isSearchActive ? (
-          // Search active header
+          // Search active header - New Design
           <View style={styles.searchActiveHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 setIsSearchActive(false);
                 setSearchQuery('');
               }}
-              style={styles.backButton}
+              style={styles.searchBackButton}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color="#737373" />
             </TouchableOpacity>
-            <TextInput
-              style={styles.searchInputExpanded}
-              placeholder="Search aisles..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={theme.colors.text.tertiary}
-              autoFocus={true}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
-              </TouchableOpacity>
-            )}
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search Aisles"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#A3A3A3" // Neutral-400
+                autoFocus={true}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                  <Ionicons name="close" size={16} color="#737373" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         ) : (
           // Normal header
           <View style={styles.headerTopRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={navigationStack.length > 1 ? navigateBack : () => navigation.goBack()}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
             <Text style={styles.headerTitle} numberOfLines={1}>
               {currentLevel?.title || 'Browse Aisles'}
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setIsSearchActive(true)}
               style={styles.searchButton}
             >
-              <Ionicons name="search" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="search" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      <ScrollView 
-        style={styles.container}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Categories List */}
-        <View style={styles.categoriesContainer}>
-          {/* View All Foods or Shop All - show as first item */}
-          {navigationStack.length === 1 && (
-            <CategoryCard
-              aisle={createViewAllAisle()}
-              onPress={() => navigateToAllFoods()}
-            />
-          )}
-          
-          {currentLevel?.parentSlug && (
-            <CategoryCard
-              aisle={createShopAllAisle()}
-              onPress={() => navigateToShopAll()}
-            />
-          )}
+      <View style={styles.container}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Categories List */}
+          <View style={styles.categoriesContainer}>
+            {/* View All Foods or Shop All - show as first item */}
+            {navigationStack.length === 1 && (
+              <CategoryCard
+                aisle={createViewAllAisle()}
+                onPress={() => navigateToAllFoods()}
+              />
+            )}
 
-          {/* Regular aisles */}
-          {filteredAisles.map((item, index) => (
-            <View key={item.id}>
-              {renderAisleItem({ item, index })}
-            </View>
-          ))}
-          
-          {filteredAisles.length === 0 && searchQuery && (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
-              <Text style={styles.emptyText}>No categories found</Text>
-              <Text style={styles.emptySubtext}>
-                Try adjusting your search terms
-              </Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+            {currentLevel?.parentSlug && (
+              <CategoryCard
+                aisle={createShopAllAisle()}
+                onPress={() => navigateToShopAll()}
+              />
+            )}
+
+            {/* Regular aisles */}
+            {filteredAisles.map((item, index) => (
+              <View key={item.id}>
+                {renderAisleItem({ item, index })}
+              </View>
+            ))}
+
+            {filteredAisles.length === 0 && searchQuery && (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
+                <Text style={styles.emptyText}>No categories found</Text>
+                <Text style={styles.emptySubtext}>
+                  Try adjusting your search terms
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -248,75 +251,102 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F7F6F0', // Neutral-BG
   },
-  
+
+  safeAreaWhite: {
+    backgroundColor: '#FFFFFF', // White for header area
+  },
+
   container: {
     flex: 1,
-    backgroundColor: '#F7F6F0',
+    backgroundColor: '#F7F6F0', // Neutral-BG
   },
 
   scrollContent: {
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: 100, // Extra padding for tab bar
   },
-  
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 4,
+
+  headerContainer: {
+    backgroundColor: '#FFFFFF', // White from Figma
+    paddingHorizontal: 24, // Figma 24px
+    paddingTop: 20, // Padding after safe area - nudge content down
+    paddingBottom: 23, // Figma 23px gap
   },
   
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   searchActiveHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40, // Figma height
+    gap: 16, // Figma spacing-16
   },
-  
+
   backButton: {
     padding: 4,
     marginRight: theme.spacing.sm,
   },
-  
+
   searchButton: {
     padding: 4,
     width: 32,
     alignItems: 'center',
   },
-  
+
   headerTitle: {
-    ...theme.typography.heading,
-    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
-    color: theme.colors.green[950],
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#0A0A0A', // Neutral-950 from Figma
+    letterSpacing: -0.44,
     flex: 1,
     textAlign: 'center',
   },
-  
-  searchInputExpanded: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginRight: theme.spacing.sm,
+
+  // Search Active Header Components
+  searchBackButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F6F0', // Neutral-BG from Figma
+    borderRadius: 8, // Figma spacing-8
+    paddingHorizontal: 16, // Figma spacing-16
+    paddingVertical: 12, // Figma spacing-12
+    gap: 8,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#0A0A0A', // Neutral-950
+    letterSpacing: -0.15,
+    padding: 0, // Remove default padding
+  },
+
+  clearButton: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+
   categoriesContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
+    paddingHorizontal: 16, // Figma: spacing-16
+    paddingTop: 16, // Figma: spacing-16
   },
 
   emptyContainer: {

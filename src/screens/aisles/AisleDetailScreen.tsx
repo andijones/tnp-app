@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -126,60 +127,62 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, styles.safeAreaWhite]}>
         <LoadingSpinner message="Loading aisle..." />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, styles.safeAreaWhite]}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Header with SafeArea combined */}
+        <View style={styles.headerContainer}>
         {isSearchActive ? (
-          // Search active header
+          // Search active header - New Design
           <View style={styles.searchActiveHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 setIsSearchActive(false);
                 setSearchQuery('');
               }}
-              style={styles.backButton}
+              style={styles.searchBackButton}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color="#737373" />
             </TouchableOpacity>
-            <TextInput
-              style={styles.searchInputExpanded}
-              placeholder={`Search in ${title}...`}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={theme.colors.text.tertiary}
-              autoFocus={true}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
-              </TouchableOpacity>
-            )}
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder={`Search ${title}`}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#A3A3A3" // Neutral-400
+                autoFocus={true}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                  <Ionicons name="close" size={16} color="#737373" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         ) : (
           // Normal header
           <View style={styles.headerTopRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => navigation.goBack()}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
             <Text style={styles.headerTitle} numberOfLines={1}>
               {title}
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setIsSearchActive(true)}
               style={styles.searchButton}
             >
-              <Ionicons name="search" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="search" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
           </View>
         )}
@@ -215,20 +218,32 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
         onToggleFavorite={toggleFavorite}
         ListEmptyComponent={() => (
           searchQuery ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
-              <Text style={styles.emptyText}>No foods found</Text>
-              <Text style={styles.emptySubtext}>
-                Try adjusting your search terms
-              </Text>
+            <View style={styles.emptyStateContainer}>
+              <Image
+                source={require('../../../assets/NoFoodFound.png')}
+                style={styles.emptyStateImage}
+                resizeMode="contain"
+              />
+              <View style={styles.emptyStateTextContainer}>
+                <Text style={styles.emptyStateHeading}>No foods found</Text>
+                <Text style={styles.emptyStateBody}>
+                  We couldn't find any foods matching your search. Please try a different term.
+                </Text>
+              </View>
             </View>
           ) : (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="storefront-outline" size={48} color={theme.colors.text.tertiary} />
-              <Text style={styles.emptyText}>No foods in this aisle yet</Text>
-              <Text style={styles.emptySubtext}>
-                Check back later or explore other aisles
-              </Text>
+            <View style={styles.emptyAisleContainer}>
+              <Image
+                source={require('../../../assets/Inbox.png')}
+                style={styles.emptyAisleImage}
+                resizeMode="contain"
+              />
+              <View style={styles.emptyAisleTextContainer}>
+                <Text style={styles.emptyAisleHeading}>This aisle is empty</Text>
+                <Text style={styles.emptyAisleBody}>
+                  We haven't added any foods to this aisle yet, please keep checking back.
+                </Text>
+              </View>
             </View>
           )
         )}
@@ -284,64 +299,92 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F7F6F0', // Neutral-BG
+  },
+
+  safeAreaWhite: {
+    backgroundColor: '#FFFFFF', // White for header area
   },
 
   container: {
     flex: 1,
-    backgroundColor: '#F7F6F0',
+    backgroundColor: '#F7F6F0', // Neutral-BG
   },
-  
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+
+  headerContainer: {
+    backgroundColor: '#FFFFFF', // White from Figma
+    paddingHorizontal: 24, // Figma 24px
+    paddingTop: 20, // Padding after safe area - nudge content down
+    paddingBottom: 23, // Figma 23px gap
   },
-  
+
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   searchActiveHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40, // Figma height
+    gap: 16, // Figma spacing-16
   },
-  
+
   backButton: {
     padding: 4,
     marginRight: theme.spacing.sm,
   },
-  
+
   searchButton: {
     padding: 4,
     width: 32,
     alignItems: 'center',
   },
-  
+
   headerTitle: {
-    ...theme.typography.heading,
-    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
-    color: theme.colors.green[950],
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#0A0A0A', // Neutral-950 from Figma
+    letterSpacing: -0.44,
     flex: 1,
     textAlign: 'center',
   },
-  
-  searchInputExpanded: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginRight: theme.spacing.sm,
+
+  // Search Active Header Components
+  searchBackButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  
+
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F6F0', // Neutral-BG from Figma
+    borderRadius: 8, // Figma spacing-8
+    paddingHorizontal: 16, // Figma spacing-16
+    paddingVertical: 12, // Figma spacing-12
+    gap: 8,
+  },
+
   searchInput: {
     flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginLeft: theme.spacing.sm,
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#0A0A0A', // Neutral-950
+    letterSpacing: -0.15,
+    padding: 0, // Remove default padding
+  },
+
+  clearButton: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   filterSection: {
@@ -386,22 +429,81 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   
-  emptyContainer: {
+  // Figma Empty Aisle State - No Foods in Aisle
+  emptyAisleContainer: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xxl,
+    paddingTop: 200, // Figma 200px top padding for vertical centering
+    paddingHorizontal: 16, // Figma 16px horizontal padding
+    maxWidth: 300, // Figma 300px max width for content
+    alignSelf: 'center',
   },
-  
-  emptyText: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.md,
+
+  emptyAisleImage: {
+    width: 160, // Figma 160px
+    height: 160, // Figma 160px
+    marginBottom: 8, // Figma 8px gap to text
   },
-  
-  emptySubtext: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
+
+  emptyAisleTextContainer: {
+    gap: 4, // Figma 4px gap between heading and body
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  emptyAisleHeading: {
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#262626', // Neutral-800
+    letterSpacing: -0.44,
     textAlign: 'center',
-    marginTop: theme.spacing.sm,
+  },
+
+  emptyAisleBody: {
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#737373', // Neutral-500
+    letterSpacing: -0.15,
+    textAlign: 'center',
+  },
+
+  // Figma Empty State - No Foods Found (for search)
+  emptyStateContainer: {
+    alignItems: 'center',
+    paddingTop: 160, // Figma 160px top padding for vertical centering
+    paddingHorizontal: 16, // Figma 16px horizontal padding
+    maxWidth: 300, // Figma 300px max width for content
+    alignSelf: 'center',
+  },
+
+  emptyStateImage: {
+    width: 160, // Figma 160px
+    height: 160, // Figma 160px
+    marginBottom: 8, // Figma 8px gap to text
+  },
+
+  emptyStateTextContainer: {
+    gap: 4, // Figma 4px gap between heading and body
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  emptyStateHeading: {
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#262626', // Neutral-800
+    letterSpacing: -0.44,
+    textAlign: 'center',
+  },
+
+  emptyStateBody: {
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#737373', // Neutral-500
+    letterSpacing: -0.15,
+    textAlign: 'center',
   },
 });

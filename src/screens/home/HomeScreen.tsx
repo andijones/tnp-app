@@ -25,9 +25,10 @@ import { Supermarket } from '../../types';
 
 interface HomeScreenProps {
   navigation: any;
+  route?: any;
 }
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +62,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   }, [foods]);
 
+  // Listen for tab press to scroll to top
+  useEffect(() => {
+    if (route?.params?.scrollToTop) {
+      scrollToTop();
+      // Clear the param so it doesn't trigger again
+      navigation.setParams({ scrollToTop: undefined });
+    }
+  }, [route?.params?.scrollToTop]);
+
   const fetchFoods = async () => {
     try {
       const { data, error } = await supabase
@@ -69,7 +79,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           *,
           food_supermarkets(supermarket)
         `)
-        .eq('status', 'approved')
+        .eq('status', 'approved') // Only show approved foods (RLS handles permissions)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -105,41 +115,46 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <View style={[styles.safeArea, styles.safeAreaWhite, { paddingTop: insets.top }]}>
         <LoadingSpinner message="Loading foods..." />
       </View>
     );
   }
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+    <View style={[styles.safeArea, styles.safeAreaWhite]}>
+      {/* White Safe Area Background */}
+      <View style={[styles.safeAreaBackground, { height: insets.top }]} />
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={styles.headerContainer}>
         {isSearchActive ? (
-          // Search active header
+          // Search active header - New Design
           <View style={styles.searchActiveHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 setIsSearchActive(false);
                 setSearchQuery('');
               }}
-              style={styles.backButton}
+              style={styles.searchBackButton}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color="#737373" />
             </TouchableOpacity>
-            <TextInput
-              style={styles.searchInputExpanded}
-              placeholder="Search foods..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={theme.colors.text.tertiary}
-              autoFocus={true}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={theme.colors.text.secondary} />
-              </TouchableOpacity>
-            )}
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search Foods"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#A3A3A3" // Neutral-400
+                autoFocus={true}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                  <Ionicons name="close" size={16} color="#737373" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         ) : (
           // Normal header
@@ -148,7 +163,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               onPress={() => navigation.navigate('AisleMenu')}
               style={styles.menuButton}
             >
-              <Ionicons name="menu" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="menu" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.titleContainer}
@@ -161,13 +176,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               onPress={() => setIsSearchActive(true)}
               style={styles.searchButton}
             >
-              <Ionicons name="search" size={24} color={theme.colors.text.primary} />
+              <Ionicons name="search" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      {/* Filter Bar */}
+      {/* Filter Bar - Only show when not searching */}
       {!isSearchActive && (
         <FilterBar
           activeFilters={filters}
@@ -228,13 +243,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
-            <Text style={styles.emptyText}>No foods found</Text>
-            <Text style={styles.emptySubtext}>
-              Try adjusting your search
-            </Text>
-          </View>
+          searchQuery ? (
+            <View style={styles.emptyStateContainer}>
+              <Image
+                source={require('../../../assets/NoFoodFound.png')}
+                style={styles.emptyStateImage}
+                resizeMode="contain"
+              />
+              <View style={styles.emptyStateTextContainer}>
+                <Text style={styles.emptyStateHeading}>No foods found</Text>
+                <Text style={styles.emptyStateBody}>
+                  We couldn't find any foods matching your search. Please try a different term.
+                </Text>
+              </View>
+            </View>
+          ) : null
         }
         />
       </View>
@@ -245,30 +268,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F7F6F0', // Neutral-BG
   },
-  
+
+  safeAreaWhite: {
+    backgroundColor: '#FFFFFF', // White for header area
+  },
+
+  // White Safe Area Background
+  safeAreaBackground: {
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+  },
+
   container: {
     flex: 1,
-    backgroundColor: '#F7F6F0',
+    backgroundColor: '#F7F6F0', // Neutral-BG content area
   },
-  
-  header: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
-    borderBottomWidth: 0,
+
+  headerContainer: {
+    backgroundColor: '#FFFFFF', // White from Figma
+    paddingHorizontal: 24, // Figma 24px
+    paddingTop: 20, // Padding after safe area - nudge content down
+    paddingBottom: 23, // Figma 23px gap
   },
-  
+
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   searchActiveHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40, // Figma height
+    gap: 16, // Figma spacing-16
   },
   
   menuButton: {
@@ -282,58 +316,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   
-  backButton: {
-    padding: 4,
-    marginRight: theme.spacing.sm,
-  },
-  
   titleContainer: {
     flex: 1,
     alignItems: 'center',
   },
 
   headerTitleText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: theme.colors.green[950],
-    letterSpacing: -0.3,
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#0A0A0A', // Neutral-950 from Figma
+    letterSpacing: -0.44,
   },
 
-  headerTitle: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+  // Search Active Header Components
+  searchBackButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  
-  headerSubtitle: {
-    fontSize: theme.typography.fontSize.sm,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  
-  searchBar: {
+
+  searchInputContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    marginHorizontal: theme.spacing.xs,
+    backgroundColor: '#F7F6F0', // Neutral-BG from Figma
+    borderRadius: 8, // Figma spacing-8
+    paddingHorizontal: 16, // Figma spacing-16
+    paddingVertical: 12, // Figma spacing-12
+    gap: 8,
   },
-  
-  searchInputExpanded: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginRight: theme.spacing.sm,
-  },
-  
+
   searchInput: {
     flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginLeft: theme.spacing.sm,
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#0A0A0A', // Neutral-950
+    letterSpacing: -0.15,
+    padding: 0, // Remove default padding
+  },
+
+  clearButton: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   featureSection: {
@@ -408,22 +437,42 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
 
-  emptyContainer: {
+  // Figma Empty State - No Foods Found
+  emptyStateContainer: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xxl,
+    paddingTop: 160, // Figma 160px top padding for vertical centering
+    paddingHorizontal: 16, // Figma 16px horizontal padding
+    maxWidth: 300, // Figma 300px max width for content
+    alignSelf: 'center',
   },
-  
-  emptyText: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.md,
+
+  emptyStateImage: {
+    width: 160, // Figma 160px
+    height: 160, // Figma 160px
+    marginBottom: 8, // Figma 8px gap to text
   },
-  
-  emptySubtext: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
+
+  emptyStateTextContainer: {
+    gap: 4, // Figma 4px gap between heading and body
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  emptyStateHeading: {
+    fontSize: 22, // Figma Heading2
+    fontWeight: '700',
+    lineHeight: 28,
+    color: '#262626', // Neutral-800
+    letterSpacing: -0.44,
     textAlign: 'center',
-    marginTop: theme.spacing.sm,
+  },
+
+  emptyStateBody: {
+    fontSize: 15, // Figma Body
+    fontWeight: '400',
+    lineHeight: 21,
+    color: '#737373', // Neutral-500
+    letterSpacing: -0.15,
+    textAlign: 'center',
   },
 });
