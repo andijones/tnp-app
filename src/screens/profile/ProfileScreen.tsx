@@ -503,15 +503,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
               </View>
             </View>
 
-            {/* Edit Profile Button */}
+            {/* Edit Profile Button and Settings Icon Row */}
             {!editing && isOwnProfile && (
-              <TouchableOpacity
-                style={styles.editProfileButton}
-                onPress={() => setEditing(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-              </TouchableOpacity>
+              <View style={styles.actionButtonsRow}>
+                <TouchableOpacity
+                  style={styles.editProfileButton}
+                  onPress={() => setEditing(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.settingsIconButton}
+                  onPress={() => (navigation as any).navigate('Settings')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="settings-outline" size={22} color={theme.colors.text.secondary} />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </View>
@@ -806,6 +816,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
+  // Action Buttons Row (Edit Profile + Settings)
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
   profileTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -871,8 +888,9 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
 
-  // Edit Profile Button - Full Width
+  // Edit Profile Button - Flexible Width
   editProfileButton: {
+    flex: 1,
     backgroundColor: theme.colors.neutral.BG2,
     height: 48,
     borderRadius: 9999,
@@ -887,6 +905,16 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[600],
     lineHeight: Math.round(16 * 1.197),
     letterSpacing: -0.48,
+  },
+
+  // Settings Icon Button
+  settingsIconButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: theme.colors.neutral.BG2,
+    borderRadius: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Content sections

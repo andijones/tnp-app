@@ -54,7 +54,7 @@ export const useFavorites = (): UseFavoritesReturn => {
     console.log('🔄 toggleFavorite called for:', foodId);
     console.log('📊 Current favorites size:', favorites.size);
     console.log('❤️ Is currently favorite:', favorites.has(foodId));
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -62,7 +62,22 @@ export const useFavorites = (): UseFavoritesReturn => {
         return false;
       }
 
-      const isCurrentlyFavorite = favorites.has(foodId);
+      // First, check the actual state in the database to avoid race conditions
+      const { data: existingFavorite, error: checkError } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('food_id', foodId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('❌ Error checking favorite status:', checkError);
+        Alert.alert('Error', 'Failed to check favorite status');
+        return false;
+      }
+
+      const isCurrentlyFavorite = !!existingFavorite;
+      console.log('🎯 Database state - Is favorite:', isCurrentlyFavorite);
       console.log('🎯 Action will be:', isCurrentlyFavorite ? 'REMOVE' : 'ADD');
 
       if (isCurrentlyFavorite) {
@@ -95,7 +110,12 @@ export const useFavorites = (): UseFavoritesReturn => {
 
         if (error) {
           console.error('❌ Error adding favorite:', error);
-          Alert.alert('Error', 'Failed to add to favorites');
+          // Don't show alert for duplicate error - it means it's already favorited
+          if (error.code !== '23505') {
+            Alert.alert('Error', 'Failed to add to favorites');
+          }
+          // Re-fetch to sync state even if there was a duplicate error
+          await fetchFavorites();
           return false;
         }
 
@@ -111,7 +131,7 @@ export const useFavorites = (): UseFavoritesReturn => {
       Alert.alert('Error', 'An unexpected error occurred');
       return false;
     }
-  }, [favorites, fetchFavorites]); // Updated dependencies
+  }, [fetchFavorites]); // Removed favorites from dependencies to prevent stale closure
 
   return {
     favorites,

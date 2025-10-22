@@ -19,6 +19,7 @@ import { SubmissionScreen } from '../screens/scanner/SubmissionScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { UserReviewsScreen } from '../screens/profile/UserReviewsScreen';
 import { UserContributionsScreen } from '../screens/profile/UserContributionsScreen';
+import { SettingsScreen } from '../screens/profile/SettingsScreen';
 import { ProfilePicture } from '../components/common/ProfilePicture';
 import { useUser } from '../hooks/useUser';
 import { ScannerIcon } from '../components/icons/ScannerIcon';
@@ -381,6 +382,10 @@ export function RootNavigator() {
       <Stack.Screen
         name="UserContributions"
         component={UserContributionsScreen}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
       />
       <Stack.Screen
         name="IngredientScanner"
