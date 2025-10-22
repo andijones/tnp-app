@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
-import { Food } from '../../types';
+import { Food, FoodDetailScreenProps } from '../../types';
 import { supabase } from '../../services/supabase/config';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { Button } from '../../components/common/Button';
@@ -40,7 +40,7 @@ import { CategoryCard } from '../../components/aisles/CategoryCard';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-export const FoodDetailScreen: React.FC<any> = ({ route, navigation }) => {
+export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navigation }) => {
   const { foodId } = route.params;
   const [food, setFood] = useState<Food | null>(null);
   const [loading, setLoading] = useState(true);

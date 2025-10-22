@@ -25,22 +25,39 @@ import { supabase } from '../../services/supabase/config';
 import { useUser } from '../../hooks/useUser';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useNavigation } from '@react-navigation/native';
-import { Food } from '../../types';
+import { Food, UserProfile, ProfileNavigationProp, ProfileRouteProp } from '../../types';
+import {
+  uploadImage,
+  deleteImage,
+  isLocalUri,
+  getUserFriendlyErrorMessage,
+  ImageValidationError,
+  ImageProcessingError,
+  ImageUploadError,
+} from '../../utils/imageUpload';
 
 const { width } = Dimensions.get('window');
 
 interface ProfileScreenProps {
-  route?: {
-    params?: {
-      userId?: string;
-    };
+  route?: ProfileRouteProp | { params?: { userId?: string }; name?: string };
+}
+
+interface Review {
+  id: string;
+  rating: string;
+  review: string;
+  created_at: string;
+  food_id: string;
+  foods?: {
+    id: string;
+    name: string;
   };
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   const insets = useSafeAreaInsets();
   const targetUserId = route?.params?.userId;
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileNavigationProp>();
   const { user, profile: currentUserProfile, loading: userLoading, error: currentUserError, updateProfile } = useUser();
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
 
@@ -48,12 +65,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
   // Check if we need to show header (when navigated via UserProfile route, not Profile tab)
-  const showHeader = (route as any)?.name === 'UserProfile';
+  const showHeader = route && 'name' in route && route.name === 'UserProfile';
 
   // State for profile data (either current user or target user)
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Edit mode states (only for own profile)
   const [editing, setEditing] = useState(false);
@@ -67,7 +84,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   useEffect(() => {
     if (!showHeader) {
       // Only update if we're on the Profile tab (not UserProfile route)
-      navigation.setParams({ hideTabBar: editing } as never);
+      navigation.setParams({ hideTabBar: editing });
     }
   }, [editing, showHeader, navigation]);
 
@@ -76,7 +93,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
 
   // Common profile data states
   const [contributions, setContributions] = useState<Food[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [userStats, setUserStats] = useState({
     totalFavorites: 0,
     totalReviews: 0,
@@ -278,7 +295,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
     loadUserContent(userId, true);
   };
 
-  const handleScroll = (event: any) => {
+  const handleScroll = (event: { nativeEvent: { layoutMeasurement: { height: number }; contentOffset: { y: number }; contentSize: { height: number } } }) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     const paddingToBottom = 100;
 
@@ -330,10 +347,66 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Filter out empty strings to avoid overwriting with null values
-      const updates = Object.fromEntries(
-        Object.entries(formData).filter(([_, value]) => value !== '')
-      );
+      // Prepare updates
+      const updates: Record<string, any> = {};
+
+      // Handle full_name
+      if (formData.full_name && formData.full_name.trim() !== '') {
+        updates.full_name = formData.full_name.trim();
+      }
+
+      // Handle avatar upload if it's a local URI
+      if (formData.avatar_url) {
+        if (isLocalUri(formData.avatar_url)) {
+          console.log('Uploading new avatar image...');
+          try {
+            // Delete old avatar if exists and is from Supabase
+            if (profile?.avatar_url && profile.avatar_url.includes('supabase.co')) {
+              try {
+                await deleteImage(profile.avatar_url);
+                console.log('Old avatar deleted successfully');
+              } catch (deleteError) {
+                console.warn('Failed to delete old avatar:', deleteError);
+                // Continue anyway - not critical
+              }
+            }
+
+            // Upload new avatar with better error handling
+            const publicUrl = await uploadImage(formData.avatar_url, 'avatars');
+            updates.avatar_url = publicUrl;
+            console.log('New avatar uploaded:', publicUrl);
+          } catch (uploadError) {
+            console.error('Avatar upload error:', uploadError);
+
+            // Get user-friendly error message
+            const errorMessage = getUserFriendlyErrorMessage(uploadError);
+
+            // Show appropriate alert based on error type
+            if (uploadError instanceof ImageValidationError) {
+              Alert.alert('Invalid Image', errorMessage);
+            } else if (uploadError instanceof ImageProcessingError) {
+              Alert.alert('Processing Error', errorMessage);
+            } else if (uploadError instanceof ImageUploadError) {
+              Alert.alert('Upload Failed', errorMessage);
+            } else {
+              Alert.alert('Upload Error', errorMessage);
+            }
+
+            setSaving(false);
+            return;
+          }
+        } else {
+          // Already a remote URL, use as-is
+          updates.avatar_url = formData.avatar_url;
+        }
+      }
+
+      if (Object.keys(updates).length === 0) {
+        Alert.alert('No Changes', 'No changes to save.');
+        setEditing(false);
+        setSaving(false);
+        return;
+      }
 
       console.log('Attempting to save profile updates:', updates);
       await updateProfile(updates);
@@ -341,7 +414,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
       console.error('Profile update error:', error);
-      Alert.alert('Error', `Failed to update profile: ${error?.message || 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      Alert.alert('Error', `Failed to update profile: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
@@ -434,6 +508,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
             <TouchableOpacity
               onPress={() => navigation.goBack()}
               style={styles.backButton}
+              accessible={true}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+              accessibilityHint="Double tap to go back to previous screen"
             >
               <Ionicons name="arrow-back" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
@@ -441,7 +519,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
               {profile?.full_name || 'Profile'}
             </Text>
             {isOwnProfile && (
-              <TouchableOpacity onPress={handleSignOut} style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={handleSignOut}
+                style={styles.headerRight}
+                accessible={true}
+                accessibilityLabel="Sign out"
+                accessibilityRole="button"
+                accessibilityHint="Double tap to sign out of your account"
+              >
                 <Ionicons name="log-out-outline" size={24} color={theme.colors.text.secondary} />
               </TouchableOpacity>
             )}
@@ -468,6 +553,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                     style={styles.editAvatarButton}
                     onPress={handleImagePicker}
                     activeOpacity={0.7}
+                    accessible={true}
+                    accessibilityLabel="Change profile picture"
+                    accessibilityRole="button"
+                    accessibilityHint="Double tap to select a new profile picture"
                   >
                     <Ionicons name="camera" size={20} color={theme.colors.surface} />
                   </TouchableOpacity>
@@ -510,14 +599,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                   style={styles.editProfileButton}
                   onPress={() => setEditing(true)}
                   activeOpacity={0.8}
+                  accessible={true}
+                  accessibilityLabel="Edit profile"
+                  accessibilityRole="button"
+                  accessibilityHint="Double tap to edit your profile"
                 >
                   <Text style={styles.editProfileButtonText}>Edit Profile</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.settingsIconButton}
-                  onPress={() => (navigation as any).navigate('Settings')}
+                  onPress={() => navigation.navigate('Settings')}
                   activeOpacity={0.7}
+                  accessible={true}
+                  accessibilityLabel="Settings"
+                  accessibilityRole="button"
+                  accessibilityHint="Double tap to open settings"
                 >
                   <Ionicons name="settings-outline" size={22} color={theme.colors.text.secondary} />
                 </TouchableOpacity>
@@ -546,6 +643,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                   style={styles.clearButton}
                   onPress={handleCancel}
                   activeOpacity={0.8}
+                  accessible={true}
+                  accessibilityLabel="Cancel editing"
+                  accessibilityRole="button"
+                  accessibilityHint="Double tap to cancel profile changes"
                 >
                   <Text style={styles.clearButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -554,6 +655,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                   onPress={handleSave}
                   disabled={saving}
                   activeOpacity={0.8}
+                  accessible={true}
+                  accessibilityLabel={saving ? "Saving profile" : "Save profile"}
+                  accessibilityRole="button"
+                  accessibilityHint="Double tap to save profile changes"
+                  accessibilityState={{ disabled: saving, busy: saving }}
                 >
                   <Text style={styles.saveButtonText}>{saving ? "Saving..." : "Save"}</Text>
                 </TouchableOpacity>
@@ -652,7 +758,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                         <View key={food.id} style={styles.gridCardWrapper}>
                           <GridFoodCard
                             food={food}
-                            onPress={() => (navigation as any).navigate('FoodDetail', { foodId: food.id })}
+                            onPress={() => navigation.navigate('FoodDetail', { foodId: food.id })}
                             isFavorite={isFavorite(food.id)}
                             onToggleFavorite={toggleFavorite}
                           />
@@ -683,7 +789,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                           style={styles.reviewCard}
                           onPress={() => {
                             if (review.food_id) {
-                              (navigation as any).navigate('FoodDetail', { foodId: review.food_id });
+                              navigation.navigate('FoodDetail', { foodId: review.food_id });
                             }
                           }}
                           activeOpacity={0.7}

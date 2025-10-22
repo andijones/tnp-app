@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../theme';
-import { Food } from '../../types';
+import { Food, HomeScreenProps } from '../../types';
 import { supabase } from '../../services/supabase/config';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { FoodGrid } from '../../components/common/FoodGrid';
@@ -22,11 +22,6 @@ import { useFavorites } from '../../hooks/useFavorites';
 import { FilterBar } from '../../components/common/FilterBar2';
 import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/filterUtils';
 import { Supermarket } from '../../types';
-
-interface HomeScreenProps {
-  navigation: any;
-  route?: any;
-}
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
@@ -352,10 +347,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15, // Figma Body
     fontWeight: '400',
-    lineHeight: 21,
     color: '#0A0A0A', // Neutral-950
     letterSpacing: -0.15,
-    padding: 0, // Remove default padding
+    paddingVertical: 0, // Ensure vertical alignment
+    paddingHorizontal: 0, // Container handles horizontal padding
   },
 
   clearButton: {

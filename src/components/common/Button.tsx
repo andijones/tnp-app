@@ -11,6 +11,8 @@ interface ButtonProps {
   style?: ViewStyle;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -21,8 +23,12 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   leftIcon,
   rightIcon,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const hasIcons = leftIcon || rightIcon;
+  const defaultAccessibilityLabel = accessibilityLabel || title;
+  const defaultAccessibilityHint = accessibilityHint || `Double tap to ${title.toLowerCase()}`;
 
   const renderContent = () => {
     if (hasIcons) {
@@ -45,6 +51,11 @@ export const Button: React.FC<ButtonProps> = ({
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.8}
+        accessible={true}
+        accessibilityLabel={defaultAccessibilityLabel}
+        accessibilityRole="button"
+        accessibilityHint={defaultAccessibilityHint}
+        accessibilityState={{ disabled }}
       >
         <LinearGradient
           colors={['rgba(5, 55, 22, 0.2)', 'rgba(31, 89, 50, 0.2)']}
@@ -68,6 +79,11 @@ export const Button: React.FC<ButtonProps> = ({
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.8}
+        accessible={true}
+        accessibilityLabel={defaultAccessibilityLabel}
+        accessibilityRole="button"
+        accessibilityHint={defaultAccessibilityHint}
+        accessibilityState={{ disabled }}
       >
         <LinearGradient
           colors={['rgba(255, 255, 255, 0)', 'rgba(212, 207, 181, 0.05)']}
@@ -94,6 +110,11 @@ export const Button: React.FC<ButtonProps> = ({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
+      accessible={true}
+      accessibilityLabel={defaultAccessibilityLabel}
+      accessibilityRole="button"
+      accessibilityHint={defaultAccessibilityHint}
+      accessibilityState={{ disabled }}
     >
       {renderContent()}
     </TouchableOpacity>

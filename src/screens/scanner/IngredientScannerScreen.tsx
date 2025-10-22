@@ -19,6 +19,7 @@ import { Button } from '../../components/common/Button';
 import { ProcessingLevelCard } from '../../components/common/ProcessingLevelCard';
 import { supabase } from '../../services/supabase/config';
 import { classifyFoodByIngredients, type NovaClassificationResult } from '../../utils/enhancedNovaClassifier';
+import { validateImage, getUserFriendlyErrorMessage } from '../../utils/imageUpload';
 
 type ScanStep = 'intro' | 'ingredients' | 'front' | 'processing' | 'results';
 
@@ -108,17 +109,10 @@ export const IngredientScannerScreen: React.FC = () => {
 
       console.log('Extracted text:', data.extractedText);
       return data.extractedText;
-      
+
     } catch (error) {
       console.error('OCR extraction error:', error);
-      
-      // Fallback: return a sample for testing
-      Alert.alert(
-        'OCR Service Unavailable', 
-        'Using sample data for demonstration. In production, this would extract text from your image.'
-      );
-      
-      return "water, organic tomatoes, organic onions, sea salt, organic garlic, organic basil, natural flavoring";
+      throw error;
     }
   };
 
@@ -212,20 +206,28 @@ export const IngredientScannerScreen: React.FC = () => {
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).slice(2, 11);
 
-      // Upload ingredients image to storage
+      // Validate and upload ingredients image to storage
       const ingredientsFileName = `scanner-submission-${timestamp}-${randomId}-ingredients.jpg`;
       console.log('Uploading ingredients image:', ingredientsFileName, 'URI:', scanResult.ingredientsImage);
-      
+
+      // Validate ingredients image
+      try {
+        await validateImage(scanResult.ingredientsImage);
+      } catch (validationError) {
+        const errorMessage = getUserFriendlyErrorMessage(validationError);
+        throw new Error(`Ingredients image validation failed: ${errorMessage}`);
+      }
+
       const ingredientsResponse = await fetch(scanResult.ingredientsImage);
       if (!ingredientsResponse.ok) {
-        throw new Error(`Failed to fetch ingredients image: ${ingredientsResponse.status}`);
+        throw new Error(`Failed to fetch ingredients image: ${ingredientsResponse.status} ${ingredientsResponse.statusText}`);
       }
-      
+
       const ingredientsArrayBuffer = await ingredientsResponse.arrayBuffer();
       console.log('Ingredients ArrayBuffer size:', ingredientsArrayBuffer.byteLength);
-      
+
       if (ingredientsArrayBuffer.byteLength === 0) {
-        throw new Error('Ingredients image ArrayBuffer is empty - image may be corrupted');
+        throw new Error('Ingredients image is empty or corrupted. Please try scanning again.');
       }
       
       const { data: ingredientsUploadData, error: ingredientsUploadError } = await supabase.storage
@@ -244,20 +246,28 @@ export const IngredientScannerScreen: React.FC = () => {
         .from('food-images')
         .getPublicUrl(`submissions/${ingredientsFileName}`);
 
-      // Upload front image to storage
+      // Validate and upload front image to storage
       const frontFileName = `scanner-submission-${timestamp}-${randomId}-front.jpg`;
       console.log('Uploading front image:', frontFileName, 'URI:', scanResult.frontImage);
-      
+
+      // Validate front image
+      try {
+        await validateImage(scanResult.frontImage);
+      } catch (validationError) {
+        const errorMessage = getUserFriendlyErrorMessage(validationError);
+        throw new Error(`Front image validation failed: ${errorMessage}`);
+      }
+
       const frontResponse = await fetch(scanResult.frontImage);
       if (!frontResponse.ok) {
-        throw new Error(`Failed to fetch front image: ${frontResponse.status}`);
+        throw new Error(`Failed to fetch front image: ${frontResponse.status} ${frontResponse.statusText}`);
       }
-      
+
       const frontArrayBuffer = await frontResponse.arrayBuffer();
       console.log('Front ArrayBuffer size:', frontArrayBuffer.byteLength);
-      
+
       if (frontArrayBuffer.byteLength === 0) {
-        throw new Error('Front image ArrayBuffer is empty - image may be corrupted');
+        throw new Error('Front image is empty or corrupted. Please try scanning again.');
       }
       
       const { data: frontUploadData, error: frontUploadError } = await supabase.storage
@@ -326,20 +336,45 @@ export const IngredientScannerScreen: React.FC = () => {
 
     } catch (error) {
       console.error('Save error:', error);
-      
+
       // Provide more specific error messages
       let errorMessage = 'Failed to save results. Please try again.';
+      let errorTitle = 'Save Error';
+
       if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'Could not access the captured images. Please try scanning again.';
-        } else if (error.message.includes('storage')) {
+        // Check for validation errors
+        if (error.message.includes('validation failed')) {
+          errorTitle = 'Invalid Image';
+          errorMessage = error.message.replace('Ingredients image validation failed: ', '')
+                                      .replace('Front image validation failed: ', '');
+        }
+        // Check for corrupted/empty images
+        else if (error.message.includes('corrupted') || error.message.includes('empty')) {
+          errorTitle = 'Image Error';
+          errorMessage = error.message;
+        }
+        // Check for fetch errors
+        else if (error.message.includes('Failed to fetch')) {
+          errorTitle = 'Network Error';
+          errorMessage = 'Could not access the captured images. Please check your connection and try scanning again.';
+        }
+        // Check for storage errors
+        else if (error.message.includes('storage') || error.message.includes('upload')) {
+          errorTitle = 'Upload Failed';
           errorMessage = 'Image upload failed. Please check your internet connection and try again.';
-        } else if (error.message.includes('policies')) {
+        }
+        // Check for permission errors
+        else if (error.message.includes('policies') || error.message.includes('permission')) {
+          errorTitle = 'Permission Error';
           errorMessage = 'Storage permission error. Please contact support.';
         }
+        // Generic error with message
+        else {
+          errorMessage = error.message;
+        }
       }
-      
-      Alert.alert('Save Error', errorMessage);
+
+      Alert.alert(errorTitle, errorMessage);
     } finally {
       setIsProcessing(false);
     }

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
-import { Rating } from '../../types';
+import { Rating, AppNavigationProp } from '../../types';
 import { SectionHeader } from '../common/SectionHeader';
 
 interface RatingsSectionProps {
@@ -22,7 +22,7 @@ interface StarRatingProps {
 const StarRating: React.FC<StarRatingProps> = ({ rating, size = 16, showNumber = false }) => {
   const stars = [];
   const roundedRating = Math.round(rating);
-  
+
   for (let i = 1; i <= 5; i++) {
     stars.push(
       <Ionicons
@@ -34,12 +34,22 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, size = 16, showNumber =
       />
     );
   }
-  
+
+  const accessibilityLabel = `${rating.toFixed(1)} stars out of 5`;
+
   return (
-    <View style={styles.starContainer}>
+    <View
+      style={styles.starContainer}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="text"
+    >
       {stars}
       {showNumber && (
-        <Text style={[styles.ratingNumber, { fontSize: size * 0.8 }]}>
+        <Text
+          style={[styles.ratingNumber, { fontSize: size * 0.8 }]}
+          accessibilityLabel={`Rating: ${rating.toFixed(1)}`}
+        >
           {rating.toFixed(1)}
         </Text>
       )}
@@ -52,7 +62,7 @@ interface RatingItemProps {
 }
 
 const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<AppNavigationProp>();
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -64,21 +74,39 @@ const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
 
   const handleUserPress = () => {
     if (rating.user_id) {
-      navigation.navigate('UserProfile' as never, { userId: rating.user_id } as never);
+      navigation.navigate('UserProfile', { userId: rating.user_id });
     }
   };
 
+  const username = rating.username || 'Anonymous User';
+  const ratingValue = rating.ratingValue || 0;
+  const accessibilityLabel = `Review by ${username}, ${ratingValue} stars, ${formatDate(rating.created_at)}${rating.review ? `, ${rating.review}` : ''}`;
+
   return (
-    <View style={styles.ratingItem}>
+    <View
+      style={styles.ratingItem}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="text"
+    >
       <View style={styles.ratingHeader}>
         <TouchableOpacity
           style={styles.userInfo}
           onPress={handleUserPress}
           activeOpacity={0.7}
           disabled={!rating.user_id}
+          accessible={true}
+          accessibilityLabel={`View profile of ${username}`}
+          accessibilityRole="button"
+          accessibilityHint="Double tap to view user profile"
         >
           {rating.avatar_url ? (
-            <Image source={{ uri: rating.avatar_url }} style={styles.avatar} />
+            <Image
+              source={{ uri: rating.avatar_url }}
+              style={styles.avatar}
+              accessible={true}
+              accessibilityLabel={`${username}'s profile picture`}
+            />
           ) : (
             <View style={styles.avatarPlaceholder}>
               <Ionicons name="person" size={16} color={theme.colors.text.tertiary} />
@@ -86,16 +114,16 @@ const RatingItem: React.FC<RatingItemProps> = ({ rating }) => {
           )}
           <View style={styles.userDetails}>
             <Text style={styles.username}>
-              {rating.username || 'Anonymous User'}
+              {username}
             </Text>
             <Text style={styles.reviewDate}>
               {formatDate(rating.created_at)}
             </Text>
           </View>
         </TouchableOpacity>
-        <StarRating rating={rating.ratingValue || 0} size={14} />
+        <StarRating rating={ratingValue} size={14} />
       </View>
-      
+
       {rating.review && (
         <Text style={styles.reviewText}>{rating.review}</Text>
       )}

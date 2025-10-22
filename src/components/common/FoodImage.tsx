@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Image, ActivityIndicator, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
+import { API_CONFIG } from '../../constants';
 
 interface FoodImageProps {
   imageUrl?: string | null;
@@ -41,20 +42,18 @@ export const FoodImage: React.FC<FoodImageProps> = ({
   // Helper function to ensure we have a full URL
   const getImageUrl = (url?: string | null) => {
     if (!url) return null;
-    
+
     // If it's already a full URL, return it
     if (url.startsWith('http')) return url;
-    
-    // If it's a storage path, construct the full URL
-    const supabaseUrl = 'https://uacihrlnwlqhpbobzajs.supabase.co';
-    
+
+    // If it's a storage path, construct the full URL using config
     // Handle both bucket paths and direct paths
     if (url.startsWith('food-images/')) {
       // Already includes bucket name
-      return `${supabaseUrl}/storage/v1/object/public/${url}`;
+      return `${API_CONFIG.supabaseUrl}/storage/v1/object/public/${url}`;
     } else {
       // Assume it's just the file path without bucket name
-      return `${supabaseUrl}/storage/v1/object/public/food-images/${url}`;
+      return `${API_CONFIG.supabaseUrl}/storage/v1/object/public/food-images/${url}`;
     }
   };
 

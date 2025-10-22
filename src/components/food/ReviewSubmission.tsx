@@ -28,27 +28,42 @@ interface StarRatingPickerProps {
   size?: number;
 }
 
-const StarRatingPicker: React.FC<StarRatingPickerProps> = ({ 
-  rating, 
-  onRatingChange, 
-  size = 32 
+const StarRatingPicker: React.FC<StarRatingPickerProps> = ({
+  rating,
+  onRatingChange,
+  size = 32
 }) => {
   return (
-    <View style={styles.starPicker}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <TouchableOpacity
-          key={star}
-          onPress={() => onRatingChange(star)}
-          style={styles.starButton}
-          hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
-        >
-          <Ionicons
-            name={star <= rating ? "star" : "star-outline"}
-            size={size}
-            color={star <= rating ? theme.colors.warning : theme.colors.text.tertiary}
-          />
-        </TouchableOpacity>
-      ))}
+    <View
+      style={styles.starPicker}
+      accessible={false}
+      accessibilityLabel="Star rating picker"
+    >
+      {[1, 2, 3, 4, 5].map((star) => {
+        const isSelected = star <= rating;
+        const accessibilityLabel = `${star} star${star > 1 ? 's' : ''}${isSelected ? ', selected' : ''}`;
+        const accessibilityHint = `Double tap to rate ${star} out of 5 stars`;
+
+        return (
+          <TouchableOpacity
+            key={star}
+            onPress={() => onRatingChange(star)}
+            style={styles.starButton}
+            hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+            accessible={true}
+            accessibilityLabel={accessibilityLabel}
+            accessibilityRole="button"
+            accessibilityHint={accessibilityHint}
+            accessibilityState={{ selected: isSelected }}
+          >
+            <Ionicons
+              name={isSelected ? "star" : "star-outline"}
+              size={size}
+              color={isSelected ? theme.colors.warning : theme.colors.text.tertiary}
+            />
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };

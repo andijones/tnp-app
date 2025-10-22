@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform, Animated } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { theme } from '../theme';
+import type { RootStackParamList, TabParamList } from '../types/navigation';
 
 // Import your screens
 import { HomeScreen } from '../screens/home/HomeScreen';
@@ -27,8 +28,8 @@ import { TNPLogoIcon } from '../components/icons/TNPLogoIcon';
 import { AddIcon } from '../components/icons/AddIcon';
 import { HeartIcon } from '../components/icons/HeartIcon';
 
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
 // Drawer removed – Aisle browsing lives as a regular stack screen
 
 // Custom Floating Tab Bar Background
@@ -214,6 +215,7 @@ function TabNavigator() {
         component={HomeScreen}
         options={{
           title: 'All Foods',
+          tabBarAccessibilityLabel: 'Home, Browse all foods',
           tabBarIcon: ({ focused, color }) => (
             <AnimatedTabIcon
               name="nutrition-outline"
@@ -247,6 +249,7 @@ function TabNavigator() {
         component={UnifiedScannerScreen}
         options={({ route }) => ({
           title: 'Scanner',
+          tabBarAccessibilityLabel: 'Scanner, Scan ingredient labels',
           tabBarIcon: ({ focused, color }) => (
             <AnimatedTabIcon
               name="scan-outline"
@@ -285,6 +288,7 @@ function TabNavigator() {
         component={SubmissionScreen}
         options={{
           title: 'Submit',
+          tabBarAccessibilityLabel: 'Submit, Add a food suggestion',
           tabBarIcon: ({ focused, color }) => (
             <AnimatedTabIcon
               name="add-circle-outline"
@@ -302,6 +306,7 @@ function TabNavigator() {
         component={FavoritesScreen}
         options={{
           title: 'Favorites',
+          tabBarAccessibilityLabel: 'Favorites, View your favorite foods',
           tabBarIcon: ({ focused, color }) => (
             <AnimatedTabIcon
               name="heart-outline"
@@ -319,6 +324,7 @@ function TabNavigator() {
         component={ProfileScreen}
         options={({ route }) => ({
           title: 'Profile',
+          tabBarAccessibilityLabel: 'Profile, View your profile and settings',
           tabBarIcon: ({ focused, color }) => (
             <ProfileTabIcon color={color} size={28} focused={focused} />
           ),

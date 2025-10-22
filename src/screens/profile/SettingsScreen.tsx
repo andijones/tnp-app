@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,24 @@ import {
   Alert,
   Switch,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
 import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
 import { useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
+import { APP_INFO, DEEP_LINKS } from '../../constants';
 
 export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [useMetric, setUseMetric] = useState(false); // Default to Imperial
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [cacheSize, setCacheSize] = useState<string>('Calculating...');
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -54,7 +60,7 @@ export const SettingsScreen: React.FC = () => {
               const { data: { user } } = await supabase.auth.getUser();
               if (user?.email) {
                 const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-                  redirectTo: 'tnpclean://auth/callback',
+                  redirectTo: DEEP_LINKS.authCallback,
                 });
                 if (error) {
                   Alert.alert('Error', error.message);
@@ -72,6 +78,8 @@ export const SettingsScreen: React.FC = () => {
   };
 
   const handleDeleteAccount = () => {
+    if (isDeleting) return; // Prevent multiple calls
+
     Alert.alert(
       'Delete Account',
       'Are you sure you want to delete your account? This action cannot be undone. All your data, contributions, and reviews will be permanently deleted.',
@@ -91,16 +99,52 @@ export const SettingsScreen: React.FC = () => {
                   text: 'Yes, Delete',
                   style: 'destructive',
                   onPress: async () => {
+                    setIsDeleting(true);
                     try {
-                      // TODO: Implement account deletion API call
-                      // This should be handled by a backend function that:
-                      // 1. Deletes user profile
-                      // 2. Removes user contributions
-                      // 3. Deletes user reviews
-                      // 4. Deletes auth user
-                      Alert.alert('Notice', 'Account deletion is not yet implemented. Please contact support.');
+                      console.log('Initiating account deletion...');
+
+                      // Get the current session to use the access token
+                      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+                      if (sessionError || !session) {
+                        throw new Error('Not authenticated');
+                      }
+
+                      // Call the delete-account edge function
+                      const { data, error } = await supabase.functions.invoke('delete-account', {
+                        headers: {
+                          Authorization: `Bearer ${session.access_token}`,
+                        },
+                      });
+
+                      if (error) {
+                        console.error('Account deletion error:', error);
+                        throw new Error(error.message || 'Failed to delete account');
+                      }
+
+                      console.log('Account deletion response:', data);
+
+                      // Sign out the user (session should already be invalidated)
+                      await supabase.auth.signOut();
+
+                      // Show success message
+                      Alert.alert(
+                        'Account Deleted',
+                        'Your account has been permanently deleted. We\'re sorry to see you go!',
+                        [{ text: 'OK' }]
+                      );
+
+                      // Navigation will automatically redirect to auth screen after sign out
                     } catch (error) {
-                      Alert.alert('Error', 'Failed to delete account');
+                      console.error('Account deletion failed:', error);
+                      const errorMessage = error instanceof Error ? error.message : 'Failed to delete account';
+                      Alert.alert(
+                        'Deletion Failed',
+                        `Unable to delete your account: ${errorMessage}. Please try again or contact support.`,
+                        [{ text: 'OK' }]
+                      );
+                    } finally {
+                      setIsDeleting(false);
                     }
                   },
                 },
@@ -112,17 +156,108 @@ export const SettingsScreen: React.FC = () => {
     );
   };
 
+  // Calculate cache size on component mount
+  useEffect(() => {
+    calculateCacheSize();
+  }, []);
+
+  const calculateCacheSize = async () => {
+    try {
+      const cacheDir = FileSystem.cacheDirectory;
+      if (!cacheDir) {
+        setCacheSize('Unknown');
+        return;
+      }
+
+      // Get all files in cache directory
+      const files = await FileSystem.readDirectoryAsync(cacheDir);
+      let totalSize = 0;
+
+      // Calculate total size of all cached files
+      for (const file of files) {
+        try {
+          const fileInfo = await FileSystem.getInfoAsync(`${cacheDir}${file}`);
+          if (fileInfo.exists && fileInfo.size) {
+            totalSize += fileInfo.size;
+          }
+        } catch (error) {
+          console.warn(`Could not get info for file: ${file}`, error);
+        }
+      }
+
+      // Format size in human-readable format
+      const formatSize = (bytes: number): string => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+      };
+
+      setCacheSize(formatSize(totalSize));
+    } catch (error) {
+      console.error('Error calculating cache size:', error);
+      setCacheSize('Unknown');
+    }
+  };
+
   const handleClearCache = () => {
     Alert.alert(
       'Clear Cache',
-      'This will clear all cached images. The app may take longer to load images temporarily.',
+      `This will clear approximately ${cacheSize} of cached images. The app may take longer to load images temporarily.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Clear',
-          onPress: () => {
-            // TODO: Implement cache clearing
-            Alert.alert('Success', 'Cache cleared successfully');
+          onPress: async () => {
+            setIsClearing(true);
+            try {
+              const cacheDir = FileSystem.cacheDirectory;
+              if (!cacheDir) {
+                throw new Error('Cache directory not available');
+              }
+
+              // Get all files in cache directory
+              const files = await FileSystem.readDirectoryAsync(cacheDir);
+              let deletedCount = 0;
+              let failedCount = 0;
+
+              // Delete each file
+              for (const file of files) {
+                try {
+                  const filePath = `${cacheDir}${file}`;
+                  const fileInfo = await FileSystem.getInfoAsync(filePath);
+
+                  // Only delete files (not directories)
+                  if (fileInfo.exists && !fileInfo.isDirectory) {
+                    await FileSystem.deleteAsync(filePath, { idempotent: true });
+                    deletedCount++;
+                  }
+                } catch (error) {
+                  console.warn(`Failed to delete file: ${file}`, error);
+                  failedCount++;
+                }
+              }
+
+              // Recalculate cache size
+              await calculateCacheSize();
+
+              // Show success message
+              const message = failedCount > 0
+                ? `Cache cleared! Deleted ${deletedCount} files. ${failedCount} files could not be deleted.`
+                : `Cache cleared successfully! Deleted ${deletedCount} files.`;
+
+              Alert.alert('Success', message);
+            } catch (error) {
+              console.error('Error clearing cache:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+              Alert.alert(
+                'Error',
+                `Failed to clear cache: ${errorMessage}. Please try again.`
+              );
+            } finally {
+              setIsClearing(false);
+            }
           },
         },
       ]
@@ -130,15 +265,15 @@ export const SettingsScreen: React.FC = () => {
   };
 
   const handleReportBug = () => {
-    Linking.openURL('mailto:support@thenakedpantry.com?subject=Bug Report');
+    Linking.openURL(`mailto:${APP_INFO.supportEmail}?subject=Bug Report`);
   };
 
   const handleRequestFeature = () => {
-    Linking.openURL('mailto:support@thenakedpantry.com?subject=Feature Request');
+    Linking.openURL(`mailto:${APP_INFO.supportEmail}?subject=Feature Request`);
   };
 
   const handleContactSupport = () => {
-    Linking.openURL('mailto:support@thenakedpantry.com?subject=Support Request');
+    Linking.openURL(`mailto:${APP_INFO.supportEmail}?subject=Support Request`);
   };
 
   const handleTermsOfService = () => {
@@ -224,15 +359,30 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>DATA & STORAGE</Text>
 
           <TouchableOpacity
-            style={styles.settingRow}
+            style={[styles.settingRow, isClearing && styles.disabledRow]}
             onPress={handleClearCache}
             activeOpacity={0.7}
+            disabled={isClearing}
+            accessible={true}
+            accessibilityLabel={`Clear image cache, current size ${cacheSize}`}
+            accessibilityRole="button"
+            accessibilityHint="Double tap to clear cached images"
+            accessibilityState={{ disabled: isClearing, busy: isClearing }}
           >
             <View style={styles.settingLeft}>
               <Ionicons name="trash-outline" size={20} color={theme.colors.text.secondary} />
-              <Text style={styles.settingText}>Clear Image Cache</Text>
+              <View style={styles.settingTextContainer}>
+                <Text style={styles.settingText}>
+                  {isClearing ? 'Clearing Cache...' : 'Clear Image Cache'}
+                </Text>
+                <Text style={styles.cacheSize}>{cacheSize}</Text>
+              </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.text.tertiary} />
+            {isClearing ? (
+              <ActivityIndicator size="small" color={theme.colors.text.secondary} />
+            ) : (
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.text.tertiary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -319,15 +469,22 @@ export const SettingsScreen: React.FC = () => {
           <Text style={[styles.sectionTitle, styles.dangerTitle]}>DANGER ZONE</Text>
 
           <TouchableOpacity
-            style={[styles.settingRow, styles.dangerRow]}
+            style={[styles.settingRow, styles.dangerRow, isDeleting && styles.disabledRow]}
             onPress={handleDeleteAccount}
             activeOpacity={0.7}
+            disabled={isDeleting}
           >
             <View style={styles.settingLeft}>
               <Ionicons name="warning-outline" size={20} color={theme.colors.error} />
-              <Text style={[styles.settingText, styles.dangerText]}>Delete Account</Text>
+              <Text style={[styles.settingText, styles.dangerText]}>
+                {isDeleting ? 'Deleting Account...' : 'Delete Account'}
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.error} />
+            {isDeleting ? (
+              <ActivityIndicator size="small" color={theme.colors.error} />
+            ) : (
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.error} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -416,11 +573,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  settingTextContainer: {
+    flex: 1,
+  },
+
   settingText: {
     fontSize: 16,
     fontWeight: '400',
     color: theme.colors.text.primary,
     letterSpacing: -0.32,
+  },
+
+  cacheSize: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: theme.colors.text.secondary,
+    marginTop: 2,
   },
 
   versionText: {
@@ -440,6 +608,10 @@ const styles = StyleSheet.create({
 
   dangerText: {
     color: theme.colors.error,
+  },
+
+  disabledRow: {
+    opacity: 0.5,
   },
 
   bottomSpacer: {

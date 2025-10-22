@@ -14,8 +14,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase/config';
+import { validateImage, getUserFriendlyErrorMessage } from '../../utils/imageUpload';
 
 interface ImageItem {
   uri: string;
@@ -168,38 +170,77 @@ export const SubmissionScreen: React.FC = () => {
 
       const uploadedImages: string[] = [];
 
-      // Upload images if any
+      // Upload images if any with improved error handling
       for (let i = 0; i < selectedImages.length; i++) {
         const image = selectedImages[i];
-        const fileName = `suggestion-${Date.now()}-${Math.random().toString(36).substring(2, 11)}-${i}.jpg`;
 
-        const response = await fetch(image.uri);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch image: ${response.status}`);
+        try {
+          // Validate image before processing
+          await validateImage(image.uri);
+
+          // Resize and compress the image
+          const manipulatedImage = await ImageManipulator.manipulateAsync(
+            image.uri,
+            [{ resize: { width: 1200 } }], // Resize to max 1200px width
+            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+          );
+
+          // Fetch processed image
+          const response = await fetch(manipulatedImage.uri);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch processed image: ${response.status}`);
+          }
+
+          const arrayBuffer = await response.arrayBuffer();
+
+          if (arrayBuffer.byteLength === 0) {
+            throw new Error('Processed image is empty');
+          }
+
+          // Generate unique filename
+          const fileName = `suggestion-${Date.now()}-${Math.random().toString(36).substring(2, 11)}-${i}.jpg`;
+
+          // Upload to Supabase Storage with retry logic
+          let uploadSuccess = false;
+          let uploadAttempts = 0;
+          const maxAttempts = 3;
+
+          while (!uploadSuccess && uploadAttempts < maxAttempts) {
+            uploadAttempts++;
+
+            const { error: uploadError } = await supabase.storage
+              .from('food-images')
+              .upload(`submissions/${fileName}`, arrayBuffer, {
+                contentType: 'image/jpeg',
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error(`Upload attempt ${uploadAttempts} failed:`, uploadError);
+              if (uploadAttempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
+              } else {
+                throw uploadError;
+              }
+            } else {
+              uploadSuccess = true;
+            }
+          }
+
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('food-images')
+            .getPublicUrl(`submissions/${fileName}`);
+
+          uploadedImages.push(publicUrl);
+        } catch (imageError) {
+          console.error(`Error uploading image ${i + 1}:`, imageError);
+
+          // Get user-friendly error message
+          const errorMessage = getUserFriendlyErrorMessage(imageError);
+
+          throw new Error(`Failed to upload image ${i + 1}: ${errorMessage}`);
         }
-
-        const arrayBuffer = await response.arrayBuffer();
-
-        if (arrayBuffer.byteLength === 0) {
-          throw new Error('Image is empty or corrupted');
-        }
-
-        const { error: uploadError } = await supabase.storage
-          .from('food-images')
-          .upload(`submissions/${fileName}`, arrayBuffer, {
-            contentType: 'image/jpeg',
-            upsert: false
-          });
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('food-images')
-          .getPublicUrl(`submissions/${fileName}`);
-
-        uploadedImages.push(publicUrl);
       }
 
       // Build description from user suggestion + images
@@ -252,8 +293,11 @@ export const SubmissionScreen: React.FC = () => {
 
       let errorMessage = 'Failed to submit. Please try again.';
       if (error instanceof Error) {
-        if (error.message.includes('image')) {
-          errorMessage = 'Image upload failed. Please check your connection.';
+        // Check if it's an image-related error (from our custom error messages)
+        if (error.message.includes('upload image')) {
+          errorMessage = error.message; // Use the detailed error message we created
+        } else if (error.message.includes('image')) {
+          errorMessage = 'Image upload failed. Please check your connection and try again.';
         } else if (error.message.includes('storage')) {
           errorMessage = 'Upload failed. Please try again.';
         }

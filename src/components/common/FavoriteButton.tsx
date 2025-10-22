@@ -66,12 +66,22 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     setIsProcessing(false);
   };
 
+  const accessibilityLabel = isFavorite ? 'Remove from favorites' : 'Add to favorites';
+  const accessibilityHint = isFavorite
+    ? 'Double tap to remove this food from your favorites'
+    : 'Double tap to add this food to your favorites';
+
   return (
-    <TouchableOpacity 
-      style={[styles.button, isProcessing && styles.buttonDisabled]} 
+    <TouchableOpacity
+      style={[styles.button, isProcessing && styles.buttonDisabled]}
       onPress={handlePress}
       disabled={isProcessing}
       activeOpacity={0.8}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ selected: isFavorite, disabled: isProcessing }}
     >
       <Animated.View
         style={{

@@ -22,10 +22,21 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 }) => {
   const ingredientCount = getIngredientCount(food.ingredients, food.description);
 
+  // Build accessibility label
+  const accessibilityLabel = `${food.name}, ${
+    ingredientCount > 0 ? `${ingredientCount} ingredient${ingredientCount === 1 ? '' : 's'}` : ''
+  }, ${food.supermarket || 'Store not specified'}${
+    isFavorite ? ', favorited' : ''
+  }`;
+
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityHint="Double tap to view food details"
     >
       <View style={styles.foodCard}>
         {/* Header with Food Image and Favorite Button */}

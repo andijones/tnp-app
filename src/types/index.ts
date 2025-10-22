@@ -49,6 +49,7 @@ export interface Food {
     bio?: string;
     username?: string;
     instagram?: string;
+    created_at?: string;
   }
   
   export interface Favorite {
@@ -114,3 +115,38 @@ export interface FoodLink {
     status: 'pending' | 'approved' | 'rejected';
     created_at: string;
   }
+
+// Navigation Types - Re-export from navigation.ts for convenience
+export type {
+  RootStackParamList,
+  TabParamList,
+  RootStackNavigationProp,
+  TabNavigationProp,
+  AppNavigationProp,
+  RootStackScreenProps,
+  TabScreenProps,
+  AisleDetailScreenProps,
+  FoodDetailScreenProps,
+  UserProfileScreenProps,
+  UserReviewsScreenProps,
+  UserContributionsScreenProps,
+  SettingsScreenProps,
+  IngredientScannerScreenProps,
+  HomeScreenProps,
+  ScannerScreenProps,
+  SubmitScreenProps,
+  FavoritesScreenProps,
+  ProfileScreenProps,
+  AisleDetailNavigationProp,
+  FoodDetailNavigationProp,
+  UserProfileNavigationProp,
+  SettingsNavigationProp,
+  HomeNavigationProp,
+  ScannerNavigationProp,
+  ProfileNavigationProp,
+  AisleDetailRouteProp,
+  FoodDetailRouteProp,
+  UserProfileRouteProp,
+  HomeRouteProp,
+  ProfileRouteProp,
+} from './navigation';
