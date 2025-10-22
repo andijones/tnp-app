@@ -104,10 +104,10 @@ const styles = StyleSheet.create({
   input: {
     paddingHorizontal: 16, // Figma 16px → 16pt RN
     paddingVertical: 12, // Figma 12px spacing-12
-    fontSize: 13, // Figma Body 13px
+    fontSize: 15, // Figma Body 15px
     fontWeight: '400',
-    lineHeight: 17, // Figma Body lineHeight
-    letterSpacing: -0.13, // Figma Body letterSpacing
+    lineHeight: 21, // Figma Body lineHeight
+    letterSpacing: -0.15, // Figma Body letterSpacing
     color: '#171717', // Neutral-900
     height: 52, // Figma 52px height for inputs
   },

@@ -11,6 +11,7 @@ import {
   Dimensions,
   Linking,
   FlatList,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,6 +62,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
     avatar_url: '',
   });
   const [saving, setSaving] = useState(false);
+
+  // Hide tab bar when in edit mode
+  useEffect(() => {
+    if (!showHeader) {
+      // Only update if we're on the Profile tab (not UserProfile route)
+      navigation.setParams({ hideTabBar: editing } as never);
+    }
+  }, [editing, showHeader, navigation]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'contributions' | 'reviews'>('contributions');
@@ -442,128 +451,114 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
       )}
 
       <View style={styles.container}>
-        {/* Modern Profile Header - Instagram/Twitter Inspired */}
+        {/* Modern Profile Header */}
         <View style={[styles.modernHeader, !showHeader && { paddingTop: insets.top + 16 }]}>
-          {/* Avatar and Stats Row */}
-          <View style={styles.profileTopRow}>
-            <View style={styles.avatarContainer}>
-              <ProfilePicture
-                imageUrl={editing && formData.avatar_url ? formData.avatar_url : profile?.avatar_url}
-                fullName={profile?.full_name}
-                email={user?.email}
-                size="large"
-              />
-              {editing && (
-                <TouchableOpacity
-                  style={styles.editAvatarButton}
-                  onPress={handleImagePicker}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="camera" size={20} color={theme.colors.surface} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Right side: Name + Stats */}
-            <View style={styles.rightSection}>
-              {/* Name above stats */}
-              <Text style={styles.displayName}>
-                {(profile?.full_name && profile.full_name.trim() !== '') ? profile.full_name : 'User Profile'}
-              </Text>
-
-              {/* Stats Row - Instagram Style */}
-              <View style={styles.statsRow}>
-                <TouchableOpacity style={styles.statItem} activeOpacity={0.7}>
-                  <Text style={styles.statNumber}>{userStats.totalContributions}</Text>
-                  <Text style={styles.statLabel}>Submissions</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.statItem} activeOpacity={0.7}>
-                  <Text style={styles.statNumber}>{userStats.totalReviews}</Text>
-                  <Text style={styles.statLabel}>Reviews</Text>
-                </TouchableOpacity>
-
-                {isOwnProfile && (
-                  <TouchableOpacity style={styles.statItem} activeOpacity={0.7}>
-                    <Text style={styles.statNumber}>{userStats.totalFavorites}</Text>
-                    <Text style={styles.statLabel}>Favorites</Text>
+          <View style={styles.profileContentContainer}>
+            {/* Avatar and Stats Row */}
+            <View style={styles.profileTopRow}>
+              <View style={styles.avatarContainer}>
+                <ProfilePicture
+                  imageUrl={editing && formData.avatar_url ? formData.avatar_url : profile?.avatar_url}
+                  fullName={profile?.full_name}
+                  email={user?.email}
+                  size="xlarge"
+                />
+                {editing && (
+                  <TouchableOpacity
+                    style={styles.editAvatarButton}
+                    onPress={handleImagePicker}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="camera" size={20} color={theme.colors.surface} />
                   </TouchableOpacity>
                 )}
               </View>
+
+              {/* Right side: Name + Stats */}
+              <View style={styles.rightSection}>
+                {/* Name above stats */}
+                <Text style={styles.displayName} numberOfLines={1}>
+                  {(profile?.full_name && profile.full_name.trim() !== '') ? profile.full_name : 'User Profile'}
+                </Text>
+
+                {/* Stats Row */}
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>{userStats.totalContributions}</Text>
+                    <Text style={styles.statLabel}>Submissions</Text>
+                  </View>
+
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>{userStats.totalReviews}</Text>
+                    <Text style={styles.statLabel}>Reviews</Text>
+                  </View>
+
+                  {isOwnProfile && (
+                    <View style={styles.statItem}>
+                      <Text style={styles.statNumber}>{userStats.totalFavorites}</Text>
+                      <Text style={styles.statLabel}>Favourites</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
+
+            {/* Edit Profile Button */}
+            {!editing && isOwnProfile && (
+              <TouchableOpacity
+                style={styles.editProfileButton}
+                onPress={() => setEditing(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+              </TouchableOpacity>
+            )}
           </View>
-
-          {/* Join Date */}
-          {userStats.joinDate && (
-            <View style={styles.joinDateRow}>
-              <Ionicons name="calendar-outline" size={14} color={theme.colors.text.tertiary} />
-              <Text style={styles.joinDateText}>Joined {userStats.joinDate}</Text>
-            </View>
-          )}
-
-          {/* Edit Profile Button */}
-          {!editing && isOwnProfile && (
-            <TouchableOpacity
-              style={styles.editProfileButton}
-              onPress={() => setEditing(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Content Sections */}
         {editing ? (
           /* Edit Mode */
           <View style={styles.editModeContainer}>
-            <ScrollView
-              style={styles.editScrollView}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.editScrollContent}
-            >
-              <View style={styles.editingContainer}>
-                <Input
-                  label="Full Name"
-                  placeholder="Enter your full name"
-                  value={formData.full_name}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, full_name: text }))}
-                />
-              </View>
-            </ScrollView>
+            <View style={styles.editingContainer}>
+              <Input
+                label="Full Name"
+                placeholder="Enter your full name"
+                value={formData.full_name}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, full_name: text }))}
+              />
+            </View>
 
-            {/* Fixed Action Buttons at Bottom */}
-            <View style={styles.editFooter}>
+            {/* Action Buttons */}
+            <View style={styles.editActionsContainer}>
               <View style={styles.editActions}>
-                <Button
-                  title="Cancel"
+                <TouchableOpacity
+                  style={styles.clearButton}
                   onPress={handleCancel}
-                  variant="tertiary"
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title={saving ? "Saving..." : "Save"}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.clearButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.saveButton, saving && styles.saveButtonDisabled]}
                   onPress={handleSave}
                   disabled={saving}
-                  variant="secondary"
-                  style={{ flex: 1 }}
-                />
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.saveButtonText}>{saving ? "Saving..." : "Save"}</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Sign Out Button */}
               {isOwnProfile && (
-                <Button
-                  title="Sign Out"
+                <TouchableOpacity
+                  style={styles.signOutButtonEdit}
                   onPress={handleSignOut}
-                  variant="outline"
-                  style={styles.signOutButton}
-                />
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.signOutButtonText}>Sign Out</Text>
+                </TouchableOpacity>
               )}
-
-              {/* App Info */}
-              <View style={styles.appInfo}>
-                <Text style={styles.appInfoText}>The Naked Pantry v1.0</Text>
-              </View>
             </View>
           </View>
         ) : (
@@ -629,11 +624,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                 {activeTab === 'contributions' ? (
                   contributions.length === 0 ? (
                     <View style={styles.emptyStateContainer}>
-                      <Ionicons name="add-circle-outline" size={64} color={theme.colors.text.tertiary} />
-                      <Text style={styles.emptyStateTitle}>No Contributions Yet</Text>
-                      <Text style={styles.emptyStateSubtitle}>
-                        {isOwnProfile ? "You haven't" : `${profile?.full_name || 'This user'} hasn't`} contributed any foods yet.
-                      </Text>
+                      <Image
+                        source={require('../../../assets/submissions.png')}
+                        style={styles.emptyStateImage}
+                        resizeMode="contain"
+                      />
+                      <View style={styles.emptyStateTextContainer}>
+                        <Text style={styles.emptyStateTitle}>No Submissions</Text>
+                        <Text style={styles.emptyStateSubtitle}>
+                          We need people like you to submit foods to our ever growing database.
+                        </Text>
+                      </View>
                     </View>
                   ) : (
                     <View style={styles.contributionsGrid}>
@@ -652,11 +653,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                 ) : (
                   reviews.length === 0 ? (
                     <View style={styles.emptyStateContainer}>
-                      <Ionicons name="chatbubble-outline" size={64} color={theme.colors.text.tertiary} />
-                      <Text style={styles.emptyStateTitle}>No Reviews Yet</Text>
-                      <Text style={styles.emptyStateSubtitle}>
-                        {isOwnProfile ? "You haven't" : `${profile?.full_name || 'This user'} hasn't`} written any reviews yet.
-                      </Text>
+                      <Image
+                        source={require('../../../assets/noreviews.png')}
+                        style={styles.emptyStateImage}
+                        resizeMode="contain"
+                      />
+                      <View style={styles.emptyStateTextContainer}>
+                        <Text style={styles.emptyStateTitle}>No Reviews</Text>
+                        <Text style={styles.emptyStateSubtitle}>
+                          Add some of your ratings to our food database it really helps.
+                        </Text>
+                      </View>
                     </View>
                   ) : (
                     <View style={styles.reviewsList}>
@@ -752,10 +759,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral.BG,
   },
 
-  editScrollView: {
-    flex: 1,
-  },
-
   // Standard Header
   headerContainer: {
     backgroundColor: '#FFFFFF',
@@ -789,19 +792,25 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  // Modern Profile Header - Instagram/Twitter Inspired
+  // Modern Profile Header
   modernHeader: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: theme.colors.neutral[200],
+    borderBottomColor: theme.colors.neutral.BG2,
+  },
+
+  profileContentContainer: {
+    paddingHorizontal: 16,
+    gap: 16,
   },
 
   profileTopRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 16,
   },
 
   avatarContainer: {
@@ -825,65 +834,59 @@ const styles = StyleSheet.create({
   // Right section: Name + Stats
   rightSection: {
     flex: 1,
-    marginLeft: 16,
+    gap: 16,
   },
 
   displayName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: theme.colors.neutral[950],
-    marginBottom: 8,
+    color: theme.colors.neutral[800],
+    lineHeight: Math.round(16 * 1.197),
+    letterSpacing: -0.48,
   },
 
-  // Stats Row - Instagram Style
+  // Stats Row
   statsRow: {
     flexDirection: 'row',
-    gap: 24,
+    gap: 12,
   },
 
   statItem: {
     alignItems: 'flex-start',
+    gap: 4,
   },
 
   statNumber: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: theme.colors.neutral[950],
-    marginBottom: 2,
+    color: theme.colors.neutral[800],
+    lineHeight: Math.round(16 * 1.197),
+    letterSpacing: -0.48,
   },
 
   statLabel: {
-    fontSize: 13,
-    color: theme.colors.text.secondary,
+    fontSize: 12,
+    color: theme.colors.neutral[500],
     fontWeight: '400',
+    lineHeight: 12,
   },
 
-  joinDateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 12,
-  },
-
-  joinDateText: {
-    fontSize: 13,
-    color: theme.colors.text.tertiary,
-  },
-
-  // Edit Profile Button - Full Width like Instagram
+  // Edit Profile Button - Full Width
   editProfileButton: {
-    backgroundColor: theme.colors.neutral[100],
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: theme.colors.neutral.BG2,
+    height: 48,
+    borderRadius: 9999,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.neutral[200],
+    justifyContent: 'center',
+    paddingHorizontal: 24,
   },
 
   editProfileButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.neutral[950],
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.neutral[600],
+    lineHeight: Math.round(16 * 1.197),
+    letterSpacing: -0.48,
   },
 
   // Content sections
@@ -895,15 +898,14 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.neutral.BG2,
     zIndex: 10,
   },
 
   tab: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    height: 48,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 2,
@@ -911,7 +913,7 @@ const styles = StyleSheet.create({
   },
 
   activeTab: {
-    borderBottomColor: theme.colors.green[500],
+    borderBottomColor: '#44db6d',
   },
 
   tabPressed: {
@@ -919,13 +921,15 @@ const styles = StyleSheet.create({
   },
 
   tabText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: theme.colors.text.secondary,
+    color: theme.colors.neutral[500],
+    lineHeight: 21,
+    letterSpacing: -0.3,
   },
 
   activeTabText: {
-    color: theme.colors.green[600],
+    color: theme.colors.neutral[900],
   },
 
   // Tab Content
@@ -1036,20 +1040,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
   },
 
+  emptyStateImage: {
+    width: 160,
+    height: 140,
+    marginBottom: 4,
+  },
+
+  emptyStateTextContainer: {
+    gap: 8,
+    alignItems: 'center',
+    width: 300,
+  },
+
   emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: theme.colors.neutral[800],
+    lineHeight: 28,
+    letterSpacing: -0.44,
     textAlign: 'center',
+    width: '100%',
   },
 
   emptyStateSubtitle: {
-    fontSize: 16,
-    color: theme.colors.text.secondary,
+    fontSize: 15,
+    fontWeight: '400',
+    color: theme.colors.neutral[500],
+    lineHeight: 21,
+    letterSpacing: -0.15,
     textAlign: 'center',
-    lineHeight: 24,
+    width: '100%',
   },
 
   // Edit Mode Styles
@@ -1058,43 +1078,87 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral.BG,
   },
 
-  editScrollContent: {
-    paddingBottom: theme.spacing.xl,
-  },
-
   editingContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
+    paddingHorizontal: 27,
+    paddingTop: 24,
   },
 
-  editFooter: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.neutral[200],
+  editActionsContainer: {
+    paddingHorizontal: 25,
+    paddingTop: 110,
+    gap: 24,
   },
 
   editActions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    gap: 16,
+    paddingTop: 52,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.neutral[100],
   },
 
-  signOutButton: {
-    marginBottom: theme.spacing.sm,
-  },
-
-  appInfo: {
+  clearButton: {
+    flex: 1,
+    height: 52,
+    backgroundColor: theme.colors.neutral.BG2,
+    borderRadius: 9999,
     alignItems: 'center',
-    paddingTop: theme.spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
   },
 
-  appInfoText: {
-    fontSize: 12,
-    color: theme.colors.text.tertiary,
-    textAlign: 'center',
+  clearButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.neutral[600],
+    lineHeight: Math.round(16 * 1.197),
+    letterSpacing: -0.48,
+  },
+
+  saveButton: {
+    flex: 1,
+    height: 52,
+    backgroundColor: theme.colors.green[950],
+    borderRadius: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    borderWidth: 1,
+    borderColor: '#043614',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.neutral.white,
+    lineHeight: Math.round(16 * 1.197),
+    letterSpacing: -0.48,
+  },
+
+  signOutButtonEdit: {
+    height: 52,
+    backgroundColor: theme.colors.neutral.BG2,
+    borderRadius: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+
+  signOutButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.neutral[600],
+    lineHeight: Math.round(16 * 1.197),
+    letterSpacing: -0.48,
   },
 
   loadingContainer: {

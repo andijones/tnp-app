@@ -316,12 +316,33 @@ function TabNavigator() {
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{
+        options={({ route }) => ({
           title: 'Profile',
           tabBarIcon: ({ focused, color }) => (
             <ProfileTabIcon color={color} size={28} focused={focused} />
           ),
-        }}
+          tabBarStyle: (route.params as any)?.hideTabBar ? { display: 'none' } : {
+            position: 'absolute',
+            bottom: 30,
+            left: 0,
+            right: 0,
+            height: 68,
+            borderRadius: 34,
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 10,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 20,
+            elevation: 15,
+            paddingHorizontal: 24,
+            paddingTop: 12,
+            paddingBottom: 12,
+          },
+        })}
       />
     </Tab.Navigator>
   );
