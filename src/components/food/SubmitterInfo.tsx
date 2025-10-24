@@ -197,19 +197,10 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
       activeOpacity={0.7}
       disabled={!originalSubmitterId}
     >
-      <View style={styles.userRow}>
-        {submitterProfile?.avatar_url ? (
-          <Image
-            source={{ uri: submitterProfile.avatar_url }}
-            style={styles.avatar}
-          />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-            <Ionicons name="person" size={14} color={theme.colors.text.tertiary} />
-          </View>
-        )}
-        <Text style={styles.submittedText}>
-          Submitted by <Text style={styles.username}>{displayName}</Text>
+      <View style={styles.badge}>
+        <Ionicons name="person-circle-outline" size={16} color={theme.colors.neutral[500]} />
+        <Text style={styles.badgeText}>
+          Contributed by <Text style={styles.username}>{displayName}</Text>
         </Text>
       </View>
     </TouchableOpacity>
@@ -221,41 +212,33 @@ const styles = StyleSheet.create({
     // No extra styling needed
   },
 
-  userRow: {
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: theme.colors.neutral[50],
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: theme.colors.neutral[200],
   },
 
-  avatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-
-  avatarPlaceholder: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  submittedText: {
-    fontSize: 13,
-    color: theme.colors.text.secondary,
-    flex: 1,
+  badgeText: {
+    fontSize: 12,
+    color: theme.colors.neutral[600],
+    letterSpacing: -0.12,
   },
 
   username: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: theme.colors.text.primary,
+    color: theme.colors.neutral[700],
+    letterSpacing: -0.12,
   },
 
   loadingText: {
-    fontSize: 13,
+    fontSize: 12,
     color: theme.colors.text.secondary,
     marginLeft: theme.spacing.sm,
   },

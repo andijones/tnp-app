@@ -62,9 +62,13 @@ export const validateImage = async (uri: string): Promise<void> => {
       if (fileInfo.size > MAX_FILE_SIZE) {
         throw new ImageValidationError('Image file is too large (max 10MB)');
       }
+
+      // For local URIs, we've done sufficient validation
+      // No need to fetch as it will fail for local files
+      return;
     }
 
-    // Try to fetch the image to verify it's accessible
+    // For remote URLs only, try to fetch the image to verify it's accessible
     try {
       const response = await fetch(uri);
 

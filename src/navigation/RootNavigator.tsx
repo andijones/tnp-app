@@ -376,6 +376,14 @@ export function RootNavigator() {
       <Stack.Screen
         name="FoodDetail"
         component={FoodDetailScreen}
+        options={{
+          presentation: 'transparentModal',
+          animation: 'slide_from_bottom',
+          headerShown: false,
+          cardStyle: { backgroundColor: 'transparent' },
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+        }}
       />
       <Stack.Screen
         name="UserProfile"

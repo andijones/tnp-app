@@ -202,16 +202,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
         )}
       </View>
 
-      {/* Filter Bar - Only show when not searching */}
-      {!isSearchActive && (
-        <FilterBar
-          activeFilters={filters}
-          onFiltersChange={setFilters}
-          availableSupermarkets={availableSupermarkets}
-          totalCount={foods.length}
-          filteredCount={filteredFoods.length}
-        />
-      )}
+      {/* Filter Bar - Always visible so users can see active filters during search */}
+      <FilterBar
+        activeFilters={filters}
+        onFiltersChange={setFilters}
+        availableSupermarkets={availableSupermarkets}
+        totalCount={foods.length}
+        filteredCount={filteredFoods.length}
+      />
 
       <View style={styles.container}>
         <FoodGrid

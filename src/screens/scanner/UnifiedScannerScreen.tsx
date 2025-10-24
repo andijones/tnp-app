@@ -20,6 +20,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { fetchProductByBarcode, transformToFoodData, TransformedProduct } from '../../services/openFoodFacts';
 import { BarcodeProductResult } from '../../components/scanner/BarcodeProductResult';
 import { logger } from '../../utils/logger';
+import { FoodCelebration } from '../../components/common/FoodCelebration';
 
 type ScanMode = 'intro' | 'barcode' | 'barcodeResult';
 
@@ -32,6 +33,7 @@ export const UnifiedScannerScreen: React.FC = () => {
   const [flash, setFlash] = useState<'off' | 'on'>('off');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Barcode scanning state
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
@@ -180,13 +182,19 @@ export const UnifiedScannerScreen: React.FC = () => {
 
       if (error) throw error;
 
-      Alert.alert(
-        'Success!',
-        isAcceptable
-          ? 'Product has been added to the database. Thank you for contributing!'
-          : 'Product submitted for review. Our team will review it shortly.',
-        [{ text: 'OK', onPress: resetScanner }]
-      );
+      // Show celebration animation
+      setShowCelebration(true);
+
+      // Show success message after brief delay
+      setTimeout(() => {
+        Alert.alert(
+          'Success!',
+          isAcceptable
+            ? 'Product has been added to the database. Thank you for contributing!'
+            : 'Product submitted for review. Our team will review it shortly.',
+          [{ text: 'OK', onPress: resetScanner }]
+        );
+      }, 500);
 
     } catch (error) {
       logger.error('Save error:', error);
@@ -344,6 +352,13 @@ export const UnifiedScannerScreen: React.FC = () => {
       {currentMode === 'intro' && renderIntro()}
       {currentMode === 'barcode' && renderBarcodeScanner()}
       {currentMode === 'barcodeResult' && renderBarcodeResult()}
+
+      {/* Celebration Animation */}
+      {showCelebration && (
+        <FoodCelebration
+          onComplete={() => setShowCelebration(false)}
+        />
+      )}
     </View>
   );
 };

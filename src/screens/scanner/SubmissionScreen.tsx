@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase/config';
 import { validateImage, getUserFriendlyErrorMessage } from '../../utils/imageUpload';
 import { logger } from '../../utils/logger';
+import { FoodCelebration } from '../../components/common/FoodCelebration';
 
 interface ImageItem {
   uri: string;
@@ -39,6 +40,7 @@ export const SubmissionScreen: React.FC = () => {
   const [detectedUrl, setDetectedUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placeholder, setPlaceholder] = useState(PLACEHOLDERS[0]);
+  const [showCelebration, setShowCelebration] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Rotate placeholder on mount
@@ -282,12 +284,18 @@ export const SubmissionScreen: React.FC = () => {
         throw insertError;
       }
 
-      // Success!
-      Alert.alert(
-        'Thanks!',
-        'We\'ll check it out and add it to the app soon 🎉',
-        [{ text: 'Suggest Another', onPress: resetForm }]
-      );
+      // Success! Show celebration animation
+      setShowCelebration(true);
+
+      // Reset form after a brief delay to let animation start
+      setTimeout(() => {
+        resetForm();
+        Alert.alert(
+          'Thanks!',
+          'We\'ll check it out and add it to the app soon 🎉',
+          [{ text: 'Suggest Another' }]
+        );
+      }, 500);
 
     } catch (error) {
       logger.error('Submission error:', error);
@@ -449,6 +457,31 @@ export const SubmissionScreen: React.FC = () => {
               <Text style={styles.inlineActionLabel}>Link</Text>
             </TouchableOpacity>
 
+            {/* Reset Button - only shows when there's content */}
+            {hasContent && (
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Clear Form',
+                    'Are you sure you want to clear everything and start over?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Clear',
+                        style: 'destructive',
+                        onPress: resetForm
+                      },
+                    ]
+                  );
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="refresh-outline" size={18} color="#737373" />
+                <Text style={styles.resetButtonLabel}>Reset</Text>
+              </TouchableOpacity>
+            )}
+
             <View style={styles.inlineActionSpacer} />
 
             <TouchableOpacity
@@ -535,6 +568,13 @@ export const SubmissionScreen: React.FC = () => {
 
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Celebration Animation */}
+      {showCelebration && (
+        <FoodCelebration
+          onComplete={() => setShowCelebration(false)}
+        />
+      )}
     </View>
   );
 };
@@ -673,6 +713,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#404040', // Neutral-700 (outline text)
     letterSpacing: -0.28,
+  },
+  // Reset Button - subtle style
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44,
+    paddingHorizontal: 14,
+    backgroundColor: 'transparent',
+    borderRadius: 9999,
+    gap: 4,
+  },
+  resetButtonLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#737373', // Neutral-500 (more subtle)
+    letterSpacing: -0.13,
   },
   inlineActionSpacer: {
     flex: 1,

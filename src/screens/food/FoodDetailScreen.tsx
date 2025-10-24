@@ -13,7 +13,9 @@ import {
   StatusBar,
   Share,
   Platform,
+  Animated,
 } from 'react-native';
+import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Food, FoodDetailScreenProps } from '../../types';
@@ -38,6 +40,7 @@ import { RelatedFoodsSection } from '../../components/food/RelatedFoodsSection';
 import { SubmitterInfo } from '../../components/food/SubmitterInfo';
 import { CategoryCard } from '../../components/aisles/CategoryCard';
 import { CollapsibleSection } from '../../components/common/CollapsibleSection';
+import { SimilarFoodsSection } from '../../components/food/SimilarFoodsSection';
 import { logger } from '../../utils/logger';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -51,6 +54,53 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
   const scrollViewRef = useRef<ScrollView>(null);
   const reviewSectionRef = useRef<View>(null);
   const { isFavorite, toggleFavorite: toggleFavoriteHook } = useFavorites();
+
+  // Gesture handling for swipe to dismiss
+  const translateY = useRef(new Animated.Value(0)).current;
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+
+  const onHandlerStateChange = (event: any) => {
+    const { state, translationY: translation, velocityY } = event.nativeEvent;
+
+    // When gesture starts
+    if (state === 2) { // BEGAN
+      setScrollEnabled(false);
+    }
+
+    // When gesture ends
+    if (state === 5) { // END
+      // Dismiss if dragged down more than 100px or fast swipe down
+      if (translation > 100 || velocityY > 1000) {
+        // Navigate immediately for better responsiveness
+        navigation.goBack();
+
+        // Continue animation for visual smoothness (but don't wait for it)
+        Animated.spring(translateY, {
+          toValue: 1000,
+          velocity: velocityY / 1000,
+          useNativeDriver: true,
+          stiffness: 150,
+          damping: 25,
+        }).start();
+      } else {
+        // Spring back to original position
+        Animated.spring(translateY, {
+          toValue: 0,
+          velocity: velocityY / 1000,
+          useNativeDriver: true,
+          stiffness: 400,
+          damping: 30,
+        }).start(() => {
+          setScrollEnabled(true);
+        });
+      }
+    }
+  };
 
   useEffect(() => {
     fetchFoodDetails();
@@ -316,71 +366,114 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <LoadingSpinner message="Loading food details..." />
-      </SafeAreaView>
+      <GestureHandlerRootView style={styles.container}>
+        <View style={styles.modalCard}>
+          <LoadingSpinner message="Loading food details..." />
+        </View>
+      </GestureHandlerRootView>
     );
   }
 
   if (!food) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={64} color={theme.colors.error} />
-          <Text style={styles.errorText}>Food not found</Text>
-          <Button title="Go Back" onPress={() => navigation.goBack()} />
+      <GestureHandlerRootView style={styles.container}>
+        <View style={styles.modalCard}>
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={64} color={theme.colors.error} />
+            <Text style={styles.errorText}>Food not found</Text>
+            <Button title="Go Back" onPress={() => navigation.goBack()} />
+          </View>
         </View>
-      </SafeAreaView>
+      </GestureHandlerRootView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar 
-        barStyle="dark-content" 
-        backgroundColor={theme.colors.surface} 
-        translucent={false}
+    <GestureHandlerRootView style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
       />
-      <SafeAreaView style={styles.safeArea}>
-        {/* Clean Fixed Header */}
-        <View style={styles.header}>
+      {/* Animated Backdrop */}
+      <Animated.View
+        style={[
+          styles.backdrop,
+          {
+            opacity: translateY.interpolate({
+              inputRange: [0, 300],
+              outputRange: [1, 0],
+              extrapolate: 'clamp',
+            }),
+          },
+        ]}
+      />
+      {/* Modal Card Container with Gesture Handler */}
+      <PanGestureHandler
+        onGestureEvent={onGestureEvent}
+        onHandlerStateChange={onHandlerStateChange}
+        activeOffsetY={5}
+        failOffsetY={-5}
+      >
+        <Animated.View
+          style={[
+            styles.modalCard,
+            {
+              transform: [
+                {
+                  translateY: translateY.interpolate({
+                    inputRange: [-50, 0, 1000],
+                    outputRange: [0, 0, 1000],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+        {/* Drag Handle */}
+        <View style={styles.dragHandle} />
+
+        {/* Close Button - Top Right */}
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="close" size={28} color={theme.colors.neutral[600]} />
+        </TouchableOpacity>
+
+        {/* Header Actions - Share & Favorite */}
+        <View style={styles.headerActions}>
           <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.6}
+            style={styles.actionButton}
+            onPress={shareFood}
+            activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+            <Ionicons name="share-outline" size={22} color={theme.colors.text.primary} />
           </TouchableOpacity>
-          
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={shareFood}
-              activeOpacity={0.6}
-            >
-              <Ionicons name="share-outline" size={22} color={theme.colors.text.primary} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.headerButton, favoriteLoading && styles.buttonDisabled]}
-              onPress={handleToggleFavorite}
-              disabled={favoriteLoading}
-              activeOpacity={0.6}
-            >
-              <Ionicons
-                name={isFavorite(foodId) ? 'heart' : 'heart-outline'}
-                size={22}
-                color={isFavorite(foodId) ? theme.colors.error : theme.colors.text.primary}
-              />
-            </TouchableOpacity>
-          </View>
+
+          <TouchableOpacity
+            style={[styles.actionButton, favoriteLoading && styles.buttonDisabled]}
+            onPress={handleToggleFavorite}
+            disabled={favoriteLoading}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={isFavorite(foodId) ? 'heart' : 'heart-outline'}
+              size={22}
+              color={isFavorite(foodId) ? theme.colors.error : theme.colors.text.primary}
+            />
+          </TouchableOpacity>
         </View>
 
-        <ScrollView 
+        <ScrollView
           ref={scrollViewRef}
-          style={styles.scrollView} 
+          style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          scrollEnabled={scrollEnabled}
+          bounces={false}
         >
           {/* Hero Product Image */}
           <View style={styles.heroImageContainer}>
@@ -393,14 +486,13 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
             )}
           </View>
 
+          {/* Processing Level Card - Full Width */}
+          {food.nova_group && (
+            <ProcessingLevelCard level={food.nova_group} />
+          )}
+
           {/* Content Container with Card Layout */}
           <View style={styles.contentContainer}>
-            {/* Hero Section (no gaps) */}
-            {/* Processing Level Card - Full Width */}
-            {food.nova_group && (
-              <ProcessingLevelCard level={food.nova_group} />
-            )}
-
             {/* Info Card - Full Width */}
             <View style={styles.heroCard}>
 
@@ -474,16 +566,6 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
               </View>
             </View>
 
-            {/* Submitter Info Card - Always show if we have food data */}
-            {(food.original_submitter_id || food.food_link_id || food.user_id) && (
-              <View style={styles.card}>
-                <SubmitterInfo
-                  originalSubmitterId={food.original_submitter_id || food.user_id}
-                  foodLinkId={food.food_link_id}
-                />
-              </View>
-            )}
-
             {/* Collapsible Sections - Full Width with Top Margin */}
             <View style={styles.collapsibleSectionsContainer}>
               {/* Ingredients Section */}
@@ -519,6 +601,25 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
               </View>
             </View>
 
+            {/* Similar Foods Section */}
+            <SimilarFoodsSection
+              currentFoodId={foodId}
+              aisleId={food.aisle?.id}
+              onFoodPress={(foodId) => navigation.push('FoodDetail', { foodId })}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleFavoriteHook}
+            />
+
+            {/* Submitter Info - Moved to bottom */}
+            {(food.original_submitter_id || food.food_link_id || food.user_id) && (
+              <View style={styles.submitterContainer}>
+                <SubmitterInfo
+                  originalSubmitterId={food.original_submitter_id || food.user_id}
+                  foodLinkId={food.food_link_id}
+                />
+              </View>
+            )}
+
             {/* Footer */}
             <View style={styles.footer}>
               <TouchableOpacity style={styles.reportLink} onPress={reportFood}>
@@ -528,66 +629,111 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
             </View>
           </View>
         </ScrollView>
-      </SafeAreaView>
-    </View>
+        </Animated.View>
+      </PanGestureHandler>
+    </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
 
-  safeArea: {
+  // Backdrop
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+
+  // Modal Card Container
+  modalCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: 80, // Space for status bar and dynamic island
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 20,
+      },
+    }),
   },
-  
-  // Header Design
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderBottomWidth: 0,
+
+  // Drag Handle (visual indicator for swipe gesture)
+  dragHandle: {
+    width: 36,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: theme.colors.neutral[300],
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
   },
-  
-  headerButton: {
-    width: 44,
-    height: 44,
+
+  // Close Button - Top Right
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.neutral[100],
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 22,
+    zIndex: 10,
   },
-  
+
+  // Header Actions - Share & Favorite (Top Left)
   headerActions: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
     flexDirection: 'row',
     gap: theme.spacing.xs,
+    zIndex: 10,
   },
-  
+
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.neutral[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   buttonDisabled: {
     opacity: 0.5,
   },
   
   scrollView: {
     flex: 1,
-    backgroundColor: theme.colors.neutral.BG,
+    backgroundColor: theme.colors.neutral.white,
   },
-  
+
   scrollContent: {
     paddingBottom: 100, // Extra padding for bottom tab bar (68px + margin)
+    backgroundColor: theme.colors.neutral.white,
   },
-  
+
   // Hero Image Container
   heroImageContainer: {
-    height: 320,
+    height: 280,
     backgroundColor: theme.colors.neutral.white,
     position: 'relative',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5', // neutral-200
+    marginTop: 0, // Remove margin - drag handle provides spacing
   },
   
   heroImage: {
@@ -629,15 +775,17 @@ const styles = StyleSheet.create({
     paddingTop: 0, // No top padding for hero section
     paddingBottom: theme.spacing.md,
     gap: 0, // No gap - we control spacing manually
+    backgroundColor: theme.colors.neutral.white,
   },
 
-  // Hero Card - Full Width (no rounded corners, no margin)
+  // Hero Card - Full Width with horizontal padding for breathing room
   heroCard: {
     borderWidth: 0,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.neutral[200],
     backgroundColor: theme.colors.neutral.white,
-    padding: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md, // 16px horizontal padding
   },
 
   // Card Styling from Figma (with horizontal margin for rounded cards)
@@ -656,68 +804,83 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between', // Space between for left/right alignment
-    marginBottom: theme.spacing.lg,
+    marginBottom: 12,
   },
 
   storeText: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
+    textTransform: 'uppercase',
     color: theme.colors.neutral[500],
+    letterSpacing: 0.5,
   },
 
   // Aisle Pill
   aislePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 1000,
-    backgroundColor: '#FAFAFA',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: theme.colors.neutral[100],
     borderWidth: 0.5,
-    borderColor: 'rgba(161, 153, 105, 0.3)',
+    borderColor: theme.colors.neutral[200],
   },
 
   aislePillText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#404040',
-    letterSpacing: -0.24,
+    color: theme.colors.neutral[700],
+    letterSpacing: -0.11,
   },
 
   // Collapsible Sections Container
   collapsibleSectionsContainer: {
     marginTop: theme.spacing.md, // Add spacing after hero section
   },
+
+  // Submitter Container - At bottom of page
+  submitterContainer: {
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.neutral[200],
+    marginTop: theme.spacing.lg,
+  },
   
   
   // Product Title
   productTitle: {
-    ...theme.typography.heading,
-    fontSize: 22, // Reduced from 26 to 22 (4px decrease)
-    color: theme.colors.green[950],
-    marginBottom: theme.spacing.lg,
-    lineHeight: 28,
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.neutral[900],
+    marginBottom: theme.spacing.md,
+    lineHeight: 29,
+    letterSpacing: -0.72,
   },
   
   // Rating Row
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    gap: 6,
+    marginBottom: 20,
   },
-  
+
   starsContainer: {
     flexDirection: 'row',
-    gap: 2,
+    gap: 3,
   },
-  
+
   ratingText: {
     fontSize: 14,
-    color: theme.colors.neutral[500],
+    fontWeight: '500',
+    color: theme.colors.neutral[600],
+    letterSpacing: -0.14,
   },
   
   // Action Buttons
   buttonContainer: {
-    gap: theme.spacing.md,
+    gap: 12, // Slightly tighter spacing between buttons
   },
   
   // Section Header
