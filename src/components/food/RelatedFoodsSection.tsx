@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
+import { logger } from '../../utils/logger';
 import { Food } from '../../types';
 import { RelatedFood, relatedFoodsService } from '../../services/relatedFoodsService';
 import { FoodCard } from '../common/FoodCard';
@@ -49,7 +50,7 @@ export const RelatedFoodsSection: React.FC<RelatedFoodsSectionProps> = ({
       const foods = await relatedFoodsService.getRelatedFoods(currentFood);
       setRelatedFoods(foods);
     } catch (err) {
-      console.error('Error fetching related foods:', err);
+      logger.error('Error fetching related foods:', err);
       setError('Failed to load related foods');
     } finally {
       setLoading(false);
@@ -60,7 +61,7 @@ export const RelatedFoodsSection: React.FC<RelatedFoodsSectionProps> = ({
     try {
       await toggleFavorite(foodId);
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      logger.error('Error toggling favorite:', error);
     }
   };
 

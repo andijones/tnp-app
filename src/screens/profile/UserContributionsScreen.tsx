@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
+import { logger } from '../../utils/logger';
 
 interface UserContributionsScreenProps {
   route: {
@@ -61,14 +62,14 @@ export const UserContributionsScreen: React.FC<UserContributionsScreenProps> = (
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading contributions:', error);
+        logger.error('Error loading contributions:', error);
         Alert.alert('Error', 'Failed to load contributions');
         return;
       }
 
       setContributions(data || []);
     } catch (error) {
-      console.error('Error loading contributions:', error);
+      logger.error('Error loading contributions:', error);
       Alert.alert('Error', 'Failed to load contributions');
     } finally {
       setLoading(false);

@@ -17,7 +17,9 @@ import { Food } from '../../types';
 import { supabase } from '../../services/supabase/config';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { FoodGrid } from '../../components/common/FoodGrid';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useFavorites } from '../../hooks/useFavorites';
+import { logger } from '../../utils/logger';
 
 interface FavoritesScreenProps {
   navigation: any;
@@ -52,7 +54,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         .order('created_at', { ascending: false });
 
       if (favError) {
-        console.error('Error fetching favorite IDs:', favError);
+        logger.error('Error fetching favorite IDs:', favError);
         Alert.alert('Error', 'Failed to load favorites');
         setLoading(false);
         return;
@@ -74,16 +76,16 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         .eq('status', 'approved'); // Only show approved foods (RLS handles permissions)
 
       if (foodError) {
-        console.error('Error fetching foods:', foodError);
+        logger.error('Error fetching foods:', foodError);
         Alert.alert('Error', 'Failed to load favorite foods');
       } else {
-        console.log('Direct fetch: Got', foodsData?.length || 0, 'foods for', favoriteIds.length, 'favorites');
+        logger.log('Direct fetch: Got', foodsData?.length || 0, 'foods for', favoriteIds.length, 'favorites');
         // Sort foods to match the favorites order (newest first)
         const orderedFoods = favoriteIds.map(id => foodsData?.find(food => food.id === id)).filter(Boolean) as Food[];
         setFavoritesFoods(orderedFoods);
       }
     } catch (error) {
-      console.error('Error fetching favorites:', error);
+      logger.error('Error fetching favorites:', error);
       Alert.alert('Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -93,7 +95,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
   // Refresh when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log('FavoritesScreen focused - fetching fresh data');
+      logger.log('FavoritesScreen focused - fetching fresh data');
       fetchFavoritesFoods();
     }, [])
   );
@@ -197,19 +199,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         )}
         ListEmptyComponent={
           searchQuery ? (
-            <View style={styles.emptyStateContainer}>
-              <Image
-                source={require('../../../assets/NoFoodFound.png')}
-                style={styles.emptyStateImage}
-                resizeMode="contain"
-              />
-              <View style={styles.emptyStateTextContainer}>
-                <Text style={styles.emptyStateHeading}>No foods found</Text>
-                <Text style={styles.emptyStateBody}>
-                  We couldn't find any foods matching your search. Please try a different term.
-                </Text>
-              </View>
-            </View>
+            <EmptyState />
           ) : (
             <View style={styles.noFavoritesContainer}>
               <Image
@@ -353,45 +343,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.md,
-  },
-  
-  // Figma Empty State - No Foods Found (for search)
-  emptyStateContainer: {
-    alignItems: 'center',
-    paddingTop: 160, // Figma 160px top padding for vertical centering
-    paddingHorizontal: 16, // Figma 16px horizontal padding
-    maxWidth: 300, // Figma 300px max width for content
-    alignSelf: 'center',
-  },
-
-  emptyStateImage: {
-    width: 160, // Figma 160px
-    height: 160, // Figma 160px
-    marginBottom: 8, // Figma 8px gap to text
-  },
-
-  emptyStateTextContainer: {
-    gap: 4, // Figma 4px gap between heading and body
-    alignItems: 'center',
-    width: '100%',
-  },
-
-  emptyStateHeading: {
-    fontSize: 22, // Figma Heading2
-    fontWeight: '700',
-    lineHeight: 28,
-    color: '#262626', // Neutral-800
-    letterSpacing: -0.44,
-    textAlign: 'center',
-  },
-
-  emptyStateBody: {
-    fontSize: 15, // Figma Body
-    fontWeight: '400',
-    lineHeight: 21,
-    color: '#737373', // Neutral-500
-    letterSpacing: -0.15,
-    textAlign: 'center',
   },
 
   // No Favorites State - Separate from search empty state

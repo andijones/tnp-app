@@ -1,7 +1,8 @@
 import * as Font from 'expo-font';
+import { logger } from './logger';
 
 export const loadFonts = async () => {
-  console.log('Using system fonts - no custom font loading needed');
+  logger.log('Using system fonts - no custom font loading needed');
   // System fonts are used, no custom font loading required
 };
 

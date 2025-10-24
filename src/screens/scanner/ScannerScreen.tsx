@@ -12,6 +12,7 @@ import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { supabase } from '../../services/supabase/config';
+import { logger } from '../../utils/logger';
 
 type ScanMode = 'url' | 'manual';
 
@@ -49,7 +50,7 @@ export const ScannerScreen: React.FC = () => {
         });
 
       if (error) {
-        console.error('Submission error:', error);
+        logger.error('Submission error:', error);
         Alert.alert('Error', 'Failed to submit food. Please try again.');
         return;
       }
@@ -65,7 +66,7 @@ export const ScannerScreen: React.FC = () => {
         ]
       );
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       Alert.alert('Error', 'An unexpected error occurred.');
     } finally {
       setLoading(false);
@@ -95,7 +96,7 @@ export const ScannerScreen: React.FC = () => {
         });
 
       if (error) {
-        console.error('URL submission error:', error);
+        logger.error('URL submission error:', error);
         Alert.alert('Error', 'Failed to submit URL. Please try again.');
         return;
       }
@@ -106,7 +107,7 @@ export const ScannerScreen: React.FC = () => {
         [{ text: 'OK', onPress: resetForm }]
       );
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       Alert.alert('Error', 'An unexpected error occurred.');
     } finally {
       setLoading(false);

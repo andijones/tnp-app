@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { theme } from '../theme';
+import { logger } from '../utils/logger';
 
 interface SplashScreenProps {
   onAnimationComplete?: () => void;
@@ -21,7 +22,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete 
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    console.log('SplashScreen mounted and starting animation');
+    logger.log('SplashScreen mounted and starting animation');
     // Set status bar style for splash screen
     StatusBar.setBarStyle('light-content', true);
 
@@ -64,7 +65,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete 
     ]);
 
     animationSequence.start(() => {
-      console.log('SplashScreen animation finished');
+      logger.log('SplashScreen animation finished');
       // Reset status bar style
       StatusBar.setBarStyle('dark-content', true);
       onAnimationComplete?.();

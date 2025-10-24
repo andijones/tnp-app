@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase/config';
 import { UserProfile } from '../types';
+import { logger } from '../utils/logger';
 
 export interface UserData {
   user: User | null;
@@ -73,7 +74,7 @@ export const useUser = () => {
         }
       } catch (error) {
         if (mounted) {
-          console.error('Error fetching user data:', error);
+          logger.error('Error fetching user data:', error);
           setUserData(prev => ({ ...prev, error: 'Failed to load user data', loading: false }));
         }
       }
@@ -110,7 +111,7 @@ export const useUser = () => {
       throw new Error('No user logged in');
     }
 
-    console.log('Updating profile for user:', userData.user.id, 'with updates:', updates);
+    logger.log('Updating profile for user:', userData.user.id, 'with updates:', updates);
     
     try {
       // First, try to update existing profile
@@ -123,11 +124,11 @@ export const useUser = () => {
         .eq('id', userData.user.id)
         .select();
 
-      console.log('Update response:', { data, error });
+      logger.log('Update response:', { data, error });
 
       // If no rows were updated (profile doesn't exist), try to insert
       if (!error && (!data || data.length === 0)) {
-        console.log('No existing profile found, attempting insert...');
+        logger.log('No existing profile found, attempting insert...');
         const insertResult = await supabase
           .from('profiles')
           .insert({
@@ -140,15 +141,15 @@ export const useUser = () => {
         
         data = insertResult.data;
         error = insertResult.error;
-        console.log('Insert response:', { data, error });
+        logger.log('Insert response:', { data, error });
       }
 
       if (error) {
-        console.error('Supabase error:', error);
+        logger.error('Supabase error:', error);
         
         // If it's an RLS error, try alternative approach using auth metadata
         if (error.message.includes('row-level security') || error.message.includes('RLS')) {
-          console.log('RLS error detected, trying auth metadata update...');
+          logger.log('RLS error detected, trying auth metadata update...');
           
           // Update user metadata as fallback
           const { data: authData, error: authError } = await supabase.auth.updateUser({
@@ -162,7 +163,7 @@ export const useUser = () => {
             throw new Error(`Authentication error: ${authError.message}`);
           }
           
-          console.log('Updated via auth metadata:', authData);
+          logger.log('Updated via auth metadata:', authData);
           
           // Update local state with auth metadata
           setUserData(prev => ({
@@ -188,9 +189,9 @@ export const useUser = () => {
         },
       }));
       
-      console.log('Profile updated successfully');
+      logger.log('Profile updated successfully');
     } catch (err) {
-      console.error('Profile update failed:', err);
+      logger.error('Profile update failed:', err);
       throw err;
     }
   };

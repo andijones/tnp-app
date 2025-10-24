@@ -18,6 +18,7 @@ import { supabase } from '../../services/supabase/config';
 import { useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
 import { APP_INFO, DEEP_LINKS } from '../../constants';
+import { logger } from '../../utils/logger';
 
 export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -101,7 +102,7 @@ export const SettingsScreen: React.FC = () => {
                   onPress: async () => {
                     setIsDeleting(true);
                     try {
-                      console.log('Initiating account deletion...');
+                      logger.log('Initiating account deletion...');
 
                       // Get the current session to use the access token
                       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -118,11 +119,11 @@ export const SettingsScreen: React.FC = () => {
                       });
 
                       if (error) {
-                        console.error('Account deletion error:', error);
+                        logger.error('Account deletion error:', error);
                         throw new Error(error.message || 'Failed to delete account');
                       }
 
-                      console.log('Account deletion response:', data);
+                      logger.log('Account deletion response:', data);
 
                       // Sign out the user (session should already be invalidated)
                       await supabase.auth.signOut();
@@ -136,7 +137,7 @@ export const SettingsScreen: React.FC = () => {
 
                       // Navigation will automatically redirect to auth screen after sign out
                     } catch (error) {
-                      console.error('Account deletion failed:', error);
+                      logger.error('Account deletion failed:', error);
                       const errorMessage = error instanceof Error ? error.message : 'Failed to delete account';
                       Alert.alert(
                         'Deletion Failed',
@@ -181,7 +182,7 @@ export const SettingsScreen: React.FC = () => {
             totalSize += fileInfo.size;
           }
         } catch (error) {
-          console.warn(`Could not get info for file: ${file}`, error);
+          logger.warn(`Could not get info for file: ${file}`, error);
         }
       }
 
@@ -196,7 +197,7 @@ export const SettingsScreen: React.FC = () => {
 
       setCacheSize(formatSize(totalSize));
     } catch (error) {
-      console.error('Error calculating cache size:', error);
+      logger.error('Error calculating cache size:', error);
       setCacheSize('Unknown');
     }
   };
@@ -234,7 +235,7 @@ export const SettingsScreen: React.FC = () => {
                     deletedCount++;
                   }
                 } catch (error) {
-                  console.warn(`Failed to delete file: ${file}`, error);
+                  logger.warn(`Failed to delete file: ${file}`, error);
                   failedCount++;
                 }
               }
@@ -249,7 +250,7 @@ export const SettingsScreen: React.FC = () => {
 
               Alert.alert('Success', message);
             } catch (error) {
-              console.error('Error clearing cache:', error);
+              logger.error('Error clearing cache:', error);
               const errorMessage = error instanceof Error ? error.message : 'Unknown error';
               Alert.alert(
                 'Error',

@@ -1,5 +1,6 @@
 import { supabase } from './supabase/config';
 import { Supermarket, FoodSupermarket } from '../types';
+import { logger } from '../utils/logger';
 
 /**
  * Service for fetching supermarket data from database
@@ -16,13 +17,13 @@ export const supermarketService = {
         .order('name', { ascending: true });
 
       if (error) {
-        console.error('Error fetching supermarkets:', error);
+        logger.error('Error fetching supermarkets:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getAllSupermarkets:', error);
+      logger.error('Error in getAllSupermarkets:', error);
       return [];
     }
   },
@@ -39,7 +40,7 @@ export const supermarketService = {
         .eq('available', true);
 
       if (fsError) {
-        console.error('Error fetching food_supermarkets:', fsError);
+        logger.error('Error fetching food_supermarkets:', fsError);
         return [];
       }
 
@@ -60,13 +61,13 @@ export const supermarketService = {
         .order('name', { ascending: true });
 
       if (smError) {
-        console.error('Error fetching supermarkets:', smError);
+        logger.error('Error fetching supermarkets:', smError);
         return [];
       }
 
       return supermarkets || [];
     } catch (error) {
-      console.error('Error in getSupermarketsWithFoods:', error);
+      logger.error('Error in getSupermarketsWithFoods:', error);
       return [];
     }
   },
@@ -89,13 +90,13 @@ export const supermarketService = {
         .eq('food_id', foodId);
 
       if (error) {
-        console.error('Error fetching food supermarkets:', error);
+        logger.error('Error fetching food supermarkets:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getSupermarketsForFood:', error);
+      logger.error('Error in getSupermarketsForFood:', error);
       return [];
     }
   },
@@ -117,7 +118,7 @@ export const supermarketService = {
         .eq('available', true);
 
       if (error) {
-        console.error('Error fetching food IDs by supermarkets:', error);
+        logger.error('Error fetching food IDs by supermarkets:', error);
         return [];
       }
 
@@ -125,7 +126,7 @@ export const supermarketService = {
       const uniqueFoodIds = [...new Set(data?.map(fs => fs.food_id) || [])];
       return uniqueFoodIds;
     } catch (error) {
-      console.error('Error in getFoodIdsBySupermarkets:', error);
+      logger.error('Error in getFoodIdsBySupermarkets:', error);
       return [];
     }
   },

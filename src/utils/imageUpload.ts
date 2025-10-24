@@ -1,6 +1,7 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { supabase } from '../services/supabase/config';
+import { logger } from './logger';
 
 // Error types for better error handling
 export class ImageValidationError extends Error {
@@ -118,11 +119,11 @@ export const uploadImage = async (
   maxHeight: number = 400
 ): Promise<string> => {
   try {
-    console.log('Starting image upload:', { uri, bucket, folder });
+    logger.log('Starting image upload:', { uri, bucket, folder });
 
     // Step 1: Validate the image
     await validateImage(uri);
-    console.log('Image validation passed');
+    logger.log('Image validation passed');
 
     // Step 2: Resize and compress the image
     let manipulatedImage;
@@ -132,7 +133,7 @@ export const uploadImage = async (
         [{ resize: { width: maxWidth, height: maxHeight } }],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
-      console.log('Image processing completed');
+      logger.log('Image processing completed');
     } catch (error) {
       throw new ImageProcessingError(
         `Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -152,7 +153,7 @@ export const uploadImage = async (
         throw new ImageProcessingError('Processed image is empty');
       }
 
-      console.log('Image converted to blob:', blob.size, 'bytes');
+      logger.log('Image converted to blob:', blob.size, 'bytes');
     } catch (error) {
       throw new ImageProcessingError(
         `Failed to convert image: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -184,7 +185,7 @@ export const uploadImage = async (
           throw error;
         }
 
-        console.log('Upload successful:', filePath);
+        logger.log('Upload successful:', filePath);
 
         // Step 6: Get and verify public URL
         const { data: { publicUrl } } = supabase.storage
@@ -199,16 +200,16 @@ export const uploadImage = async (
         try {
           const verifyResponse = await fetch(publicUrl, { method: 'HEAD' });
           if (!verifyResponse.ok) {
-            console.warn('Uploaded image may not be immediately accessible');
+            logger.warn('Uploaded image may not be immediately accessible');
           }
         } catch (verifyError) {
-          console.warn('Could not verify uploaded image accessibility:', verifyError);
+          logger.warn('Could not verify uploaded image accessibility:', verifyError);
         }
 
         return publicUrl;
       } catch (error) {
         uploadError = error instanceof Error ? error : new Error('Unknown upload error');
-        console.error(`Upload attempt ${uploadAttempts} failed:`, uploadError.message);
+        logger.error(`Upload attempt ${uploadAttempts} failed:`, uploadError.message);
 
         if (uploadAttempts < maxAttempts) {
           // Wait before retrying (exponential backoff)
@@ -222,7 +223,7 @@ export const uploadImage = async (
       `Upload failed after ${maxAttempts} attempts: ${uploadError?.message || 'Unknown error'}`
     );
   } catch (error) {
-    console.error('Image upload error:', error);
+    logger.error('Image upload error:', error);
 
     // Re-throw custom errors as-is
     if (error instanceof ImageValidationError ||
@@ -264,7 +265,7 @@ export const deleteImage = async (
       throw new Error(`Delete failed: ${error.message}`);
     }
   } catch (error) {
-    console.error('Image delete error:', error);
+    logger.error('Image delete error:', error);
     throw error;
   }
 };

@@ -3,6 +3,7 @@
 import { supabase } from './supabase/config';
 import { Aisle, FoodItemAisle, AisleLevel } from '../types/aisle';
 import { Food } from '../types';
+import { logger } from '../utils/logger';
 
 class AisleService {
   private aisleCache: Map<string, Food[]> = new Map();
@@ -18,13 +19,13 @@ class AisleService {
         .order('name');
 
       if (error) {
-        console.error('Error fetching aisles:', error);
+        logger.error('Error fetching aisles:', error);
         throw error;
       }
 
       return this.buildHierarchy(data || []);
     } catch (error) {
-      console.error('Error in fetchAisles:', error);
+      logger.error('Error in fetchAisles:', error);
       throw error;
     }
   }
@@ -78,13 +79,13 @@ class AisleService {
         .single();
 
       if (error) {
-        console.error('Error fetching aisle by slug:', error);
+        logger.error('Error fetching aisle by slug:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error in getAisleBySlug:', error);
+      logger.error('Error in getAisleBySlug:', error);
       return null;
     }
   }
@@ -99,13 +100,13 @@ class AisleService {
         .order('name');
 
       if (error) {
-        console.error('Error fetching child aisles:', error);
+        logger.error('Error fetching child aisles:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getChildAisles:', error);
+      logger.error('Error in getChildAisles:', error);
       return [];
     }
   }
@@ -124,7 +125,7 @@ class AisleService {
         .rpc('get_descendant_aisles', { parent_aisle_id: aisleId });
 
       if (descendantsError) {
-        console.error('Error getting descendant aisles:', descendantsError);
+        logger.error('Error getting descendant aisles:', descendantsError);
       }
 
       const allAisleIds = [aisleId, ...(descendants || []).map((d: Aisle) => d.id)];
@@ -136,7 +137,7 @@ class AisleService {
         .in('aisle_id', allAisleIds);
 
       if (foodAislesError) {
-        console.error('Error fetching food-aisle relationships:', foodAislesError);
+        logger.error('Error fetching food-aisle relationships:', foodAislesError);
         return [];
       }
 
@@ -158,7 +159,7 @@ class AisleService {
         .order('created_at', { ascending: false });
 
       if (foodsError) {
-        console.error('Error fetching foods:', foodsError);
+        logger.error('Error fetching foods:', foodsError);
         return [];
       }
 
@@ -173,7 +174,7 @@ class AisleService {
       return transformedData;
 
     } catch (error) {
-      console.error('Error in getFoodsForAisle:', error);
+      logger.error('Error in getFoodsForAisle:', error);
       return [];
     }
   }
@@ -191,7 +192,7 @@ class AisleService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching all foods:', error);
+        logger.error('Error fetching all foods:', error);
         return [];
       }
 
@@ -204,7 +205,7 @@ class AisleService {
 
       return transformedData;
     } catch (error) {
-      console.error('Error in getAllFoods:', error);
+      logger.error('Error in getAllFoods:', error);
       return [];
     }
   }
@@ -216,6 +217,115 @@ class AisleService {
       food.name.toLowerCase().includes(query.toLowerCase()) ||
       food.description?.toLowerCase().includes(query.toLowerCase())
     );
+  }
+
+  // Search aisles by name and return with food counts
+  async searchAisles(query: string, limit: number = 3): Promise<Array<Aisle & { foodCount: number }>> {
+    try {
+      if (!query || query.trim().length === 0) {
+        return [];
+      }
+
+      const searchTerm = query.trim().toLowerCase();
+
+      // Search aisles by name (case-insensitive) - must start with search term
+      const { data: matchingAisles, error: aislesError } = await supabase
+        .from('aisles')
+        .select('*')
+        .ilike('name', `${searchTerm}%`)
+        .order('name');
+
+      if (aislesError) {
+        logger.error('Error searching aisles:', aislesError);
+        return [];
+      }
+
+      if (!matchingAisles || matchingAisles.length === 0) {
+        return [];
+      }
+
+      // Filter to only include aisles that start with the search term (case-insensitive)
+      const filteredAisles = matchingAisles.filter(aisle =>
+        aisle.name.toLowerCase().startsWith(searchTerm)
+      );
+
+      logger.log(`Search term: "${searchTerm}"`);
+      logger.log('Matching aisles from DB:', matchingAisles.map(a => a.name));
+      logger.log('Filtered aisles:', filteredAisles.map(a => a.name));
+
+      if (filteredAisles.length === 0) {
+        return [];
+      }
+
+      // Get food counts for each aisle
+      const aislesWithCounts = await Promise.all(
+        filteredAisles.map(async (aisle) => {
+          try {
+            // Get descendant aisles
+            const { data: descendants } = await supabase
+              .rpc('get_descendant_aisles', { parent_aisle_id: aisle.id });
+
+            const allAisleIds = [aisle.id, ...(descendants || []).map((d: Aisle) => d.id)];
+
+            // Get food count for this aisle and descendants
+            const { data: foodAisles } = await supabase
+              .from('food_item_aisles')
+              .select('food_id', { count: 'exact', head: false })
+              .in('aisle_id', allAisleIds);
+
+            // Get unique food IDs and count only approved foods
+            const foodIds = [...new Set(foodAisles?.map(fa => fa.food_id) || [])];
+
+            if (foodIds.length === 0) {
+              return { ...aisle, foodCount: 0 };
+            }
+
+            const { count } = await supabase
+              .from('foods')
+              .select('*', { count: 'exact', head: true })
+              .in('id', foodIds)
+              .eq('status', 'approved');
+
+            return {
+              ...aisle,
+              foodCount: count || 0,
+            };
+          } catch (error) {
+            logger.error('Error getting food count for aisle:', aisle.id, error);
+            return { ...aisle, foodCount: 0 };
+          }
+        })
+      );
+
+      // Sort by relevance: exact matches first, then by name
+      const sorted = aislesWithCounts.sort((a, b) => {
+        const aNameLower = a.name.toLowerCase();
+        const bNameLower = b.name.toLowerCase();
+
+        // Exact matches first
+        const aExact = aNameLower === searchTerm;
+        const bExact = bNameLower === searchTerm;
+
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+
+        // Then starts-with matches
+        const aStarts = aNameLower.startsWith(searchTerm);
+        const bStarts = bNameLower.startsWith(searchTerm);
+
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+
+        // Finally alphabetical
+        return a.name.localeCompare(b.name);
+      });
+
+      // Return top N results
+      return sorted.slice(0, limit);
+    } catch (error) {
+      logger.error('Error in searchAisles:', error);
+      return [];
+    }
   }
 
   // Cache management

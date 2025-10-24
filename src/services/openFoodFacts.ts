@@ -1,6 +1,8 @@
 // Open Food Facts API Service
 // https://world.openfoodfacts.org/api/v2
 
+import { logger } from '../utils/logger';
+
 export interface OpenFoodFactsProduct {
   code: string;
   product_name?: string;
@@ -105,14 +107,14 @@ export const fetchProductByBarcode = async (barcode: string): Promise<OpenFoodFa
     const data = await response.json();
 
     if (data.status === 0 || !data.product) {
-      console.log('Product not found in Open Food Facts:', barcode);
+      logger.log('Product not found in Open Food Facts:', barcode);
       return null;
     }
 
-    console.log('Product found in Open Food Facts:', data.product.product_name);
+    logger.log('Product found in Open Food Facts:', data.product.product_name);
     return data.product;
   } catch (error) {
-    console.error('Error fetching product from Open Food Facts:', error);
+    logger.error('Error fetching product from Open Food Facts:', error);
     throw error;
   }
 };

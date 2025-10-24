@@ -19,7 +19,7 @@ import { CompositeNavigationProp, CompositeScreenProps, RouteProp } from '@react
 export type RootStackParamList = {
   Main: undefined;
   AisleMenu: undefined;
-  AisleDetail: { aisleId: string; aisleName: string };
+  AisleDetail: { slug: string; title: string };
   FoodDetail: { foodId: string };
   UserProfile: { userId: string };
   UserReviews: { userId: string };

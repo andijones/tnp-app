@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../../utils/logger';
 
 const supabaseUrl = 'https://uacihrlnwlqhpbobzajs.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhY2locmxud2xxaHBib2J6YWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1NTE2MjUsImV4cCI6MjA2MDEyNzYyNX0.NKoj5Olfg3sxPX0p3AT4POlxs4wmHa3XmcAIXEttxXU';
@@ -20,4 +21,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Test the connection
-console.log('Supabase client created:', !!supabase);
+logger.log('Supabase client created:', !!supabase);

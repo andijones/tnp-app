@@ -2,6 +2,7 @@
 
 import { supabase } from './supabase/config';
 import { Food, Aisle } from '../types';
+import { logger } from '../utils/logger';
 
 interface RelatedFood extends Food {
   aisles: Aisle[];
@@ -62,7 +63,7 @@ class RelatedFoodsService {
       return result;
 
     } catch (error) {
-      console.error('Error fetching related foods:', error);
+      logger.error('Error fetching related foods:', error);
       return [];
     }
   }
@@ -94,7 +95,7 @@ class RelatedFoodsService {
       .limit(this.MAX_ITEMS * 2);
 
     if (error) {
-      console.error('Error in Tier 1 query:', error);
+      logger.error('Error in Tier 1 query:', error);
       return [];
     }
 
@@ -124,7 +125,7 @@ class RelatedFoodsService {
       .limit(this.MAX_ITEMS * 2); // Get more than needed for deduplication
 
     if (error) {
-      console.error('Error in Tier 2 query:', error);
+      logger.error('Error in Tier 2 query:', error);
       return [];
     }
 
@@ -157,7 +158,7 @@ class RelatedFoodsService {
       .limit(this.MAX_ITEMS * 2);
 
     if (error) {
-      console.error('Error in Tier 3 query:', error);
+      logger.error('Error in Tier 3 query:', error);
       return [];
     }
 
@@ -200,7 +201,7 @@ class RelatedFoodsService {
           aisleIds.push(...data.map(item => item.aisle_id));
         }
       } catch (error) {
-        console.error('Error fetching aisle IDs:', error);
+        logger.error('Error fetching aisle IDs:', error);
       }
     }
 

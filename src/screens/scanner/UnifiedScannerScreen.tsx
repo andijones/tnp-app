@@ -19,6 +19,7 @@ import { supabase } from '../../services/supabase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchProductByBarcode, transformToFoodData, TransformedProduct } from '../../services/openFoodFacts';
 import { BarcodeProductResult } from '../../components/scanner/BarcodeProductResult';
+import { logger } from '../../utils/logger';
 
 type ScanMode = 'intro' | 'barcode' | 'barcodeResult';
 
@@ -53,7 +54,7 @@ export const UnifiedScannerScreen: React.FC = () => {
       return;
     }
 
-    console.log('📷 Barcode scanned:', barcode);
+    logger.log('📷 Barcode scanned:', barcode);
     setLastScannedBarcode(barcode);
     setScannedBarcode(barcode);
     setScanCooldown(true);
@@ -65,7 +66,7 @@ export const UnifiedScannerScreen: React.FC = () => {
       setIsProcessing(true);
 
       // Step 1: Check local database first
-      console.log('🔍 Checking database for barcode:', barcode);
+      logger.log('🔍 Checking database for barcode:', barcode);
       const { data: existingFood, error: dbError } = await supabase
         .from('foods')
         .select('id')
@@ -74,11 +75,11 @@ export const UnifiedScannerScreen: React.FC = () => {
         .maybeSingle();
 
       if (dbError) {
-        console.error('Database lookup error:', dbError);
+        logger.error('Database lookup error:', dbError);
       }
 
       if (existingFood) {
-        console.log('✅ Found in database:', existingFood.id);
+        logger.log('✅ Found in database:', existingFood.id);
         // Still fetch from Open Food Facts to show product details
         const offProduct = await fetchProductByBarcode(barcode);
         if (offProduct) {
@@ -95,11 +96,11 @@ export const UnifiedScannerScreen: React.FC = () => {
       }
 
       // Step 2: Fetch from Open Food Facts
-      console.log('🌐 Fetching from Open Food Facts...');
+      logger.log('🌐 Fetching from Open Food Facts...');
       const product = await fetchProductByBarcode(barcode);
 
       if (!product) {
-        console.log('❌ Product not found in Open Food Facts - navigating to ingredient scanner');
+        logger.log('❌ Product not found in Open Food Facts - navigating to ingredient scanner');
         resetScanner();
         const parentNav = navigation.getParent();
         if (parentNav) {
@@ -111,13 +112,13 @@ export const UnifiedScannerScreen: React.FC = () => {
 
       // Step 3: Transform and display
       const transformedProduct = transformToFoodData(product);
-      console.log('✅ Product found:', transformedProduct.name);
+      logger.log('✅ Product found:', transformedProduct.name);
       setBarcodeProduct(transformedProduct);
       setExistingFoodId(null);
       setCurrentMode('barcodeResult');
 
     } catch (error) {
-      console.error('❌ Barcode scan error:', error);
+      logger.error('❌ Barcode scan error:', error);
       Alert.alert(
         'Scan Failed',
         'Failed to process barcode. Please try again.',
@@ -188,7 +189,7 @@ export const UnifiedScannerScreen: React.FC = () => {
       );
 
     } catch (error) {
-      console.error('Save error:', error);
+      logger.error('Save error:', error);
       Alert.alert('Error', 'Failed to save product. Please try again.');
     } finally {
       setIsSubmitting(false);

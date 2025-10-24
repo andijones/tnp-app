@@ -61,7 +61,9 @@ export const ProcessingLevelCard: React.FC<ProcessingLevelCardProps> = ({ level 
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 8,
+    borderRadius: 0, // Full width card - no rounded corners
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',

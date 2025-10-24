@@ -1,4 +1,5 @@
 import { supabase } from '../services/supabase/config';
+import { logger } from './logger';
 
 export interface NovaClassificationResult {
   nova_group: number;
@@ -235,7 +236,7 @@ export async function classifyFoodByIngredients(text: string): Promise<NovaClass
     };
     
   } catch (error) {
-    console.error('Classification error:', error);
+    logger.error('Classification error:', error);
     return {
       nova_group: 3,
       explanation: 'Classification failed - defaulting to processed food',
@@ -260,9 +261,9 @@ export async function loadIndicatorsFromDatabase(): Promise<void> {
       
     if (indicators) {
       // Could enhance the classification with database indicators
-      console.log('Loaded indicators from database:', indicators.length);
+      logger.log('Loaded indicators from database:', indicators.length);
     }
   } catch (error) {
-    console.warn('Could not load indicators from database:', error);
+    logger.warn('Could not load indicators from database:', error);
   }
 }

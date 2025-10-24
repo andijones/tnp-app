@@ -14,9 +14,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Aisle } from '../../types/aisle';
 import { Food } from '../../types';
+import { logger } from '../../utils/logger';
 import { aisleService } from '../../services/aisleService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { FoodGrid } from '../../components/common/FoodGrid';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useFavorites } from '../../hooks/useFavorites';
 import { FilterBar } from '../../components/common/FilterBar2';
 import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/filterUtils';
@@ -103,9 +105,9 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
       // Get foods for this aisle
       const aislefoods = await aisleService.getFoodsForAisle(aisleData.id);
       setFoods(aislefoods);
-      
+
     } catch (error) {
-      console.error('Error loading aisle data:', error);
+      logger.error('Error loading aisle data:', error);
       Alert.alert('Error', 'Failed to load aisle data');
     } finally {
       setLoading(false);
@@ -217,20 +219,8 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
         ListEmptyComponent={() => (
-          searchQuery ? (
-            <View style={styles.emptyStateContainer}>
-              <Image
-                source={require('../../../assets/NoFoodFound.png')}
-                style={styles.emptyStateImage}
-                resizeMode="contain"
-              />
-              <View style={styles.emptyStateTextContainer}>
-                <Text style={styles.emptyStateHeading}>No foods found</Text>
-                <Text style={styles.emptyStateBody}>
-                  We couldn't find any foods matching your search. Please try a different term.
-                </Text>
-              </View>
-            </View>
+          (searchQuery || filters.processingLevels.length > 0 || filters.supermarketIds.length > 0) ? (
+            <EmptyState />
           ) : (
             <View style={styles.emptyAisleContainer}>
               <Image
@@ -460,45 +450,6 @@ const styles = StyleSheet.create({
   },
 
   emptyAisleBody: {
-    fontSize: 15, // Figma Body
-    fontWeight: '400',
-    lineHeight: 21,
-    color: '#737373', // Neutral-500
-    letterSpacing: -0.15,
-    textAlign: 'center',
-  },
-
-  // Figma Empty State - No Foods Found (for search)
-  emptyStateContainer: {
-    alignItems: 'center',
-    paddingTop: 160, // Figma 160px top padding for vertical centering
-    paddingHorizontal: 16, // Figma 16px horizontal padding
-    maxWidth: 300, // Figma 300px max width for content
-    alignSelf: 'center',
-  },
-
-  emptyStateImage: {
-    width: 160, // Figma 160px
-    height: 160, // Figma 160px
-    marginBottom: 8, // Figma 8px gap to text
-  },
-
-  emptyStateTextContainer: {
-    gap: 4, // Figma 4px gap between heading and body
-    alignItems: 'center',
-    width: '100%',
-  },
-
-  emptyStateHeading: {
-    fontSize: 22, // Figma Heading2
-    fontWeight: '700',
-    lineHeight: 28,
-    color: '#262626', // Neutral-800
-    letterSpacing: -0.44,
-    textAlign: 'center',
-  },
-
-  emptyStateBody: {
     fontSize: 15, // Figma Body
     fontWeight: '400',
     lineHeight: 21,

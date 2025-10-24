@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
 import { PublicProfile, SubmissionStats, FoodLink } from '../../types';
+import { logger } from '../../utils/logger';
 
 interface SubmitterInfoProps {
   originalSubmitterId?: string | null;
@@ -38,7 +39,7 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
   }, [originalSubmitterId, foodLinkId]);
 
   const fetchSubmitterData = async () => {
-    console.log('SubmitterInfo - originalSubmitterId:', originalSubmitterId, 'foodLinkId:', foodLinkId);
+    logger.log('SubmitterInfo - originalSubmitterId:', originalSubmitterId, 'foodLinkId:', foodLinkId);
     try {
       // Fetch profile data if we have a submitter ID
       if (originalSubmitterId) {
@@ -46,17 +47,17 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
           .rpc('get_public_profile', { user_id: originalSubmitterId });
 
         if (profileError) {
-          console.error('Profile error:', profileError);
+          logger.error('Profile error:', profileError);
         }
 
         if (profileData && profileData.length > 0) {
           const profile = profileData[0]; // RPC returns an array, get first element
-          console.log('Profile data found from RPC:', profile);
-          console.log('Full name:', profile.full_name);
-          console.log('Username:', profile.username);
+          logger.log('Profile data found from RPC:', profile);
+          logger.log('Full name:', profile.full_name);
+          logger.log('Username:', profile.username);
           setSubmitterProfile(profile);
         } else {
-          console.log('No profile data returned from RPC for user:', originalSubmitterId);
+          logger.log('No profile data returned from RPC for user:', originalSubmitterId);
           setSubmitterProfile(null);
         }
 
@@ -79,7 +80,7 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
             totalContributions: (foodsError ? 0 : (uniqueFoods?.length || 0)) + (pendingError ? 0 : (pendingFoodLinkCount || 0))
           });
         } catch (statsError) {
-          console.error('Error fetching submission stats:', statsError);
+          logger.error('Error fetching submission stats:', statsError);
           setSubmissionStats({ totalContributions: 0 });
         }
       }
@@ -97,40 +98,40 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
             setFoodLink(foodLinkData as FoodLink);
           }
         } catch (linkError) {
-          console.error('Error fetching food link:', linkError);
+          logger.error('Error fetching food link:', linkError);
         }
       }
     } catch (error) {
-      console.error('Error fetching submitter data:', error);
+      logger.error('Error fetching submitter data:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const getDisplayName = (): string => {
-    console.log('getDisplayName called with submitterProfile:', submitterProfile);
+    logger.log('getDisplayName called with submitterProfile:', submitterProfile);
 
     if (!submitterProfile) {
-      console.log('No submitter profile found, showing Community Member');
+      logger.log('No submitter profile found, showing Community Member');
       return 'Community Member';
     }
 
     // Check if we have actual name data with detailed debugging
-    console.log('Checking full_name:', typeof submitterProfile.full_name, '"' + submitterProfile.full_name + '"');
-    console.log('Checking username:', typeof submitterProfile.username, '"' + submitterProfile.username + '"');
+    logger.log('Checking full_name:', typeof submitterProfile.full_name, '"' + submitterProfile.full_name + '"');
+    logger.log('Checking username:', typeof submitterProfile.username, '"' + submitterProfile.username + '"');
 
     if (submitterProfile.full_name && typeof submitterProfile.full_name === 'string' && submitterProfile.full_name.trim() !== '') {
-      console.log('✅ Using full_name:', submitterProfile.full_name);
+      logger.log('✅ Using full_name:', submitterProfile.full_name);
       return submitterProfile.full_name;
     }
 
     if (submitterProfile.username && typeof submitterProfile.username === 'string' && submitterProfile.username.trim() !== '') {
-      console.log('✅ Using username:', submitterProfile.username);
+      logger.log('✅ Using username:', submitterProfile.username);
       return submitterProfile.username;
     }
 
     // If the RPC returned a profile but it's empty, something's wrong
-    console.log('RPC returned profile but no name data:', submitterProfile);
+    logger.log('RPC returned profile but no name data:', submitterProfile);
     return 'Community Member';
   };
 
@@ -196,27 +197,20 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
       activeOpacity={0.7}
       disabled={!originalSubmitterId}
     >
-      {/* User Profile Row - simplified */}
-      <View style={styles.userInfo}>
-        <View style={styles.avatarContainer}>
-          {submitterProfile?.avatar_url ? (
-            <Image
-              source={{ uri: submitterProfile.avatar_url }}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={16} color={theme.colors.text.tertiary} />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.userDetails}>
-          <Text style={styles.username}>{displayName}</Text>
-          <Text style={styles.contributionText}>
-            {contributionCount} contribution{contributionCount !== 1 ? 's' : ''}
-          </Text>
-        </View>
+      <View style={styles.userRow}>
+        {submitterProfile?.avatar_url ? (
+          <Image
+            source={{ uri: submitterProfile.avatar_url }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons name="person" size={14} color={theme.colors.text.tertiary} />
+          </View>
+        )}
+        <Text style={styles.submittedText}>
+          Submitted by <Text style={styles.username}>{displayName}</Text>
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -224,51 +218,44 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    // Removed vertical padding for tighter spacing
+    // No extra styling needed
   },
 
-  userInfo: {
+  userRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-
-  avatarContainer: {
-    marginRight: theme.spacing.md,
+    gap: 8,
   },
 
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
 
   avatarPlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  userDetails: {
+  submittedText: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
     flex: 1,
   },
 
   username: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: 13,
     fontWeight: '600',
     color: theme.colors.text.primary,
-    marginBottom: 2,
-  },
-
-  contributionText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
   },
 
   loadingText: {
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.text.secondary,
     marginLeft: theme.spacing.sm,
   },

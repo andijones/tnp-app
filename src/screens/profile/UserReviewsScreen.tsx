@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { supabase } from '../../services/supabase/config';
+import { logger } from '../../utils/logger';
 
 interface UserReviewsScreenProps {
   route: {
@@ -64,14 +65,14 @@ export const UserReviewsScreen: React.FC<UserReviewsScreenProps> = ({ route }) =
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading reviews:', error);
+        logger.error('Error loading reviews:', error);
         Alert.alert('Error', 'Failed to load reviews');
         return;
       }
 
       setReviews(data || []);
     } catch (error) {
-      console.error('Error loading reviews:', error);
+      logger.error('Error loading reviews:', error);
       Alert.alert('Error', 'Failed to load reviews');
     } finally {
       setLoading(false);

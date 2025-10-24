@@ -8,20 +8,26 @@ import {
   TextInput,
   Alert,
   Image,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../theme';
+import { logger } from '../../utils/logger';
 import { Food, HomeScreenProps } from '../../types';
 import { supabase } from '../../services/supabase/config';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { FoodGrid } from '../../components/common/FoodGrid';
 import { Button } from '../../components/common/Button';
+import { EmptyState } from '../../components/common/EmptyState';
+import { AislePill } from '../../components/common/AislePill';
 import { useFavorites } from '../../hooks/useFavorites';
 import { FilterBar } from '../../components/common/FilterBar2';
 import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/filterUtils';
 import { Supermarket } from '../../types';
+import { Aisle } from '../../types/aisle';
+import { aisleService } from '../../services/aisleService';
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
@@ -35,6 +41,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
     supermarketIds: [],
   });
   const [availableSupermarkets, setAvailableSupermarkets] = useState<Supermarket[]>([]);
+  const [matchedAisles, setMatchedAisles] = useState<Array<Aisle & { foodCount: number }>>([]);
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const foodGridRef = useRef<FlatList>(null);
@@ -48,6 +55,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
     const filtered = applyFilters(foods, filters, searchQuery);
     setFilteredFoods(filtered);
   }, [searchQuery, foods, filters]);
+
+  useEffect(() => {
+    // Search aisles when searchQuery changes
+    const searchAisles = async () => {
+      if (searchQuery && searchQuery.trim().length > 0) {
+        const aisles = await aisleService.searchAisles(searchQuery, 3);
+        setMatchedAisles(aisles);
+      } else {
+        setMatchedAisles([]);
+      }
+    };
+
+    searchAisles();
+  }, [searchQuery]);
 
   useEffect(() => {
     // Extract unique supermarkets when foods load
@@ -78,7 +99,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching foods:', error);
+        logger.error('Error fetching foods:', error);
         Alert.alert('Error', 'Failed to load foods. Please try again.');
         return;
       }
@@ -92,7 +113,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
 
       setFoods(transformedData);
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       Alert.alert('Error', 'An unexpected error occurred.');
     } finally {
       setLoading(false);
@@ -101,6 +122,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
 
   const navigateToFoodDetail = (foodId: string) => {
     navigation.navigate('FoodDetail', { foodId });
+  };
+
+  const navigateToAisle = (slug: string, title: string) => {
+    navigation.navigate('AisleDetail', { slug, title });
   };
 
   const scrollToTop = () => {
@@ -235,23 +260,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
               </View>
             )}
             */}
+
+            {/* Browse by Category - Show matched aisles when searching */}
+            {matchedAisles.length > 0 && searchQuery && (
+              <View style={styles.aislesSection}>
+                <Text style={styles.aislesSectionHeader}>Browse by Category</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.aislesPillsContainer}
+                >
+                  {matchedAisles.map((aisle) => (
+                    <AislePill
+                      key={aisle.id}
+                      label={aisle.name}
+                      count={aisle.foodCount}
+                      onPress={() => navigateToAisle(aisle.slug, aisle.name)}
+                    />
+                  ))}
+                </ScrollView>
+
+                {/* Divider between aisles and foods */}
+                {filteredFoods.length > 0 && (
+                  <View style={styles.divider} />
+                )}
+              </View>
+            )}
           </View>
         }
         ListEmptyComponent={
-          searchQuery ? (
-            <View style={styles.emptyStateContainer}>
-              <Image
-                source={require('../../../assets/NoFoodFound.png')}
-                style={styles.emptyStateImage}
-                resizeMode="contain"
-              />
-              <View style={styles.emptyStateTextContainer}>
-                <Text style={styles.emptyStateHeading}>No foods found</Text>
-                <Text style={styles.emptyStateBody}>
-                  We couldn't find any foods matching your search. Please try a different term.
-                </Text>
-              </View>
-            </View>
+          (searchQuery || filters.processingLevels.length > 0 || filters.supermarketIds.length > 0) ? (
+            <EmptyState />
           ) : null
         }
         />
@@ -432,42 +471,31 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
 
-  // Figma Empty State - No Foods Found
-  emptyStateContainer: {
-    alignItems: 'center',
-    paddingTop: 160, // Figma 160px top padding for vertical centering
-    paddingHorizontal: 16, // Figma 16px horizontal padding
-    maxWidth: 300, // Figma 300px max width for content
-    alignSelf: 'center',
+  // Browse by Category Section
+  aislesSection: {
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
 
-  emptyStateImage: {
-    width: 160, // Figma 160px
-    height: 160, // Figma 160px
-    marginBottom: 8, // Figma 8px gap to text
+  aislesSectionHeader: {
+    fontSize: 18, // Figma Headline
+    fontWeight: '600',
+    lineHeight: 22,
+    color: '#0A0A0A', // Neutral-950
+    letterSpacing: -0.2,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
   },
 
-  emptyStateTextContainer: {
-    gap: 4, // Figma 4px gap between heading and body
-    alignItems: 'center',
-    width: '100%',
+  aislesPillsContainer: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.xs,
   },
 
-  emptyStateHeading: {
-    fontSize: 22, // Figma Heading2
-    fontWeight: '700',
-    lineHeight: 28,
-    color: '#262626', // Neutral-800
-    letterSpacing: -0.44,
-    textAlign: 'center',
-  },
-
-  emptyStateBody: {
-    fontSize: 15, // Figma Body
-    fontWeight: '400',
-    lineHeight: 21,
-    color: '#737373', // Neutral-500
-    letterSpacing: -0.15,
-    textAlign: 'center',
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E5E5', // Neutral-200
+    marginTop: theme.spacing.lg,
+    marginHorizontal: theme.spacing.md,
   },
 });

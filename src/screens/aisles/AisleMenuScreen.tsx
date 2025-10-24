@@ -15,7 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Aisle, AisleLevel } from '../../types/aisle';
 import { aisleService } from '../../services/aisleService';
+import { logger } from '../../utils/logger';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { EmptyState } from '../../components/common/EmptyState';
 import { CategoryCard } from '../../components/aisles/CategoryCard';
 import { QuickActionCard } from '../../components/aisles/QuickActionCard';
 import { SectionHeader } from '../../components/aisles/SectionHeader';
@@ -57,7 +59,7 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
         setCurrentLevel(rootLevel);
       }
     } catch (error) {
-      console.error('Error loading aisles:', error);
+      logger.error('Error loading aisles:', error);
       Alert.alert('Error', 'Failed to load aisles. Please try again.');
     } finally {
       setLoading(false);
@@ -233,13 +235,11 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
             ))}
 
             {filteredAisles.length === 0 && searchQuery && (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="search-outline" size={48} color={theme.colors.text.tertiary} />
-                <Text style={styles.emptyText}>No categories found</Text>
-                <Text style={styles.emptySubtext}>
-                  Try adjusting your search terms
-                </Text>
-              </View>
+              <EmptyState
+                title="No categories found"
+                message="Try adjusting your search terms"
+                image={require('../../../assets/Inbox.png')}
+              />
             )}
           </View>
         </ScrollView>
@@ -347,27 +347,5 @@ const styles = StyleSheet.create({
   categoriesContainer: {
     paddingHorizontal: 16, // Figma: spacing-16
     paddingTop: 16, // Figma: spacing-16
-  },
-
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xxl,
-    paddingHorizontal: theme.spacing.lg,
-  },
-
-  emptyText: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.md,
-    textAlign: 'center',
-  },
-
-  emptySubtext: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginTop: theme.spacing.sm,
-    lineHeight: 20,
   },
 });

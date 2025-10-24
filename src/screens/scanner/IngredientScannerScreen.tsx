@@ -20,6 +20,7 @@ import { ProcessingLevelCard } from '../../components/common/ProcessingLevelCard
 import { supabase } from '../../services/supabase/config';
 import { classifyFoodByIngredients, type NovaClassificationResult } from '../../utils/enhancedNovaClassifier';
 import { validateImage, getUserFriendlyErrorMessage } from '../../utils/imageUpload';
+import { logger } from '../../utils/logger';
 
 type ScanStep = 'intro' | 'ingredients' | 'front' | 'processing' | 'results';
 
@@ -65,7 +66,7 @@ export const IngredientScannerScreen: React.FC = () => {
       
       return manipulatedImage.uri;
     } catch (error) {
-      console.error('Image optimization failed:', error);
+      logger.error('Image optimization failed:', error);
       return imageUri; // Return original if optimization fails
     }
   };
@@ -85,21 +86,21 @@ export const IngredientScannerScreen: React.FC = () => {
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error('Base64 conversion failed:', error);
+      logger.error('Base64 conversion failed:', error);
       throw error;
     }
   };
 
   const extractIngredientsText = async (imageBase64: string): Promise<string> => {
     try {
-      console.log('Calling ingredient-extractor edge function...');
+      logger.log('Calling ingredient-extractor edge function...');
       
       const { data, error } = await supabase.functions.invoke('ingredient-extractor', {
         body: { imageData: imageBase64 }
       });
 
       if (error) {
-        console.error('Edge function error:', error);
+        logger.error('Edge function error:', error);
         throw new Error(`OCR failed: ${error.message}`);
       }
 
@@ -107,11 +108,11 @@ export const IngredientScannerScreen: React.FC = () => {
         throw new Error('No text extracted from image');
       }
 
-      console.log('Extracted text:', data.extractedText);
+      logger.log('Extracted text:', data.extractedText);
       return data.extractedText;
 
     } catch (error) {
-      console.error('OCR extraction error:', error);
+      logger.error('OCR extraction error:', error);
       throw error;
     }
   };
@@ -146,7 +147,7 @@ export const IngredientScannerScreen: React.FC = () => {
       }
       
     } catch (error) {
-      console.error('Failed to take picture:', error);
+      logger.error('Failed to take picture:', error);
       Alert.alert('Error', 'Failed to take picture. Please try again.');
     }
   };
@@ -156,15 +157,15 @@ export const IngredientScannerScreen: React.FC = () => {
       setIsProcessing(true);
 
       // Step 1: Convert ingredients image to base64
-      console.log('Converting image to base64...');
+      logger.log('Converting image to base64...');
       const ingredientsBase64 = await convertToBase64(ingredientsImageUri);
 
       // Step 2: Extract text using OCR
-      console.log('Extracting ingredients text via OCR...');
+      logger.log('Extracting ingredients text via OCR...');
       const extractedText = await extractIngredientsText(ingredientsBase64);
 
       // Step 3: Classify using NOVA classifier
-      console.log('Classifying ingredients...');
+      logger.log('Classifying ingredients...');
       const novaClassification = await classifyFoodByIngredients(extractedText);
 
       // Step 4: Create result
@@ -180,7 +181,7 @@ export const IngredientScannerScreen: React.FC = () => {
       setCurrentStep('results');
 
     } catch (error) {
-      console.error('Processing failed:', error);
+      logger.error('Processing failed:', error);
       Alert.alert(
         'Processing Failed',
         'Unable to analyze the images. Please try again with clearer photos.',
@@ -208,7 +209,7 @@ export const IngredientScannerScreen: React.FC = () => {
 
       // Validate and upload ingredients image to storage
       const ingredientsFileName = `scanner-submission-${timestamp}-${randomId}-ingredients.jpg`;
-      console.log('Uploading ingredients image:', ingredientsFileName, 'URI:', scanResult.ingredientsImage);
+      logger.log('Uploading ingredients image:', ingredientsFileName, 'URI:', scanResult.ingredientsImage);
 
       // Validate ingredients image
       try {
@@ -224,7 +225,7 @@ export const IngredientScannerScreen: React.FC = () => {
       }
 
       const ingredientsArrayBuffer = await ingredientsResponse.arrayBuffer();
-      console.log('Ingredients ArrayBuffer size:', ingredientsArrayBuffer.byteLength);
+      logger.log('Ingredients ArrayBuffer size:', ingredientsArrayBuffer.byteLength);
 
       if (ingredientsArrayBuffer.byteLength === 0) {
         throw new Error('Ingredients image is empty or corrupted. Please try scanning again.');
@@ -238,7 +239,7 @@ export const IngredientScannerScreen: React.FC = () => {
         });
 
       if (ingredientsUploadError) {
-        console.error('Ingredients upload error:', ingredientsUploadError);
+        logger.error('Ingredients upload error:', ingredientsUploadError);
         throw ingredientsUploadError;
       }
 
@@ -248,7 +249,7 @@ export const IngredientScannerScreen: React.FC = () => {
 
       // Validate and upload front image to storage
       const frontFileName = `scanner-submission-${timestamp}-${randomId}-front.jpg`;
-      console.log('Uploading front image:', frontFileName, 'URI:', scanResult.frontImage);
+      logger.log('Uploading front image:', frontFileName, 'URI:', scanResult.frontImage);
 
       // Validate front image
       try {
@@ -264,7 +265,7 @@ export const IngredientScannerScreen: React.FC = () => {
       }
 
       const frontArrayBuffer = await frontResponse.arrayBuffer();
-      console.log('Front ArrayBuffer size:', frontArrayBuffer.byteLength);
+      logger.log('Front ArrayBuffer size:', frontArrayBuffer.byteLength);
 
       if (frontArrayBuffer.byteLength === 0) {
         throw new Error('Front image is empty or corrupted. Please try scanning again.');
@@ -278,7 +279,7 @@ export const IngredientScannerScreen: React.FC = () => {
         });
 
       if (frontUploadError) {
-        console.error('Front upload error:', frontUploadError);
+        logger.error('Front upload error:', frontUploadError);
         throw frontUploadError;
       }
 
@@ -286,10 +287,10 @@ export const IngredientScannerScreen: React.FC = () => {
         .from('food-images')
         .getPublicUrl(`submissions/${frontFileName}`);
 
-      console.log('Ingredients upload successful:', ingredientsUploadData);
-      console.log('Front upload successful:', frontUploadData);
-      console.log('Ingredients public URL:', ingredientsPublicUrl);
-      console.log('Front public URL:', frontPublicUrl);
+      logger.log('Ingredients upload successful:', ingredientsUploadData);
+      logger.log('Front upload successful:', frontUploadData);
+      logger.log('Ingredients public URL:', ingredientsPublicUrl);
+      logger.log('Front public URL:', frontPublicUrl);
       
       // Verify both uploaded images are accessible
       try {
@@ -297,13 +298,13 @@ export const IngredientScannerScreen: React.FC = () => {
           fetch(ingredientsPublicUrl),
           fetch(frontPublicUrl)
         ]);
-        console.log('Ingredients URL accessibility test:', ingredientsUrlTest.status);
-        console.log('Front URL accessibility test:', frontUrlTest.status);
+        logger.log('Ingredients URL accessibility test:', ingredientsUrlTest.status);
+        logger.log('Front URL accessibility test:', frontUrlTest.status);
         if (!ingredientsUrlTest.ok || !frontUrlTest.ok) {
-          console.warn('Warning: Some uploaded images may not be accessible');
+          logger.warn('Warning: Some uploaded images may not be accessible');
         }
       } catch (urlTestError) {
-        console.warn('Warning: Could not verify image accessibility:', urlTestError);
+        logger.warn('Warning: Could not verify image accessibility:', urlTestError);
       }
 
       // Create detailed description including both image URLs for admin reference
@@ -335,7 +336,7 @@ export const IngredientScannerScreen: React.FC = () => {
       );
 
     } catch (error) {
-      console.error('Save error:', error);
+      logger.error('Save error:', error);
 
       // Provide more specific error messages
       let errorMessage = 'Failed to save results. Please try again.';

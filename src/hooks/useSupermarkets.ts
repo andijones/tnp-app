@@ -1,6 +1,7 @@
 // Hook to fetch available supermarkets from both legacy and new tables
 import { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase/config';
+import { logger } from '../utils/logger';
 
 export const useSupermarkets = () => {
   const [supermarkets, setSupermarkets] = useState<string[]>([]);
@@ -40,7 +41,7 @@ export const useSupermarkets = () => {
         const uniqueSupermarkets = Array.from(allSupermarkets).sort();
         setSupermarkets(uniqueSupermarkets);
       } catch (error) {
-        console.error('Error fetching supermarkets:', error);
+        logger.error('Error fetching supermarkets:', error);
       } finally {
         setLoading(false);
       }

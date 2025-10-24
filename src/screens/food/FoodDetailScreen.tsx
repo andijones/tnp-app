@@ -26,7 +26,7 @@ import { SectionHeader } from '../../components/common/SectionHeader';
 import { NutritionPanel } from '../../components/food/NutritionPanel';
 import { IngredientsList } from '../../components/food/IngredientsList';
 import { MinimalNutritionPanel } from '../../components/food/MinimalNutritionPanel';
-import { ImprovedRatingsSection } from '../../components/food/ImprovedRatingsSection';
+import { RatingsSection } from '../../components/food/RatingsSection';
 import { ReviewSubmission } from '../../components/food/ReviewSubmission';
 import { useFavorites } from '../../hooks/useFavorites';
 import { NovaRatingBanner } from '../../components/food/NovaRatingBanner';
@@ -37,6 +37,8 @@ import { ImprovedIngredientsList } from '../../components/food/ImprovedIngredien
 import { RelatedFoodsSection } from '../../components/food/RelatedFoodsSection';
 import { SubmitterInfo } from '../../components/food/SubmitterInfo';
 import { CategoryCard } from '../../components/aisles/CategoryCard';
+import { CollapsibleSection } from '../../components/common/CollapsibleSection';
+import { logger } from '../../utils/logger';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -63,7 +65,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         .single();
 
       if (foodError) {
-        console.error('Error fetching food:', foodError);
+        logger.error('Error fetching food:', foodError);
         Alert.alert('Error', 'Failed to load food details');
         navigation.goBack();
         return;
@@ -92,12 +94,12 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         .order('created_at', { ascending: false });
 
       if (ratingsError) {
-        console.error('Error fetching ratings:', ratingsError);
+        logger.error('Error fetching ratings:', ratingsError);
       }
 
-      console.log('Raw ratings data:', ratingsData);
-      console.log('Aisle data from food item:', aisleData);
-      console.log('Food data with submitter info:', {
+      logger.log('Raw ratings data:', ratingsData);
+      logger.log('Aisle data from food item:', aisleData);
+      logger.log('Food data with submitter info:', {
         id: foodData.id,
         name: foodData.name,
         original_submitter_id: foodData.original_submitter_id,
@@ -108,39 +110,39 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
       const ratings = [];
       if (ratingsData && ratingsData.length > 0) {
         for (const rating of ratingsData) {
-          console.log('Processing rating for user_id:', rating.user_id);
+          logger.log('Processing rating for user_id:', rating.user_id);
 
           const { data: profileData, error: profileError } = await supabase
             .rpc('get_public_profile', { user_id: rating.user_id });
 
           if (profileError) {
-            console.error('Error fetching profile for rating:', profileError);
+            logger.error('Error fetching profile for rating:', profileError);
           }
 
-          console.log('Profile data for rating:', profileData);
+          logger.log('Profile data for rating:', profileData);
 
           // Use full_name first, then username, then fallback
           let displayName = null;
 
           if (profileData && profileData.length > 0) {
             const profile = profileData[0]; // RPC returns an array, get first element
-            console.log('Rating user profile check - full_name:', typeof profile.full_name, '"' + profile.full_name + '"');
-            console.log('Rating user profile check - username:', typeof profile.username, '"' + profile.username + '"');
+            logger.log('Rating user profile check - full_name:', typeof profile.full_name, '"' + profile.full_name + '"');
+            logger.log('Rating user profile check - username:', typeof profile.username, '"' + profile.username + '"');
 
             // Check for actual non-empty values
             if (profile.full_name && typeof profile.full_name === 'string' && profile.full_name.trim() !== '') {
               displayName = profile.full_name;
-              console.log('✅ Using full_name for rating:', displayName);
+              logger.log('✅ Using full_name for rating:', displayName);
             } else if (profile.username && typeof profile.username === 'string' && profile.username.trim() !== '') {
               displayName = profile.username;
-              console.log('✅ Using username for rating:', displayName);
+              logger.log('✅ Using username for rating:', displayName);
             } else {
-              console.log('❌ RPC returned profile but no valid name data for rating user:', rating.user_id, profile);
+              logger.log('❌ RPC returned profile but no valid name data for rating user:', rating.user_id, profile);
             }
           }
 
           if (!displayName) {
-            console.log('No display name found in profile for user:', rating.user_id);
+            logger.log('No display name found in profile for user:', rating.user_id);
           }
 
           ratings.push({
@@ -152,7 +154,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         }
       }
 
-      console.log('Processed ratings:', ratings);
+      logger.log('Processed ratings:', ratings);
 
       const averageRating = ratings.length > 0 
         ? ratings.reduce((sum, r) => sum + r.ratingValue, 0) / ratings.length 
@@ -181,7 +183,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         ratings_count: ratings.length
       });
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -192,7 +194,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
     try {
       await toggleFavoriteHook(foodId);
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      logger.error('Error toggling favorite:', error);
     } finally {
       setFavoriteLoading(false);
     }
@@ -221,7 +223,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         });
       }
     } catch (error) {
-      console.error('Error sharing food:', error);
+      logger.error('Error sharing food:', error);
       Alert.alert('Error', 'Failed to share this food item');
     }
   };
@@ -244,7 +246,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         Alert.alert('Error', 'Unable to open this link on your device.');
       }
     } catch (error) {
-      console.error('Error opening URL:', error);
+      logger.error('Error opening URL:', error);
       Alert.alert('Error', 'Failed to open supermarket link.');
     }
   };
@@ -258,7 +260,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
     try {
       const encodedFoodName = encodeURIComponent(food.name);
       const googleSearchUrl = `https://www.google.com/search?q=${encodedFoodName}`;
-      
+
       const supported = await Linking.canOpenURL(googleSearchUrl);
       if (supported) {
         await Linking.openURL(googleSearchUrl);
@@ -266,8 +268,49 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         Alert.alert('Error', 'Unable to open Google search on your device.');
       }
     } catch (error) {
-      console.error('Error opening Google search:', error);
+      logger.error('Error opening Google search:', error);
       Alert.alert('Error', 'Failed to open Google search.');
+    }
+  };
+
+  const handleSubmitReview = async (rating: number, review: string) => {
+    if (rating === 0) {
+      Alert.alert('Rating Required', 'Please select a star rating before submitting.');
+      return;
+    }
+
+    try {
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        Alert.alert('Authentication Required', 'Please log in to submit a review.');
+        return;
+      }
+
+      // Insert new review
+      const { error: insertError } = await supabase
+        .from('ratings')
+        .insert({
+          food_id: foodId,
+          user_id: user.id,
+          rating: rating.toString(),
+          review: review || null,
+        });
+
+      if (insertError) {
+        logger.error('Error submitting review:', insertError);
+        Alert.alert('Error', 'Failed to submit review. Please try again.');
+        return;
+      }
+
+      Alert.alert('Success', 'Your review has been submitted!');
+
+      // Refresh food details to show new review
+      fetchFoodDetails();
+    } catch (error) {
+      logger.error('Error in handleSubmitReview:', error);
+      Alert.alert('Error', 'An unexpected error occurred.');
     }
   };
 
@@ -352,19 +395,34 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
 
           {/* Content Container with Card Layout */}
           <View style={styles.contentContainer}>
-            {/* Processing Level Card */}
+            {/* Hero Section (no gaps) */}
+            {/* Processing Level Card - Full Width */}
             {food.nova_group && (
               <ProcessingLevelCard level={food.nova_group} />
             )}
 
-            {/* Info Card */}
-            <View style={styles.card}>
-              
-              {/* Store Info */}
-              <View style={styles.metaColumn}>
+            {/* Info Card - Full Width */}
+            <View style={styles.heroCard}>
+
+              {/* Store Info (left) & Aisle Pill (right) */}
+              <View style={styles.metaRow}>
                 <Text style={styles.storeText}>
                   {(food.supermarket || 'TESCO').toUpperCase()}
                 </Text>
+                {food.aisle && (
+                  <TouchableOpacity
+                    style={styles.aislePill}
+                    onPress={() => {
+                      navigation.navigate('AisleDetail', {
+                        slug: food.aisle.slug,
+                        title: food.aisle.name
+                      });
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.aislePillText}>{food.aisle.name}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Product Title */}
@@ -416,75 +474,49 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
               </View>
             </View>
 
-            {/* Category/Aisle Card */}
-            {food.aisle && (
-              <CategoryCard
-                aisle={{
-                  id: food.aisle.id || 'unknown',
-                  name: food.aisle.name,
-                  slug: food.aisle.slug,
-                  children: []
-                }}
-                onPress={(aisle) => {
-                  navigation.navigate('AisleDetail', {
-                    slug: aisle.slug,
-                    title: aisle.name
-                  });
-                }}
-              />
-            )}
-
-            {/* Submitter Info Card */}
-            {(food.original_submitter_id || food.food_link_id) && (
+            {/* Submitter Info Card - Always show if we have food data */}
+            {(food.original_submitter_id || food.food_link_id || food.user_id) && (
               <View style={styles.card}>
                 <SubmitterInfo
-                  originalSubmitterId={food.original_submitter_id}
+                  originalSubmitterId={food.original_submitter_id || food.user_id}
                   foodLinkId={food.food_link_id}
                 />
               </View>
             )}
 
-            {/* Ingredients Card */}
-            <View style={styles.card}>
-              <View style={styles.cleanSectionHeader}>
-                <Text style={styles.sectionTitle}>Ingredients</Text>
-              </View>
-              <ImprovedIngredientsList
-                ingredients={food.ingredients}
-                description={food.description}
-              />
-            </View>
+            {/* Collapsible Sections - Full Width with Top Margin */}
+            <View style={styles.collapsibleSectionsContainer}>
+              {/* Ingredients Section */}
+              <CollapsibleSection
+                icon={require('../../../assets/ingred.png')}
+                title="Ingredients"
+                defaultExpanded={true}
+              >
+                <ImprovedIngredientsList
+                  ingredients={food.ingredients}
+                  description={food.description}
+                />
+              </CollapsibleSection>
 
-            {/* Nutrition Card */}
-            <View style={styles.card}>
-              <View style={styles.cleanSectionHeader}>
-                <Text style={styles.sectionTitle}>Nutrition Facts</Text>
-              </View>
-              <ImprovedNutritionPanel nutrition={food.nutrition} />
-            </View>
+              {/* Nutrition Section */}
+              <CollapsibleSection
+                icon={require('../../../assets/nut.png')}
+                title="Nutrition Facts"
+                defaultExpanded={true}
+              >
+                <ImprovedNutritionPanel nutrition={food.nutrition} />
+              </CollapsibleSection>
 
-            {/* Reviews Card */}
-            <View style={styles.card} ref={reviewSectionRef}>
-              <View style={styles.cleanSectionHeader}>
-                <Text style={styles.sectionTitle}>Reviews</Text>
+              {/* Reviews Section */}
+              <View ref={reviewSectionRef}>
+                <RatingsSection
+                  ratings={food.ratings}
+                  averageRating={food.average_rating}
+                  ratingsCount={food.ratings_count}
+                  onSubmitReview={handleSubmitReview}
+                  userHasReviewed={hasUserReview}
+                />
               </View>
-
-              <ImprovedRatingsSection
-                ratings={food.ratings}
-                averageRating={food.average_rating}
-                ratingsCount={food.ratings_count}
-                reviewSubmission={!hasUserReview ? (
-                  <ReviewSubmission
-                    foodId={foodId}
-                    onReviewSubmitted={fetchFoodDetails}
-                    hasExistingReview={hasUserReview}
-                  />
-                ) : undefined}
-                onWriteReview={hasUserReview ? undefined : () => {
-                  // Scroll to review submission or open modal
-                  console.log('Write review pressed');
-                }}
-              />
             </View>
 
             {/* Footer */}
@@ -546,7 +578,7 @@ const styles = StyleSheet.create({
   },
   
   scrollContent: {
-    paddingBottom: theme.spacing.lg,
+    paddingBottom: 100, // Extra padding for bottom tab bar (68px + margin)
   },
   
   // Hero Image Container
@@ -594,32 +626,65 @@ const styles = StyleSheet.create({
   
   // Content Container
   contentContainer: {
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
+    paddingTop: 0, // No top padding for hero section
     paddingBottom: theme.spacing.md,
-    gap: theme.spacing.md,
+    gap: 0, // No gap - we control spacing manually
   },
-  
-  // Card Styling from Figma
+
+  // Hero Card - Full Width (no rounded corners, no margin)
+  heroCard: {
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.neutral[200],
+    backgroundColor: theme.colors.neutral.white,
+    padding: theme.spacing.md,
+  },
+
+  // Card Styling from Figma (with horizontal margin for rounded cards)
   card: {
     borderRadius: 6, // var(--Spacing-6, 6px)
     borderWidth: 1,
     borderColor: theme.colors.neutral[200], // var(--Neutral-200, #E5E5E5)
     backgroundColor: theme.colors.neutral.white, // var(--Neutral-white, #FFF)
     padding: theme.spacing.md,
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.md, // Add margin between cards
   },
-  
-  // Meta Column - Store and Category stacked
-  metaColumn: {
-    flexDirection: 'column',
-    gap: theme.spacing.sm,
+
+  // Meta Row - Store (left) and Aisle pill (right)
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between', // Space between for left/right alignment
     marginBottom: theme.spacing.lg,
   },
-  
+
   storeText: {
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.neutral[500],
+  },
+
+  // Aisle Pill
+  aislePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 1000,
+    backgroundColor: '#FAFAFA',
+    borderWidth: 0.5,
+    borderColor: 'rgba(161, 153, 105, 0.3)',
+  },
+
+  aislePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#404040',
+    letterSpacing: -0.24,
+  },
+
+  // Collapsible Sections Container
+  collapsibleSectionsContainer: {
+    marginTop: theme.spacing.md, // Add spacing after hero section
   },
   
   

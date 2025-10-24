@@ -4,6 +4,7 @@ import { googleSignInService } from '../../services/GoogleSignInService';
 import { theme } from '../../theme';
 import { Button } from '../common/Button';
 import Svg, { Path, G } from 'react-native-svg';
+import { logger } from '../../utils/logger';
 
 interface GoogleSignInButtonProps {
   onSignInSuccess?: () => void;
@@ -18,21 +19,21 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 
   // Add debug log on component mount
   React.useEffect(() => {
-    console.log('🔵 GoogleSignInButton component mounted');
+    logger.log('🔵 GoogleSignInButton component mounted');
   }, []);
 
   const handleGoogleSignIn = async () => {
-    console.log('=== GOOGLE SIGN-IN BUTTON CLICKED ===');
+    logger.log('=== GOOGLE SIGN-IN BUTTON CLICKED ===');
     if (loading) return;
 
     setLoading(true);
     try {
-      console.log('About to call googleSignInService.signIn()');
+      logger.log('About to call googleSignInService.signIn()');
       const { data, error } = await googleSignInService.signIn();
-      console.log('Result from googleSignInService:', { data, error });
+      logger.log('Result from googleSignInService:', { data, error });
 
       if (error) {
-        console.error('Google Sign-In Error:', error);
+        logger.error('Google Sign-In Error:', error);
 
         // Show more helpful error messages
         let errorMessage = error.message || 'Failed to sign in with Google';
@@ -48,11 +49,11 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
         Alert.alert('Sign In Error', errorMessage);
         onSignInError?.(error);
       } else if (data) {
-        console.log('Signed in successfully:', data.user?.email);
+        logger.log('Signed in successfully:', data.user?.email);
         onSignInSuccess?.();
       }
     } catch (error: any) {
-      console.error('Unexpected Google Sign-In Error:', error);
+      logger.error('Unexpected Google Sign-In Error:', error);
       Alert.alert('Sign In Error', 'An unexpected error occurred');
       onSignInError?.(error);
     } finally {

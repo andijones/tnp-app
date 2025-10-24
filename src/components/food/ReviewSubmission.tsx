@@ -15,6 +15,7 @@ import { supabase } from '../../services/supabase/config';
 import { SectionHeader } from '../common/SectionHeader';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
+import { logger } from '../../utils/logger';
 
 interface ReviewSubmissionProps {
   foodId: string;
@@ -118,7 +119,7 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
       onReviewSubmitted();
 
     } catch (error) {
-      console.error('Error submitting review:', error);
+      logger.error('Error submitting review:', error);
       Alert.alert('Error', 'Failed to submit review. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -153,7 +154,7 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
               onReviewSubmitted(); // Refresh the reviews
               
             } catch (error) {
-              console.error('Error deleting review:', error);
+              logger.error('Error deleting review:', error);
               Alert.alert('Error', 'Failed to delete review. Please try again.');
             } finally {
               setIsSubmitting(false);
@@ -176,7 +177,7 @@ export const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
           { text: 'Login', onPress: () => {
             // Navigate to login screen or show login modal
             // This would depend on your navigation setup
-            console.log('Navigate to login');
+            logger.log('Navigate to login');
           }}
         ]
       );

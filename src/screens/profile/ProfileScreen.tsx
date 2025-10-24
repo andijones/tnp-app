@@ -35,6 +35,7 @@ import {
   ImageProcessingError,
   ImageUploadError,
 } from '../../utils/imageUpload';
+import { logger } from '../../utils/logger';
 
 const { width } = Dimensions.get('window');
 
@@ -114,7 +115,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   // Load profile data based on whether it's own profile or target user
   useEffect(() => {
     const loadProfile = async () => {
-      console.log('ProfileScreen loading profile for:', { targetUserId, isOwnProfile });
+      logger.log('ProfileScreen loading profile for:', { targetUserId, isOwnProfile });
       setLoading(true);
       setError(null);
 
@@ -122,7 +123,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
         if (isOwnProfile) {
           // Use current user's profile data
           if (currentUserProfile) {
-            console.log('Using current user profile:', currentUserProfile);
+            logger.log('Using current user profile:', currentUserProfile);
             setProfile(currentUserProfile);
             setFormData({
               full_name: currentUserProfile.full_name || '',
@@ -130,20 +131,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
             });
           } else {
             // Don't set error yet - profile might still be loading
-            console.log('Waiting for current user profile to load...');
+            logger.log('Waiting for current user profile to load...');
             setLoading(false);
             return;
           }
         } else {
           // Fetch target user's profile
-          console.log('Fetching profile for user ID:', targetUserId);
+          logger.log('Fetching profile for user ID:', targetUserId);
           const { data: profileData, error: profileError } = await supabase
             .rpc('get_public_profile', { user_id: targetUserId });
 
-          console.log('Profile fetch result:', { profileData, profileError });
+          logger.log('Profile fetch result:', { profileData, profileError });
 
           if (profileError) {
-            console.error('Profile fetch error:', profileError);
+            logger.error('Profile fetch error:', profileError);
             setError('Failed to load profile');
             return;
           }
@@ -153,7 +154,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
             setProfile(profile);
           } else {
             // User exists but no profile created yet - create a minimal profile object
-            console.log('No profile found for user, creating minimal profile');
+            logger.log('No profile found for user, creating minimal profile');
             setProfile({
               id: targetUserId,
               full_name: null,
@@ -166,7 +167,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
           }
         }
       } catch (err) {
-        console.error('Profile loading error:', err);
+        logger.error('Profile loading error:', err);
         setError('Failed to load profile');
       } finally {
         setLoading(false);
@@ -228,9 +229,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
           .range(from, to);
 
         if (contributionsError) {
-          console.error('Error loading contributions:', contributionsError);
+          logger.error('Error loading contributions:', contributionsError);
         } else {
-          console.log(`Contributions loaded: ${contributionsData?.length || 0} items (page ${page})`);
+          logger.log(`Contributions loaded: ${contributionsData?.length || 0} items (page ${page})`);
 
           if (loadMore) {
             setContributions(prev => [...prev, ...(contributionsData || [])]);
@@ -242,7 +243,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
           setHasMoreContributions((contributionsData?.length || 0) === ITEMS_PER_PAGE);
         }
       } catch (error) {
-        console.error('Error loading contributions:', error);
+        logger.error('Error loading contributions:', error);
       } finally {
         loadMore ? setLoadingMore(false) : setLoadingContent(false);
       }
@@ -265,9 +266,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
           .range(from, to);
 
         if (reviewsError) {
-          console.error('Error loading reviews:', reviewsError);
+          logger.error('Error loading reviews:', reviewsError);
         } else {
-          console.log(`Reviews loaded: ${reviewsData?.length || 0} reviews (page ${page})`);
+          logger.log(`Reviews loaded: ${reviewsData?.length || 0} reviews (page ${page})`);
 
           if (loadMore) {
             setReviews(prev => [...prev, ...(reviewsData || [])]);
@@ -279,7 +280,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
           setHasMoreReviews((reviewsData?.length || 0) === ITEMS_PER_PAGE);
         }
       } catch (error) {
-        console.error('Error loading reviews:', error);
+        logger.error('Error loading reviews:', error);
       } finally {
         loadMore ? setLoadingMore(false) : setLoadingContent(false);
       }
@@ -339,7 +340,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
         joinDate,
       });
     } catch (error) {
-      console.error('Error loading user stats:', error);
+      logger.error('Error loading user stats:', error);
     }
   };
 
@@ -358,15 +359,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
       // Handle avatar upload if it's a local URI
       if (formData.avatar_url) {
         if (isLocalUri(formData.avatar_url)) {
-          console.log('Uploading new avatar image...');
+          logger.log('Uploading new avatar image...');
           try {
             // Delete old avatar if exists and is from Supabase
             if (profile?.avatar_url && profile.avatar_url.includes('supabase.co')) {
               try {
                 await deleteImage(profile.avatar_url);
-                console.log('Old avatar deleted successfully');
+                logger.log('Old avatar deleted successfully');
               } catch (deleteError) {
-                console.warn('Failed to delete old avatar:', deleteError);
+                logger.warn('Failed to delete old avatar:', deleteError);
                 // Continue anyway - not critical
               }
             }
@@ -374,9 +375,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
             // Upload new avatar with better error handling
             const publicUrl = await uploadImage(formData.avatar_url, 'avatars');
             updates.avatar_url = publicUrl;
-            console.log('New avatar uploaded:', publicUrl);
+            logger.log('New avatar uploaded:', publicUrl);
           } catch (uploadError) {
-            console.error('Avatar upload error:', uploadError);
+            logger.error('Avatar upload error:', uploadError);
 
             // Get user-friendly error message
             const errorMessage = getUserFriendlyErrorMessage(uploadError);
@@ -408,12 +409,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
         return;
       }
 
-      console.log('Attempting to save profile updates:', updates);
+      logger.log('Attempting to save profile updates:', updates);
       await updateProfile(updates);
       setEditing(false);
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
-      console.error('Profile update error:', error);
+      logger.error('Profile update error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       Alert.alert('Error', `Failed to update profile: ${errorMessage}`);
     } finally {
@@ -451,7 +452,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
         setFormData(prev => ({ ...prev, avatar_url: pickerResult.assets[0].uri }));
       }
     } catch (error) {
-      console.error('Image picker error:', error);
+      logger.error('Image picker error:', error);
       Alert.alert('Error', 'Failed to pick image');
     }
   };
@@ -689,7 +690,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                   pressed && styles.tabPressed
                 ]}
                 onPress={() => {
-                  console.log('Contributions tab pressed');
+                  logger.log('Contributions tab pressed');
                   setActiveTab('contributions');
                 }}
               >
@@ -710,7 +711,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                   pressed && styles.tabPressed
                 ]}
                 onPress={() => {
-                  console.log('Reviews tab pressed');
+                  logger.log('Reviews tab pressed');
                   setActiveTab('reviews');
                 }}
               >

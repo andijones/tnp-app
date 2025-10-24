@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase/config';
 import * as Linking from 'expo-linking';
+import { logger } from '../utils/logger';
 
 interface AuthContextType {
   session: Session | null;
@@ -33,9 +34,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Handle OAuth redirect URLs
     const handleUrl = (url: string) => {
-      console.log('📱 Deep link received:', url);
+      logger.log('📱 Deep link received:', url);
       if (url.includes('auth/callback')) {
-        console.log('🔗 Processing OAuth callback URL:', url);
+        logger.log('🔗 Processing OAuth callback URL:', url);
 
         // Handle the callback URL - Supabase will process it automatically
         if (url.includes('#')) {
@@ -45,19 +46,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const refreshToken = hashParams.get('refresh_token');
 
           if (accessToken && refreshToken) {
-            console.log('🔑 Found tokens in URL, setting session...');
+            logger.log('🔑 Found tokens in URL, setting session...');
             supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
             }).then(({ data, error }) => {
               if (error) {
-                console.error('❌ Error setting session:', error);
+                logger.error('❌ Error setting session:', error);
               } else {
-                console.log('✅ Session set successfully:', data.session?.user?.email);
+                logger.log('✅ Session set successfully:', data.session?.user?.email);
               }
             });
           } else {
-            console.log('⚠️ No tokens found in callback URL');
+            logger.log('⚠️ No tokens found in callback URL');
           }
         }
       }
@@ -69,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check if the app was opened with a URL
     Linking.getInitialURL().then((url) => {
       if (url) {
-        console.log('📱 Initial URL:', url);
+        logger.log('📱 Initial URL:', url);
         handleUrl(url);
       }
     });
@@ -77,14 +78,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        logger.log('Auth state changed:', event, session?.user?.email);
 
         if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed successfully');
+          logger.log('Token refreshed successfully');
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
+          logger.log('User signed out');
         } else if (event === 'SIGNED_IN') {
-          console.log('✅ User signed in:', session?.user?.email);
+          logger.log('✅ User signed in:', session?.user?.email);
         }
 
         setSession(session);
@@ -99,25 +100,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
-          console.error('Session error:', error);
+          logger.error('Session error:', error);
           // Clear any invalid session data
           await supabase.auth.signOut();
           setSession(null);
           setUser(null);
         } else {
-          console.log('Initial session:', session?.user?.email);
+          logger.log('Initial session:', session?.user?.email);
           setSession(session);
           setUser(session?.user ?? null);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        logger.error('Auth initialization error:', error);
         // Handle refresh token errors specifically
         if (error instanceof Error && error.message.includes('Invalid Refresh Token')) {
-          console.log('Clearing invalid refresh token');
+          logger.log('Clearing invalid refresh token');
           try {
             await supabase.auth.signOut();
           } catch (signOutError) {
-            console.error('Error during signOut:', signOutError);
+            logger.error('Error during signOut:', signOutError);
           }
         }
         setSession(null);
@@ -139,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', error);
     }
   };
 

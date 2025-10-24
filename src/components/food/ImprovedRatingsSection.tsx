@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { Rating } from '../../types';
 import { Button } from '../common/Button';
+import { logger } from '../../utils/logger';
 
 interface ImprovedRatingsSectionProps {
   ratings?: Rating[];
@@ -383,8 +384,8 @@ export const ImprovedRatingsSection: React.FC<ImprovedRatingsSectionProps> = ({
           <View key={rating.id}>
             <ReviewItem
               rating={rating}
-              onHelpful={(id) => console.log('Helpful:', id)}
-              onNotHelpful={(id) => console.log('Not helpful:', id)}
+              onHelpful={(id) => logger.log('Helpful:', id)}
+              onNotHelpful={(id) => logger.log('Not helpful:', id)}
             />
             {index < sortedAndFilteredReviews.length - 1 && (
               <View style={styles.reviewSeparator} />

@@ -18,6 +18,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase/config';
 import { validateImage, getUserFriendlyErrorMessage } from '../../utils/imageUpload';
+import { logger } from '../../utils/logger';
 
 interface ImageItem {
   uri: string;
@@ -81,7 +82,7 @@ export const SubmissionScreen: React.FC = () => {
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to select image');
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -107,7 +108,7 @@ export const SubmissionScreen: React.FC = () => {
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to take photo');
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -216,7 +217,7 @@ export const SubmissionScreen: React.FC = () => {
               });
 
             if (uploadError) {
-              console.error(`Upload attempt ${uploadAttempts} failed:`, uploadError);
+              logger.error(`Upload attempt ${uploadAttempts} failed:`, uploadError);
               if (uploadAttempts < maxAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
               } else {
@@ -234,7 +235,7 @@ export const SubmissionScreen: React.FC = () => {
 
           uploadedImages.push(publicUrl);
         } catch (imageError) {
-          console.error(`Error uploading image ${i + 1}:`, imageError);
+          logger.error(`Error uploading image ${i + 1}:`, imageError);
 
           // Get user-friendly error message
           const errorMessage = getUserFriendlyErrorMessage(imageError);
@@ -289,7 +290,7 @@ export const SubmissionScreen: React.FC = () => {
       );
 
     } catch (error) {
-      console.error('Submission error:', error);
+      logger.error('Submission error:', error);
 
       let errorMessage = 'Failed to submit. Please try again.';
       if (error instanceof Error) {

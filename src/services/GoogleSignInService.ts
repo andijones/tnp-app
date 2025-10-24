@@ -1,6 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 import { supabase } from './supabase/config';
+import { logger } from '../utils/logger';
 
 // Configure WebBrowser for OAuth
 WebBrowser.maybeCompleteAuthSession();
@@ -18,20 +19,20 @@ class GoogleSignInService {
   }
 
   constructor() {
-    console.log('Google Sign-In Service initialized');
-    console.log('Platform:', Platform.OS);
-    console.log('Redirect URL:', this.getRedirectUrl());
+    logger.log('Google Sign-In Service initialized');
+    logger.log('Platform:', Platform.OS);
+    logger.log('Redirect URL:', this.getRedirectUrl());
   }
 
   async signIn() {
     try {
       const redirectUrl = this.getRedirectUrl();
 
-      console.log('==========================================');
-      console.log('Starting Google OAuth flow...');
-      console.log('Platform:', Platform.OS);
-      console.log('Redirect URL:', redirectUrl);
-      console.log('==========================================');
+      logger.log('==========================================');
+      logger.log('Starting Google OAuth flow...');
+      logger.log('Platform:', Platform.OS);
+      logger.log('Redirect URL:', redirectUrl);
+      logger.log('==========================================');
 
       if (Platform.OS === 'web') {
         // For web, use the standard Supabase OAuth flow
@@ -46,10 +47,10 @@ class GoogleSignInService {
           },
         });
 
-        console.log('Supabase OAuth response:', { data, error });
+        logger.log('Supabase OAuth response:', { data, error });
 
         if (error) {
-          console.error('Supabase OAuth Error:', error);
+          logger.error('Supabase OAuth Error:', error);
           return { data: null, error };
         }
 
@@ -69,15 +70,15 @@ class GoogleSignInService {
           },
         });
 
-        console.log('Supabase OAuth response:', { data, error });
+        logger.log('Supabase OAuth response:', { data, error });
 
         if (error) {
-          console.error('Supabase OAuth Error:', error);
+          logger.error('Supabase OAuth Error:', error);
           throw error;
         }
 
         if (data?.url) {
-          console.log('Opening OAuth URL in browser...');
+          logger.log('Opening OAuth URL in browser...');
 
           // Open the OAuth URL in a web browser
           const result = await WebBrowser.openAuthSessionAsync(
@@ -85,10 +86,10 @@ class GoogleSignInService {
             redirectUrl
           );
 
-          console.log('Browser result:', result);
+          logger.log('Browser result:', result);
 
           if (result.type === 'success' && result.url) {
-            console.log('✅ OAuth success! Processing callback URL:', result.url);
+            logger.log('✅ OAuth success! Processing callback URL:', result.url);
 
             // The result.url contains the callback with tokens
             if (result.url.includes('#')) {
@@ -98,7 +99,7 @@ class GoogleSignInService {
               const refreshToken = hashParams.get('refresh_token');
 
               if (accessToken && refreshToken) {
-                console.log('🔑 Setting session with tokens from callback...');
+                logger.log('🔑 Setting session with tokens from callback...');
 
                 // Set the session directly
                 const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
@@ -107,22 +108,22 @@ class GoogleSignInService {
                 });
 
                 if (sessionError) {
-                  console.error('❌ Error setting session:', sessionError);
+                  logger.error('❌ Error setting session:', sessionError);
                   throw sessionError;
                 }
 
                 if (sessionData.session) {
-                  console.log('✅ Session established successfully:', sessionData.session.user.email);
+                  logger.log('✅ Session established successfully:', sessionData.session.user.email);
                   return { data: sessionData, error: null };
                 } else {
                   throw new Error('Failed to create session with tokens');
                 }
               } else {
-                console.log('⚠️ No tokens found in callback URL');
+                logger.log('⚠️ No tokens found in callback URL');
                 throw new Error('No authentication tokens received');
               }
             } else {
-              console.log('⚠️ No hash found in callback URL');
+              logger.log('⚠️ No hash found in callback URL');
               throw new Error('Invalid callback URL format');
             }
           } else if (result.type === 'cancel') {
@@ -136,7 +137,7 @@ class GoogleSignInService {
       }
 
     } catch (error: any) {
-      console.error('Google Sign-In Error:', error);
+      logger.error('Google Sign-In Error:', error);
       return { data: null, error };
     }
   }
@@ -146,7 +147,7 @@ class GoogleSignInService {
       await supabase.auth.signOut();
       return { error: null };
     } catch (error: any) {
-      console.error('Sign-Out Error:', error);
+      logger.error('Sign-Out Error:', error);
       return { error };
     }
   }
@@ -156,7 +157,7 @@ class GoogleSignInService {
       const { data: { session } } = await supabase.auth.getSession();
       return session?.user || null;
     } catch (error) {
-      console.error('Get current user error:', error);
+      logger.error('Get current user error:', error);
       return null;
     }
   }

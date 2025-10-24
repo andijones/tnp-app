@@ -8,6 +8,7 @@ import { AuthScreen } from './src/screens/auth/AuthScreen';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { loadFonts } from './src/utils/fonts';
+import { logger } from './src/utils/logger';
 
 const linking = {
   prefixes: ['tnpclean://'],
@@ -36,7 +37,7 @@ const AppContent: React.FC = () => {
         ]);
         setFontsLoaded(true);
       } catch (error) {
-        console.error('Error loading fonts:', error);
+        logger.error('Error loading fonts:', error);
         setFontsLoaded(true); // Continue without fonts if loading fails
       }
     };
@@ -56,7 +57,7 @@ const AppContent: React.FC = () => {
     return (
       <SplashScreen
         onAnimationComplete={() => {
-          console.log('Splash animation completed');
+          logger.log('Splash animation completed');
           setShowSplash(false);
         }}
       />

@@ -18,6 +18,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { supabase } from '../../services/supabase/config';
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
+import { logger } from '../../utils/logger';
 
 type AuthView = 'login' | 'signup' | 'forgotPassword' | 'resetSuccess';
 
@@ -107,7 +108,7 @@ export const AuthScreen: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Auth error:', error);
+      logger.error('Auth error:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -140,7 +141,7 @@ export const AuthScreen: React.FC = () => {
       // Show success screen
       setCurrentView('resetSuccess');
     } catch (error) {
-      console.error('Password reset error:', error);
+      logger.error('Password reset error:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
