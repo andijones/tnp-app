@@ -15,7 +15,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, PanGestureHandler, NativeViewGestureHandler } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Food, FoodDetailScreenProps } from '../../types';
@@ -53,11 +53,12 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
   const [hasUserReview, setHasUserReview] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const reviewSectionRef = useRef<View>(null);
+  const scrollHandlerRef = useRef(null);
   const { isFavorite, toggleFavorite: toggleFavoriteHook } = useFavorites();
 
   // Gesture handling for swipe to dismiss
   const translateY = useRef(new Animated.Value(0)).current;
-  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [scrollY, setScrollY] = useState(0);
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationY: translateY } }],
@@ -66,11 +67,6 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
 
   const onHandlerStateChange = (event: any) => {
     const { state, translationY: translation, velocityY } = event.nativeEvent;
-
-    // When gesture starts
-    if (state === 2) { // BEGAN
-      setScrollEnabled(false);
-    }
 
     // When gesture ends
     if (state === 5) { // END
@@ -95,11 +91,13 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
           useNativeDriver: true,
           stiffness: 400,
           damping: 30,
-        }).start(() => {
-          setScrollEnabled(true);
-        });
+        }).start();
       }
     }
+  };
+
+  const handleScroll = (event: any) => {
+    setScrollY(event.nativeEvent.contentOffset.y);
   };
 
   useEffect(() => {
@@ -413,7 +411,9 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onHandlerStateChange}
         activeOffsetY={5}
-        failOffsetY={-5}
+        failOffsetY={-10}
+        enabled={scrollY <= 0}
+        simultaneousHandlers={scrollHandlerRef}
       >
         <Animated.View
           style={[
@@ -467,14 +467,15 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          scrollEnabled={scrollEnabled}
-          bounces={false}
-        >
+        <NativeViewGestureHandler ref={scrollHandlerRef} disallowInterruption={true}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
           {/* Hero Product Image */}
           <View style={styles.heroImageContainer}>
             {food.image ? (
@@ -628,7 +629,8 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </NativeViewGestureHandler>
         </Animated.View>
       </PanGestureHandler>
     </GestureHandlerRootView>

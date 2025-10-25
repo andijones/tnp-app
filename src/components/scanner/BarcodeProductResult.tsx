@@ -18,6 +18,7 @@ interface BarcodeProductResultProps {
   onAddToDatabase: () => void;
   onScanAnother: () => void;
   onViewExisting?: (foodId: string) => void;
+  onReturnHome?: () => void;
   existingFoodId?: string;
   isSubmitting?: boolean;
 }
@@ -27,6 +28,7 @@ export const BarcodeProductResult: React.FC<BarcodeProductResultProps> = ({
   onAddToDatabase,
   onScanAnother,
   onViewExisting,
+  onReturnHome,
   existingFoodId,
   isSubmitting = false,
 }) => {
@@ -167,11 +169,19 @@ export const BarcodeProductResult: React.FC<BarcodeProductResultProps> = ({
         {/* Additives Warning */}
         {product.additivesCount > 0 && (
           <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Additives</Text>
             <View style={styles.warningBox}>
               <Ionicons name="warning" size={20} color={theme.colors.warning} />
-              <Text style={styles.warningText}>
-                Contains {product.additivesCount} additive{product.additivesCount > 1 ? 's' : ''}
-              </Text>
+              <View style={{ flex: 1, marginLeft: 8 }}>
+                <Text style={styles.warningText}>
+                  Contains {product.additivesCount} additive{product.additivesCount > 1 ? 's' : ''}
+                </Text>
+                {product.additives && product.additives.length > 0 && (
+                  <Text style={[styles.warningText, { fontWeight: '400', marginTop: 4 }]}>
+                    {product.additives.join(', ')}
+                  </Text>
+                )}
+              </View>
             </View>
           </View>
         )}
@@ -307,11 +317,20 @@ export const BarcodeProductResult: React.FC<BarcodeProductResultProps> = ({
               />
             </>
           ) : (
-            <Button
-              title="Scan another product"
-              onPress={onScanAnother}
-              variant="outline"
-            />
+            <>
+              <Button
+                title="Scan another item"
+                onPress={onScanAnother}
+                variant="secondary"
+              />
+              {onReturnHome && (
+                <Button
+                  title="Return Home"
+                  onPress={onReturnHome}
+                  variant="outline"
+                />
+              )}
+            </>
           )}
         </View>
       </ScrollView>

@@ -140,11 +140,8 @@ export const UnifiedScannerScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // Determine status based on NOVA group
-      const isAcceptable = barcodeProduct.novaGroup !== undefined &&
-                          barcodeProduct.novaGroup >= 1 &&
-                          barcodeProduct.novaGroup <= 3;
-      const status = isAcceptable ? 'approved' : 'pending';
+      // All submissions require admin approval
+      const status = 'pending';
 
       // Insert into database
       const { data, error } = await supabase
@@ -189,9 +186,7 @@ export const UnifiedScannerScreen: React.FC = () => {
       setTimeout(() => {
         Alert.alert(
           'Success!',
-          isAcceptable
-            ? 'Product has been added to the database. Thank you for contributing!'
-            : 'Product submitted for review. Our team will review it shortly.',
+          'Product submitted for review. Our team will review it shortly and it will appear in the app once approved.',
           [{ text: 'OK', onPress: resetScanner }]
         );
       }, 500);
@@ -206,6 +201,11 @@ export const UnifiedScannerScreen: React.FC = () => {
 
   const handleViewExisting = (foodId: string) => {
     (navigation as any).navigate('FoodDetail', { foodId });
+  };
+
+  const handleReturnHome = () => {
+    resetScanner();
+    (navigation as any).navigate('Home');
   };
 
   const resetScanner = () => {
@@ -341,6 +341,7 @@ export const UnifiedScannerScreen: React.FC = () => {
         onAddToDatabase={handleAddToDatabase}
         onScanAnother={resetScanner}
         onViewExisting={handleViewExisting}
+        onReturnHome={handleReturnHome}
         existingFoodId={existingFoodId || undefined}
         isSubmitting={isSubmitting}
       />
