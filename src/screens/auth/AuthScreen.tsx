@@ -19,6 +19,7 @@ import { Input } from '../../components/common/Input';
 import { supabase } from '../../services/supabase/config';
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 import { logger } from '../../utils/logger';
+import { formatErrorForDisplay, ValidationErrors } from '../../utils/errorHandling';
 
 type AuthView = 'login' | 'signup' | 'forgotPassword' | 'resetSuccess';
 
@@ -80,7 +81,14 @@ export const AuthScreen: React.FC = () => {
         });
 
         if (error) {
-          Alert.alert('Login Error', error.message);
+          const formattedError = formatErrorForDisplay(error);
+          Alert.alert(
+            formattedError.title,
+            formattedError.message,
+            formattedError.actionText ? [
+              { text: 'OK', style: 'default' }
+            ] : undefined
+          );
           return;
         }
       } else if (currentView === 'signup') {
@@ -96,20 +104,28 @@ export const AuthScreen: React.FC = () => {
         });
 
         if (error) {
-          Alert.alert('Sign Up Error', error.message);
+          const formattedError = formatErrorForDisplay(error);
+          Alert.alert(
+            formattedError.title,
+            formattedError.message,
+            formattedError.actionText ? [
+              { text: 'OK', style: 'default' }
+            ] : undefined
+          );
           return;
         }
 
         if (data.user && !data.session) {
           Alert.alert(
             'Check your email',
-            'Please check your email for a confirmation link to complete your registration.'
+            'We\'ve sent a confirmation link to ' + email.trim() + '. Please click the link to verify your account and complete registration.',
+            [{ text: 'OK', onPress: () => setCurrentView('login') }]
           );
         }
       }
     } catch (error) {
-      logger.error('Auth error:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      const formattedError = formatErrorForDisplay(error);
+      Alert.alert(formattedError.title, formattedError.message);
     } finally {
       setLoading(false);
     }
@@ -123,26 +139,27 @@ export const AuthScreen: React.FC = () => {
     }
 
     if (!validateEmail(email)) {
-      setErrors({ ...errors, email: 'Please enter a valid email' });
+      setErrors({ ...errors, email: 'Please enter a valid email address' });
       return;
     }
 
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: 'tnpclean://auth/callback',
+        redirectTo: 'thenakedpantry://auth/callback',
       });
 
       if (error) {
-        Alert.alert('Error', error.message);
+        const formattedError = formatErrorForDisplay(error);
+        Alert.alert(formattedError.title, formattedError.message);
         return;
       }
 
       // Show success screen
       setCurrentView('resetSuccess');
     } catch (error) {
-      logger.error('Password reset error:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      const formattedError = formatErrorForDisplay(error);
+      Alert.alert(formattedError.title, formattedError.message);
     } finally {
       setLoading(false);
     }

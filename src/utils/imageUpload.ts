@@ -25,10 +25,35 @@ export class ImageProcessingError extends Error {
   }
 }
 
-// Constants
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MIN_FILE_SIZE = 100; // 100 bytes (to detect empty files)
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+// Constants (exported for UI usage)
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (reduced for better performance)
+export const MIN_FILE_SIZE = 100; // 100 bytes (to detect empty files)
+export const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+export const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
+
+// Image dimension constraints
+export const MAX_DIMENSION = 4096; // 4K max dimension
+export const MIN_DIMENSION = 50; // Minimum 50px to avoid tiny/corrupted images
+
+// Helper to get max file size in human-readable format
+export const getMaxFileSizeLabel = (): string => formatFileSize(MAX_FILE_SIZE);
+
+/**
+ * Check if file extension is allowed
+ */
+const hasValidExtension = (uri: string): boolean => {
+  const lowerUri = uri.toLowerCase();
+  return ALLOWED_EXTENSIONS.some(ext => lowerUri.endsWith(ext));
+};
+
+/**
+ * Format file size for display
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 /**
  * Validate image file before processing
@@ -40,6 +65,13 @@ export const validateImage = async (uri: string): Promise<void> => {
     // Check if URI is valid
     if (!uri || typeof uri !== 'string') {
       throw new ImageValidationError('Invalid image URI');
+    }
+
+    // Check file extension
+    if (!hasValidExtension(uri)) {
+      throw new ImageValidationError(
+        `Unsupported file type. Please use JPEG, PNG, WebP, or HEIC images.`
+      );
     }
 
     // Check if file exists (for local URIs)
@@ -60,7 +92,11 @@ export const validateImage = async (uri: string): Promise<void> => {
       }
 
       if (fileInfo.size > MAX_FILE_SIZE) {
-        throw new ImageValidationError('Image file is too large (max 10MB)');
+        const actualSize = formatFileSize(fileInfo.size);
+        const maxSize = formatFileSize(MAX_FILE_SIZE);
+        throw new ImageValidationError(
+          `Image is too large (${actualSize}). Maximum size is ${maxSize}.`
+        );
       }
 
       // For local URIs, we've done sufficient validation
@@ -79,7 +115,9 @@ export const validateImage = async (uri: string): Promise<void> => {
       // Verify content type if available
       const contentType = response.headers.get('content-type');
       if (contentType && !ALLOWED_MIME_TYPES.some(type => contentType.includes(type))) {
-        throw new ImageValidationError(`Unsupported image format: ${contentType}`);
+        throw new ImageValidationError(
+          `Unsupported image format (${contentType}). Please use JPEG, PNG, WebP, or HEIC.`
+        );
       }
 
       // Check if response has content
@@ -89,7 +127,11 @@ export const validateImage = async (uri: string): Promise<void> => {
       }
 
       if (blob.size > MAX_FILE_SIZE) {
-        throw new ImageValidationError('Image is too large (max 10MB)');
+        const actualSize = formatFileSize(blob.size);
+        const maxSize = formatFileSize(MAX_FILE_SIZE);
+        throw new ImageValidationError(
+          `Image is too large (${actualSize}). Maximum size is ${maxSize}.`
+        );
       }
     } catch (error) {
       if (error instanceof ImageValidationError) {
@@ -293,19 +335,8 @@ export const isLocalUri = (uri: string): boolean => {
  */
 export const getUserFriendlyErrorMessage = (error: unknown): string => {
   if (error instanceof ImageValidationError) {
-    if (error.message.includes('too large')) {
-      return 'Image is too large. Please choose an image smaller than 10MB.';
-    }
-    if (error.message.includes('corrupted') || error.message.includes('empty')) {
-      return 'Image appears to be corrupted. Please try a different image.';
-    }
-    if (error.message.includes('Unsupported')) {
-      return 'Unsupported image format. Please use JPEG, PNG, or WebP.';
-    }
-    if (error.message.includes('does not exist')) {
-      return 'Image file not found. Please select the image again.';
-    }
-    return 'Invalid image. Please try a different image.';
+    // Return the error message as-is since we've made them user-friendly
+    return error.message;
   }
 
   if (error instanceof ImageProcessingError) {
@@ -326,7 +357,7 @@ export const getUserFriendlyErrorMessage = (error: unknown): string => {
   }
 
   if (error instanceof Error) {
-    return `Upload error: ${error.message}`;
+    return error.message;
   }
 
   return 'An unexpected error occurred. Please try again.';

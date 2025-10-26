@@ -23,6 +23,7 @@ import { Button } from '../../components/common/Button';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AislePill } from '../../components/common/AislePill';
 import { useFavorites } from '../../hooks/useFavorites';
+import { useDebounce } from '../../hooks/useDebounce';
 import { FilterBar } from '../../components/common/FilterBar2';
 import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/filterUtils';
 import { Supermarket } from '../../types';
@@ -35,6 +36,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300); // Debounce search input by 300ms
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
@@ -44,6 +46,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
   const [availableSupermarkets, setAvailableSupermarkets] = useState<Supermarket[]>([]);
   const [matchedAisles, setMatchedAisles] = useState<Array<Aisle & { foodCount: number }>>([]);
 
+  // Track if search is being debounced (user is still typing)
+  const isSearching = searchQuery !== debouncedSearchQuery;
+
   const { isFavorite, toggleFavorite } = useFavorites();
   const foodGridRef = useRef<FlatList>(null);
 
@@ -52,16 +57,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
   }, []);
 
   useEffect(() => {
-    // Apply filters whenever search, filters, or foods change
-    const filtered = applyFilters(foods, filters, searchQuery);
+    // Apply filters whenever debounced search, filters, or foods change
+    const filtered = applyFilters(foods, filters, debouncedSearchQuery);
     setFilteredFoods(filtered);
-  }, [searchQuery, foods, filters]);
+  }, [debouncedSearchQuery, foods, filters]);
 
   useEffect(() => {
-    // Search aisles when searchQuery changes
+    // Search aisles when debounced search query changes
     const searchAisles = async () => {
-      if (searchQuery && searchQuery.trim().length > 0) {
-        const aisles = await aisleService.searchAisles(searchQuery, 3);
+      if (debouncedSearchQuery && debouncedSearchQuery.trim().length > 0) {
+        const aisles = await aisleService.searchAisles(debouncedSearchQuery, 3);
         setMatchedAisles(aisles);
       } else {
         setMatchedAisles([]);
@@ -69,7 +74,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
     };
 
     searchAisles();
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   useEffect(() => {
     // Extract unique supermarkets when foods load

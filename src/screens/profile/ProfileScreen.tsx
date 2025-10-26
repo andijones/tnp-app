@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -63,11 +63,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   const { user, profile: currentUserProfile, loading: userLoading, error: currentUserError, updateProfile } = useUser();
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
 
-  // Determine if viewing own profile or someone else's
-  const isOwnProfile = !targetUserId || targetUserId === user?.id;
+  // Memoize expensive computations
+  const isOwnProfile = useMemo(
+    () => !targetUserId || targetUserId === user?.id,
+    [targetUserId, user?.id]
+  );
 
-  // Check if we need to show header (when navigated via UserProfile route, not Profile tab)
-  const showHeader = route && 'name' in route && route.name === 'UserProfile';
+  const showHeader = useMemo(
+    () => route && 'name' in route && route.name === 'UserProfile',
+    [route]
+  );
 
   // State for profile data (either current user or target user)
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -288,23 +293,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
     }
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (loadingMore || loadingContent) return;
 
     const userId = isOwnProfile ? user?.id : targetUserId;
     if (!userId) return;
 
     loadUserContent(userId, true);
-  };
+  }, [loadingMore, loadingContent, isOwnProfile, user?.id, targetUserId]);
 
-  const handleScroll = (event: { nativeEvent: { layoutMeasurement: { height: number }; contentOffset: { y: number }; contentSize: { height: number } } }) => {
+  const handleScroll = useCallback((event: { nativeEvent: { layoutMeasurement: { height: number }; contentOffset: { y: number }; contentSize: { height: number } } }) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     const paddingToBottom = 100;
 
     if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
       handleLoadMore();
     }
-  };
+  }, [handleLoadMore]);
 
   const loadUserStats = async (userId: string) => {
     try {
@@ -346,7 +351,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   };
 
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setSaving(true);
     try {
       // Prepare updates
@@ -421,9 +426,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [formData, profile, updateProfile]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     if (profile) {
       setFormData({
         full_name: profile.full_name || '',
@@ -431,9 +436,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
       });
     }
     setEditing(false);
-  };
+  }, [profile]);
 
-  const handleImagePicker = async () => {
+  const handleImagePicker = useCallback(async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -450,16 +455,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
       });
 
       if (!pickerResult.canceled && pickerResult.assets[0]) {
-        setFormData(prev => ({ ...prev, avatar_url: pickerResult.assets[0].uri }));
+        // Validate image before setting
+        const imageUri = pickerResult.assets[0].uri;
+
+        try {
+          // Import validation from imageUpload utility
+          const { validateImage, getUserFriendlyErrorMessage: getImageError } = await import('../../utils/imageUpload');
+          await validateImage(imageUri);
+
+          setFormData(prev => ({ ...prev, avatar_url: imageUri }));
+        } catch (validationError) {
+          const { getUserFriendlyErrorMessage: getImageError } = await import('../../utils/imageUpload');
+          const errorMessage = getImageError(validationError);
+          Alert.alert('Invalid Image', errorMessage);
+          logger.error('Avatar validation failed:', validationError);
+        }
       }
     } catch (error) {
       logger.error('Image picker error:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to pick image';
+      Alert.alert('Error', errorMessage);
     }
-  };
+  }, []);
 
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
@@ -477,7 +497,132 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
         },
       ]
     );
-  };
+  }, []);
+
+  // Memoized render functions for FlatLists
+  const renderContributionItem = useCallback(({ item }: { item: Food }) => (
+    <View style={styles.gridCardWrapper}>
+      <GridFoodCard
+        food={item}
+        onPress={() => navigation.navigate('FoodDetail', { foodId: item.id })}
+        isFavorite={isFavorite(item.id)}
+        onToggleFavorite={toggleFavorite}
+      />
+    </View>
+  ), [navigation, isFavorite, toggleFavorite]);
+
+  const renderReviewItem = useCallback(({ item }: { item: Review }) => (
+    <TouchableOpacity
+      style={styles.reviewCard}
+      onPress={() => {
+        if (item.food_id) {
+          navigation.navigate('FoodDetail', { foodId: item.food_id });
+        }
+      }}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.reviewFoodName}>
+        {item.foods?.name || 'Unknown Food'}
+      </Text>
+
+      <View style={styles.starsContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Ionicons
+            key={star}
+            name={star <= parseInt(item.rating) ? "star" : "star-outline"}
+            size={16}
+            color={star <= parseInt(item.rating) ? theme.colors.warning : theme.colors.text.tertiary}
+          />
+        ))}
+      </View>
+
+      <Text style={styles.reviewDate}>
+        {new Date(item.created_at).toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        })}
+      </Text>
+
+      <Text style={styles.reviewText}>
+        {item.review}
+      </Text>
+    </TouchableOpacity>
+  ), [navigation]);
+
+  // Memoized empty component for contributions
+  const contributionsEmptyComponent = useMemo(() => (
+    <View style={styles.emptyStateContainer}>
+      <Image
+        source={require('../../../assets/submissions.png')}
+        style={styles.emptyStateImage}
+        resizeMode="contain"
+      />
+      <View style={styles.emptyStateTextContainer}>
+        <Text style={styles.emptyStateTitle}>No Submissions</Text>
+        <Text style={styles.emptyStateSubtitle}>
+          We need people like you to submit foods to our ever growing database.
+        </Text>
+      </View>
+    </View>
+  ), []);
+
+  // Memoized empty component for reviews
+  const reviewsEmptyComponent = useMemo(() => (
+    <View style={styles.emptyStateContainer}>
+      <Image
+        source={require('../../../assets/noreviews.png')}
+        style={styles.emptyStateImage}
+        resizeMode="contain"
+      />
+      <View style={styles.emptyStateTextContainer}>
+        <Text style={styles.emptyStateTitle}>No Reviews</Text>
+        <Text style={styles.emptyStateSubtitle}>
+          Add some of your ratings to our food database it really helps.
+        </Text>
+      </View>
+    </View>
+  ), []);
+
+  // Memoized footer component for contributions
+  const contributionsFooterComponent = useMemo(() => {
+    if (loadingMore) {
+      return (
+        <View style={styles.loadingMoreContainer}>
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+          <Text style={styles.loadingMoreText}>Loading more...</Text>
+        </View>
+      );
+    }
+    if (!hasMoreContributions && contributions.length > 0) {
+      return (
+        <View style={styles.endOfListContainer}>
+          <Text style={styles.endOfListText}>You've reached the end</Text>
+        </View>
+      );
+    }
+    return null;
+  }, [loadingMore, hasMoreContributions, contributions.length]);
+
+  // Memoized footer component for reviews
+  const reviewsFooterComponent = useMemo(() => {
+    if (loadingMore) {
+      return (
+        <View style={styles.loadingMoreContainer}>
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+          <Text style={styles.loadingMoreText}>Loading more...</Text>
+        </View>
+      );
+    }
+    if (!hasMoreReviews && reviews.length > 0) {
+      return (
+        <View style={styles.endOfListContainer}>
+          <Text style={styles.endOfListText}>You've reached the end</Text>
+        </View>
+      );
+    }
+    return null;
+  }, [loadingMore, hasMoreReviews, reviews.length]);
 
   if (loading) {
     return <ProfileScreenSkeleton />;
@@ -726,126 +871,57 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
                 <ActivityIndicator size="large" color={theme.colors.primary} />
               </View>
             ) : (
-              <ScrollView
-                style={styles.tabScrollView}
-                showsVerticalScrollIndicator={false}
-                onScroll={handleScroll}
-                scrollEventThrottle={400}
-              >
-                {activeTab === 'contributions' ? (
-                  contributions.length === 0 ? (
-                    <View style={styles.emptyStateContainer}>
-                      <Image
-                        source={require('../../../assets/submissions.png')}
-                        style={styles.emptyStateImage}
-                        resizeMode="contain"
-                      />
-                      <View style={styles.emptyStateTextContainer}>
-                        <Text style={styles.emptyStateTitle}>No Submissions</Text>
-                        <Text style={styles.emptyStateSubtitle}>
-                          We need people like you to submit foods to our ever growing database.
-                        </Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.contributionsGrid}>
-                      {contributions.map((food) => (
-                        <View key={food.id} style={styles.gridCardWrapper}>
-                          <GridFoodCard
-                            food={food}
-                            onPress={() => navigation.navigate('FoodDetail', { foodId: food.id })}
-                            isFavorite={isFavorite(food.id)}
-                            onToggleFavorite={toggleFavorite}
-                          />
-                        </View>
-                      ))}
-                    </View>
-                  )
-                ) : (
-                  reviews.length === 0 ? (
-                    <View style={styles.emptyStateContainer}>
-                      <Image
-                        source={require('../../../assets/noreviews.png')}
-                        style={styles.emptyStateImage}
-                        resizeMode="contain"
-                      />
-                      <View style={styles.emptyStateTextContainer}>
-                        <Text style={styles.emptyStateTitle}>No Reviews</Text>
-                        <Text style={styles.emptyStateSubtitle}>
-                          Add some of your ratings to our food database it really helps.
-                        </Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.reviewsList}>
-                      {reviews.map((review) => (
-                        <TouchableOpacity
-                          key={review.id}
-                          style={styles.reviewCard}
-                          onPress={() => {
-                            if (review.food_id) {
-                              navigation.navigate('FoodDetail', { foodId: review.food_id });
-                            }
-                          }}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.reviewFoodName}>
-                            {review.foods?.name || 'Unknown Food'}
-                          </Text>
-
-                          <View style={styles.starsContainer}>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Ionicons
-                                key={star}
-                                name={star <= parseInt(review.rating) ? "star" : "star-outline"}
-                                size={16}
-                                color={star <= parseInt(review.rating) ? theme.colors.warning : theme.colors.text.tertiary}
-                              />
-                            ))}
-                          </View>
-
-                          <Text style={styles.reviewDate}>
-                            {new Date(review.created_at).toLocaleDateString('en-US', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
-                          </Text>
-
-                          <Text style={styles.reviewText}>
-                            {review.review}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )
+              <>
+                {/* Contributions Tab - Grid Layout */}
+                {activeTab === 'contributions' && (
+                  <FlatList
+                    data={contributions}
+                    keyExtractor={(item) => item.id}
+                    numColumns={2}
+                    columnWrapperStyle={styles.gridRow}
+                    renderItem={renderContributionItem}
+                    ListEmptyComponent={contributionsEmptyComponent}
+                    ListFooterComponent={contributionsFooterComponent}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[
+                      styles.flatListContent,
+                      contributions.length === 0 && styles.flatListContentEmpty
+                    ]}
+                    // Performance optimizations
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={10}
+                    updateCellsBatchingPeriod={50}
+                    windowSize={10}
+                    initialNumToRender={6}
+                  />
                 )}
 
-                {/* Loading More Indicator */}
-                {loadingMore && (
-                  <View style={styles.loadingMoreContainer}>
-                    <ActivityIndicator size="small" color={theme.colors.primary} />
-                    <Text style={styles.loadingMoreText}>Loading more...</Text>
-                  </View>
+                {/* Reviews Tab - List Layout */}
+                {activeTab === 'reviews' && (
+                  <FlatList
+                    data={reviews}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderReviewItem}
+                    ListEmptyComponent={reviewsEmptyComponent}
+                    ListFooterComponent={reviewsFooterComponent}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[
+                      styles.flatListContent,
+                      reviews.length === 0 && styles.flatListContentEmpty
+                    ]}
+                    // Performance optimizations
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={10}
+                    updateCellsBatchingPeriod={50}
+                    windowSize={10}
+                    initialNumToRender={8}
+                  />
                 )}
-
-                {/* End of List Indicator */}
-                {!loadingContent && !loadingMore && (
-                  activeTab === 'contributions' ? (
-                    !hasMoreContributions && contributions.length > 0 && (
-                      <View style={styles.endOfListContainer}>
-                        <Text style={styles.endOfListText}>No more contributions</Text>
-                      </View>
-                    )
-                  ) : (
-                    !hasMoreReviews && reviews.length > 0 && (
-                      <View style={styles.endOfListContainer}>
-                        <Text style={styles.endOfListText}>No more reviews</Text>
-                      </View>
-                    )
-                  )
-                )}
-              </ScrollView>
+              </>
             )}
           </View>
         )}
@@ -1075,6 +1151,30 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral.BG,
   },
 
+  // FlatList Content
+  flatListContent: {
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    paddingBottom: 120, // Account for floating tab bar
+    backgroundColor: theme.colors.neutral.BG,
+  },
+
+  flatListContentEmpty: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+
+  // Grid Row (for 2-column layout)
+  gridRow: {
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.md,
+  },
+
+  gridCardWrapper: {
+    width: (width - theme.spacing.md * 3) / 2,
+    marginBottom: theme.spacing.md,
+  },
+
   loadingMoreContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1098,28 +1198,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.text.tertiary,
     fontStyle: 'italic',
-  },
-
-  // Contributions Grid
-  contributionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    paddingBottom: 120,
-  },
-
-  gridCardWrapper: {
-    width: (width - theme.spacing.md * 3) / 2,
-    marginBottom: theme.spacing.md,
-  },
-
-  // Reviews List
-  reviewsList: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: 120,
   },
 
   reviewCard: {

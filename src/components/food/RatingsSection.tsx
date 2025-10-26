@@ -6,7 +6,7 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  ScrollView,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -391,11 +391,18 @@ export const RatingsSection: React.FC<RatingsSectionProps> = ({
                   </View>
 
                   {/* Reviews List */}
-                  <View style={styles.reviewsList}>
-                    {ratings.slice(0, 5).map((rating) => (
-                      <ReviewCard key={rating.id} rating={rating} />
-                    ))}
-                  </View>
+                  <FlatList
+                    data={ratings.slice(0, 5)}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => <ReviewCard rating={item} />}
+                    scrollEnabled={false}
+                    contentContainerStyle={styles.reviewsList}
+                    // Performance optimizations
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={5}
+                    initialNumToRender={5}
+                    windowSize={5}
+                  />
                 </>
               )}
             </>

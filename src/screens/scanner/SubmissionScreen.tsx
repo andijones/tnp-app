@@ -20,6 +20,7 @@ import { supabase } from '../../services/supabase/config';
 import { validateImage, getUserFriendlyErrorMessage } from '../../utils/imageUpload';
 import { logger } from '../../utils/logger';
 import { FoodCelebration } from '../../components/common/FoodCelebration';
+import { formatErrorForDisplay, ValidationErrors, parseUploadError } from '../../utils/errorHandling';
 
 interface ImageItem {
   uri: string;
@@ -76,15 +77,25 @@ export const SubmissionScreen: React.FC = () => {
       });
 
       if (!result.canceled && result.assets[0]) {
-        const newImage: ImageItem = {
-          uri: result.assets[0].uri,
-          id: Date.now().toString(),
-        };
-        setSelectedImages(prev => [...prev, newImage]);
+        // Validate image before adding
+        try {
+          await validateImage(result.assets[0].uri);
+
+          const newImage: ImageItem = {
+            uri: result.assets[0].uri,
+            id: Date.now().toString(),
+          };
+          setSelectedImages(prev => [...prev, newImage]);
+        } catch (validationError) {
+          const errorMessage = getUserFriendlyErrorMessage(validationError);
+          Alert.alert('Invalid Image', errorMessage);
+          logger.error('Image validation failed:', validationError);
+        }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to select image');
-      logger.error(error);
+      const errorMessage = getUserFriendlyErrorMessage(error);
+      Alert.alert('Error', errorMessage);
+      logger.error('Failed to select image:', error);
     }
   };
 
@@ -102,15 +113,25 @@ export const SubmissionScreen: React.FC = () => {
       });
 
       if (!result.canceled && result.assets[0]) {
-        const newImage: ImageItem = {
-          uri: result.assets[0].uri,
-          id: Date.now().toString(),
-        };
-        setSelectedImages(prev => [...prev, newImage]);
+        // Validate image before adding
+        try {
+          await validateImage(result.assets[0].uri);
+
+          const newImage: ImageItem = {
+            uri: result.assets[0].uri,
+            id: Date.now().toString(),
+          };
+          setSelectedImages(prev => [...prev, newImage]);
+        } catch (validationError) {
+          const errorMessage = getUserFriendlyErrorMessage(validationError);
+          Alert.alert('Invalid Image', errorMessage);
+          logger.error('Image validation failed:', validationError);
+        }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to take photo');
-      logger.error(error);
+      const errorMessage = getUserFriendlyErrorMessage(error);
+      Alert.alert('Error', errorMessage);
+      logger.error('Failed to take photo:', error);
     }
   };
 
@@ -300,19 +321,11 @@ export const SubmissionScreen: React.FC = () => {
     } catch (error) {
       logger.error('Submission error:', error);
 
-      let errorMessage = 'Failed to submit. Please try again.';
-      if (error instanceof Error) {
-        // Check if it's an image-related error (from our custom error messages)
-        if (error.message.includes('upload image')) {
-          errorMessage = error.message; // Use the detailed error message we created
-        } else if (error.message.includes('image')) {
-          errorMessage = 'Image upload failed. Please check your connection and try again.';
-        } else if (error.message.includes('storage')) {
-          errorMessage = 'Upload failed. Please try again.';
-        }
-      }
-
-      Alert.alert('Oops!', errorMessage);
+      const formattedError = formatErrorForDisplay(error);
+      Alert.alert(
+        formattedError.title,
+        formattedError.message + (formattedError.actionText ? `\n\n${formattedError.actionText}` : '')
+      );
     } finally {
       setIsSubmitting(false);
     }

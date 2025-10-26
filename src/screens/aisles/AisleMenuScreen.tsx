@@ -203,43 +203,46 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
       </View>
 
       <View style={styles.container}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Categories List */}
-          <View style={styles.categoriesContainer}>
-            {/* View All Foods or Shop All - show as first item */}
-            {navigationStack.length === 1 && (
-              <CategoryCard
-                aisle={createViewAllAisle()}
-                onPress={() => navigateToAllFoods()}
-              />
-            )}
+        <FlatList
+          data={filteredAisles}
+          keyExtractor={(item) => item.id}
+          renderItem={renderAisleItem}
+          ListHeaderComponent={
+            <>
+              {/* View All Foods or Shop All - show as first item */}
+              {navigationStack.length === 1 && (
+                <CategoryCard
+                  aisle={createViewAllAisle()}
+                  onPress={() => navigateToAllFoods()}
+                />
+              )}
 
-            {currentLevel?.parentSlug && (
-              <CategoryCard
-                aisle={createShopAllAisle()}
-                onPress={() => navigateToShopAll()}
-              />
-            )}
-
-            {/* Regular aisles */}
-            {filteredAisles.map((item, index) => (
-              <View key={item.id}>
-                {renderAisleItem({ item, index })}
-              </View>
-            ))}
-
-            {filteredAisles.length === 0 && searchQuery && (
+              {currentLevel?.parentSlug && (
+                <CategoryCard
+                  aisle={createShopAllAisle()}
+                  onPress={() => navigateToShopAll()}
+                />
+              )}
+            </>
+          }
+          ListEmptyComponent={
+            searchQuery ? (
               <EmptyState
                 title="No categories found"
                 message="Try adjusting your search terms"
                 image={require('../../../assets/Inbox.png')}
               />
-            )}
-          </View>
-        </ScrollView>
+            ) : null
+          }
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.flatListContent}
+          // Performance optimizations
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={10}
+          initialNumToRender={10}
+        />
       </View>
     </SafeAreaView>
   );
@@ -260,7 +263,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F6F0', // Neutral-BG
   },
 
-  scrollContent: {
+  flatListContent: {
+    paddingHorizontal: 16, // Figma: spacing-16
+    paddingTop: 16, // Figma: spacing-16
     paddingBottom: 100, // Extra padding for tab bar
   },
 
@@ -338,11 +343,5 @@ const styles = StyleSheet.create({
     height: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-
-  categoriesContainer: {
-    paddingHorizontal: 16, // Figma: spacing-16
-    paddingTop: 16, // Figma: spacing-16
   },
 });
