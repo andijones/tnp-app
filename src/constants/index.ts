@@ -8,12 +8,15 @@ export const APP_INFO = {
     website: 'https://thenakedpantry.com',
     supportEmail: 'support@thenakedpantry.com',
     deepLinkScheme: 'tnpclean://',
+    privacyPolicyUrl: 'https://www.thenakedpantry.com/privacy',
+    termsOfServiceUrl: 'https://www.thenakedpantry.com/terms',
   };
 
   // API Configuration
+  // Note: API keys are now stored in .env file for security
   export const API_CONFIG = {
-    supabaseUrl: 'https://uacihrlnwlqhpbobzajs.supabase.co',
-    supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhY2locmxud2xxaHBib2J6YWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1NTE2MjUsImV4cCI6MjA2MDEyNzYyNX0.NKoj5Olfg3sxPX0p3AT4POlxs4wmHa3XmcAIXEttxXU',
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || '',
+    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
   };
 
   // Deep Links

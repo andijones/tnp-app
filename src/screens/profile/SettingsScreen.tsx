@@ -277,14 +277,26 @@ export const SettingsScreen: React.FC = () => {
     Linking.openURL(`mailto:${APP_INFO.supportEmail}?subject=Support Request`);
   };
 
-  const handleTermsOfService = () => {
-    // TODO: Add actual terms of service URL
-    Alert.alert('Terms of Service', 'Terms of Service page coming soon');
+  const handleTermsOfService = async () => {
+    const url = APP_INFO.termsOfServiceUrl;
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('Error', 'Unable to open Terms of Service. Please visit thenakedpantry.com/terms in your browser.');
+    }
   };
 
-  const handlePrivacyPolicy = () => {
-    // TODO: Add actual privacy policy URL
-    Alert.alert('Privacy Policy', 'Privacy Policy page coming soon');
+  const handlePrivacyPolicy = async () => {
+    const url = APP_INFO.privacyPolicyUrl;
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('Error', 'Unable to open Privacy Policy. Please visit thenakedpantry.com/privacy in your browser.');
+    }
   };
 
   const appVersion = Constants.expoConfig?.version || '1.0.0';

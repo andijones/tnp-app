@@ -25,6 +25,7 @@ import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/fi
 import { Supermarket } from '../../types';
 import { FilterChip } from '../../components/common/FilterChip';
 import { BottomSheetModal } from '../../components/common/BottomSheetModal';
+import { AisleDetailSkeleton } from '../../components/common/skeletons/AisleDetailSkeleton';
 
 interface AisleDetailViewProps {
   navigation: any;
@@ -128,11 +129,7 @@ export const AisleDetailView: React.FC<AisleDetailViewProps> = ({
 
 
   if (loading) {
-    return (
-      <SafeAreaView style={[styles.safeArea, styles.safeAreaWhite]}>
-        <LoadingSpinner message="Loading aisle..." />
-      </SafeAreaView>
-    );
+    return <AisleDetailSkeleton />;
   }
 
   return (

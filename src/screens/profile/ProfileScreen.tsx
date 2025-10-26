@@ -26,6 +26,7 @@ import { useUser } from '../../hooks/useUser';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useNavigation } from '@react-navigation/native';
 import { Food, UserProfile, ProfileNavigationProp, ProfileRouteProp } from '../../types';
+import { ProfileScreenSkeleton } from '../../components/common/skeletons/ProfileScreenSkeleton';
 import {
   uploadImage,
   deleteImage,
@@ -479,14 +480,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
   };
 
   if (loading) {
-    return (
-      <View style={[styles.safeArea, styles.safeAreaWhite, { paddingTop: insets.top }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
-        </View>
-      </View>
-    );
+    return <ProfileScreenSkeleton />;
   }
 
   if (error) {

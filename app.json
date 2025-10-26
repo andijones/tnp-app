@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TNP-clean",
-    "slug": "TNP-clean",
+    "name": "The Naked Pantry",
+    "slug": "the-naked-pantry",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/App-Icon.png",
@@ -52,7 +52,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "tnpclean",
+    "scheme": "thenakedpantry",
     "plugins": [
       "expo-barcode-scanner"
     ]

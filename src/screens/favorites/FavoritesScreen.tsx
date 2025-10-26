@@ -20,6 +20,7 @@ import { FoodGrid } from '../../components/common/FoodGrid';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useFavorites } from '../../hooks/useFavorites';
 import { logger } from '../../utils/logger';
+import { FavoritesScreenSkeleton } from '../../components/common/skeletons/FavoritesScreenSkeleton';
 
 interface FavoritesScreenProps {
   navigation: any;
@@ -125,11 +126,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
 
   if (loading) {
-    return (
-      <View style={[styles.safeArea, styles.safeAreaWhite, { paddingTop: insets.top }]}>
-        <LoadingSpinner message="Loading favorites..." />
-      </View>
-    );
+    return <FavoritesScreenSkeleton />;
   }
 
   return (

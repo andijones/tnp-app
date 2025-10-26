@@ -21,6 +21,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { CategoryCard } from '../../components/aisles/CategoryCard';
 import { QuickActionCard } from '../../components/aisles/QuickActionCard';
 import { SectionHeader } from '../../components/aisles/SectionHeader';
+import { AisleMenuSkeleton } from '../../components/common/skeletons/AisleMenuSkeleton';
 
 interface AisleMenuViewProps {
   navigation: any;
@@ -143,11 +144,7 @@ export const AisleMenuView: React.FC<AisleMenuViewProps> = ({ navigation }) => {
   });
 
   if (loading) {
-    return (
-      <SafeAreaView style={[styles.safeArea, styles.safeAreaWhite]}>
-        <LoadingSpinner message="Loading aisles..." />
-      </SafeAreaView>
-    );
+    return <AisleMenuSkeleton />;
   }
 
   return (

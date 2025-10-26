@@ -42,6 +42,7 @@ import { CategoryCard } from '../../components/aisles/CategoryCard';
 import { CollapsibleSection } from '../../components/common/CollapsibleSection';
 import { SimilarFoodsSection } from '../../components/food/SimilarFoodsSection';
 import { logger } from '../../utils/logger';
+import { FoodDetailSkeleton } from '../../components/common/skeletons/FoodDetailSkeleton';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -363,13 +364,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
   };
 
   if (loading) {
-    return (
-      <GestureHandlerRootView style={styles.container}>
-        <View style={styles.modalCard}>
-          <LoadingSpinner message="Loading food details..." />
-        </View>
-      </GestureHandlerRootView>
-    );
+    return <FoodDetailSkeleton />;
   }
 
   if (!food) {

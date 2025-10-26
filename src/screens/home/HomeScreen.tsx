@@ -28,6 +28,7 @@ import { FilterState, applyFilters, getUniqueSupermarkets } from '../../utils/fi
 import { Supermarket } from '../../types';
 import { Aisle } from '../../types/aisle';
 import { aisleService } from '../../services/aisleService';
+import { HomeScreenSkeleton } from '../../components/common/skeletons/HomeScreenSkeleton';
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
@@ -134,11 +135,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => 
 
 
   if (loading) {
-    return (
-      <View style={[styles.safeArea, styles.safeAreaWhite, { paddingTop: insets.top }]}>
-        <LoadingSpinner message="Loading foods..." />
-      </View>
-    );
+    return <HomeScreenSkeleton />;
   }
 
   return (
