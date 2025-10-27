@@ -190,6 +190,10 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
     }
   };
 
+  const avatarUrl = submitterProfile?.avatar_url
+    ? `https://uacihrlnwlqhpbobzajs.supabase.co/storage/v1/object/public/avatars/${submitterProfile.avatar_url}`
+    : null;
+
   return (
     <TouchableOpacity
       style={styles.container}
@@ -197,44 +201,131 @@ export const SubmitterInfo: React.FC<SubmitterInfoProps> = ({
       activeOpacity={0.7}
       disabled={!originalSubmitterId}
     >
-      <View style={styles.badge}>
-        <Ionicons name="person-circle-outline" size={16} color={theme.colors.neutral[500]} />
-        <Text style={styles.badgeText}>
-          Contributed by <Text style={styles.username}>{displayName}</Text>
-        </Text>
+      {/* Profile Picture */}
+      <View style={styles.avatarContainer}>
+        {avatarUrl ? (
+          <Image
+            source={{ uri: avatarUrl }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View style={styles.avatarFallback}>
+            <Text style={styles.avatarInitials}>
+              {getInitials(displayName)}
+            </Text>
+          </View>
+        )}
       </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        <Text style={styles.label}>Contributed by</Text>
+        <Text style={styles.nameText}>{displayName}</Text>
+
+        {/* Contribution Count Badge */}
+        {submissionStats && contributionCount > 0 && (
+          <View style={styles.contributionBadge}>
+            <Text style={styles.contributionText}>
+              {contributionCount} {contributionCount === 1 ? 'contribution' : 'contributions'}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Chevron Icon */}
+      {originalSubmitterId && (
+        <Ionicons
+          name="chevron-forward"
+          size={20}
+          color={theme.colors.neutral[400]}
+          style={styles.chevron}
+        />
+      )}
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    // No extra styling needed
-  },
-
-  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     backgroundColor: theme.colors.neutral[50],
     borderRadius: 8,
     borderWidth: 0.5,
     borderColor: theme.colors.neutral[200],
   },
 
-  badgeText: {
+  avatarContainer: {
+    marginRight: 12,
+  },
+
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.neutral[100],
+  },
+
+  avatarFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.green[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  avatarInitials: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.green[950],
+    letterSpacing: -0.32,
+  },
+
+  content: {
+    flex: 1,
+  },
+
+  label: {
     fontSize: 12,
-    color: theme.colors.neutral[600],
+    lineHeight: 16,
+    color: theme.colors.neutral[500],
+    marginBottom: 2,
     letterSpacing: -0.12,
   },
 
-  username: {
-    fontSize: 12,
+  nameText: {
+    fontSize: 16,
+    lineHeight: 19,
     fontWeight: '600',
-    color: theme.colors.neutral[700],
-    letterSpacing: -0.12,
+    color: theme.colors.neutral[800],
+    marginBottom: 4,
+    letterSpacing: -0.32,
+  },
+
+  contributionBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    backgroundColor: theme.colors.green[50],
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: theme.colors.green[200],
+    marginTop: 2,
+  },
+
+  contributionText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '500',
+    color: theme.colors.green[950],
+    letterSpacing: -0.11,
+  },
+
+  chevron: {
+    marginLeft: 8,
   },
 
   loadingText: {

@@ -100,7 +100,6 @@ export const SimilarFoodsSection: React.FC<SimilarFoodsSectionProps> = ({
       {/* Section Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Similar Items You Might Like</Text>
-        <Text style={styles.headerSubtitle}>From the same aisle</Text>
       </View>
 
       {/* Horizontal Scrollable Food Cards */}
@@ -143,17 +142,12 @@ const styles = StyleSheet.create({
 
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    letterSpacing: -0.2,
-    marginBottom: 4,
-  },
-
-  headerSubtitle: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: theme.colors.text.secondary,
-    letterSpacing: -0.13,
+    fontWeight: '700', // Changed from 600 to 700 to match section headers
+    lineHeight: 22,
+    letterSpacing: -0.36, // Changed from -0.2 to -0.36 to match section headers
+    color: theme.colors.neutral[800], // Changed to match section headers
+    marginBottom: 20, // Changed from 4 to 20 to match section headers
+    fontFamily: 'System',
   },
 
   loadingContainer: {

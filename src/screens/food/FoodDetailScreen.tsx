@@ -505,35 +505,6 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
           </View>
         </View>
 
-        {/* Processing Level Ribbon - Below Header (with transparent sides) */}
-        {food.nova_group && (
-          <View style={styles.processingRibbonContainer}>
-            <View style={[
-              styles.processingRibbon,
-              food.nova_group === 1 && styles.processingRibbonNova1,
-              food.nova_group === 2 && styles.processingRibbonNova2,
-              food.nova_group === 3 && styles.processingRibbonNova3,
-            ]}>
-              <Text style={[
-                styles.processingRibbonLabel,
-                food.nova_group === 1 && styles.processingRibbonTextNova1,
-                food.nova_group === 2 && styles.processingRibbonTextNova2,
-                food.nova_group === 3 && styles.processingRibbonTextNova3,
-              ]}>
-                {food.nova_group === 1 ? 'Whole Foods' : food.nova_group === 2 ? 'Extract Foods' : 'Lightly Processed'}
-              </Text>
-              <Text style={[
-                styles.processingRibbonNova,
-                food.nova_group === 1 && styles.processingRibbonTextNova1,
-                food.nova_group === 2 && styles.processingRibbonTextNova2,
-                food.nova_group === 3 && styles.processingRibbonTextNova3,
-              ]}>
-                Nova {food.nova_group}
-              </Text>
-            </View>
-          </View>
-        )}
-
         <NativeViewGestureHandler ref={scrollHandlerRef} disallowInterruption={true}>
           <ScrollView
             ref={scrollViewRef}
@@ -543,6 +514,35 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
             onScroll={handleScroll}
             scrollEventThrottle={16}
           >
+          {/* Processing Level Ribbon - Above hero image, transparent sides */}
+          {food.nova_group && (
+            <View style={styles.processingRibbonContainer}>
+              <View style={[
+                styles.processingRibbon,
+                food.nova_group === 1 && styles.processingRibbonNova1,
+                food.nova_group === 2 && styles.processingRibbonNova2,
+                food.nova_group === 3 && styles.processingRibbonNova3,
+              ]}>
+                <Text style={[
+                  styles.processingRibbonLabel,
+                  food.nova_group === 1 && styles.processingRibbonTextNova1,
+                  food.nova_group === 2 && styles.processingRibbonTextNova2,
+                  food.nova_group === 3 && styles.processingRibbonTextNova3,
+                ]}>
+                  {food.nova_group === 1 ? 'Whole Foods' : food.nova_group === 2 ? 'Extract Foods' : 'Lightly Processed'}
+                </Text>
+                <Text style={[
+                  styles.processingRibbonNova,
+                  food.nova_group === 1 && styles.processingRibbonTextNova1,
+                  food.nova_group === 2 && styles.processingRibbonTextNova2,
+                  food.nova_group === 3 && styles.processingRibbonTextNova3,
+                ]}>
+                  Nova {food.nova_group}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Hero Product Image */}
           <View style={styles.heroImageContainer}>
             {food.image ? (
@@ -791,13 +791,15 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
             </View>
 
             {/* Similar Foods Section */}
-            <SimilarFoodsSection
-              currentFoodId={foodId}
-              aisleId={food.aisle?.id}
-              onFoodPress={(foodId) => navigation.push('FoodDetail', { foodId })}
-              isFavorite={isFavorite}
-              onToggleFavorite={toggleFavoriteHook}
-            />
+            <View style={styles.similarFoodsWrapper}>
+              <SimilarFoodsSection
+                currentFoodId={foodId}
+                aisleId={food.aisle?.id}
+                onFoodPress={(foodId) => navigation.push('FoodDetail', { foodId })}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavoriteHook}
+              />
+            </View>
 
             {/* Submitter Info - Moved to bottom */}
             {(food.original_submitter_id || food.food_link_id || food.user_id) && (
@@ -1054,10 +1056,10 @@ const styles = StyleSheet.create({
 
   // Hero Image Container
   heroImageContainer: {
-    height: 200, // Reduced from 280 to match Figma
+    height: 300, // 1.5x the original size (200 * 1.5 = 300)
     backgroundColor: theme.colors.neutral.white,
     position: 'relative',
-    marginTop: 0, // Remove margin - drag handle provides spacing
+    marginTop: 0, // Remove margin - ribbon is now above image
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1099,7 +1101,7 @@ const styles = StyleSheet.create({
   // Content Container
   contentContainer: {
     paddingTop: 0, // No top padding for hero section
-    paddingBottom: 40, // Extra bottom padding for comfortable scrolling
+    paddingBottom: 24, // Reduced bottom padding
     paddingHorizontal: 24, // 24pt padding left and right
     gap: 0, // No gap - we control spacing manually
     backgroundColor: theme.colors.neutral.white,
@@ -1108,8 +1110,6 @@ const styles = StyleSheet.create({
   // Hero Card - Full Width with horizontal padding for breathing room
   heroCard: {
     borderWidth: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.neutral[200],
     backgroundColor: theme.colors.neutral.white,
     paddingTop: 24, // Generous top padding
     paddingBottom: 32, // Extra bottom padding for separation
@@ -1160,12 +1160,12 @@ const styles = StyleSheet.create({
     letterSpacing: -0.11,
   },
 
-  // Processing Level Ribbon Container (neutral-100 background matching header)
+  // Processing Level Ribbon Container (scrolls with content, transparent sides)
   processingRibbonContainer: {
     width: '100%',
     alignItems: 'center',
-    backgroundColor: theme.colors.neutral[100], // Match header background
-    paddingBottom: 8, // Small padding for visual separation
+    backgroundColor: 'transparent', // Transparent so sides show through
+    paddingVertical: 8, // Padding for visual breathing
   },
 
   // Processing Level Ribbon (below image, above content)
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
   // Static Sections Container
   staticSectionsContainer: {
     marginTop: 0, // No extra margin - hero card handles it
-    gap: 40, // 40px gap between sections for better breathing room
+    gap: 80, // 80px gap between sections for maximum breathing room
   },
 
   staticSection: {
@@ -1500,6 +1500,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.15,
     color: theme.colors.neutral[500],
     fontFamily: 'System',
+  },
+
+  // Similar Foods Wrapper - Add spacing before submitter
+  similarFoodsWrapper: {
+    marginTop: 80, // Same as section spacing for consistency
   },
 
   // Submitter Container - At bottom of page
