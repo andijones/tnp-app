@@ -14,32 +14,19 @@ import {
   Share,
   Platform,
   Animated,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import { GestureHandlerRootView, PanGestureHandler, NativeViewGestureHandler } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { Food, FoodDetailScreenProps } from '../../types';
 import { supabase } from '../../services/supabase/config';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { Button } from '../../components/common/Button';
-import { NovaBadge } from '../../components/common/NovaBadge';
-import { IconBadge } from '../../components/common/IconBadge';
-import { SectionHeader } from '../../components/common/SectionHeader';
-import { NutritionPanel } from '../../components/food/NutritionPanel';
-import { IngredientsList } from '../../components/food/IngredientsList';
-import { MinimalNutritionPanel } from '../../components/food/MinimalNutritionPanel';
-import { RatingsSection } from '../../components/food/RatingsSection';
-import { ReviewSubmission } from '../../components/food/ReviewSubmission';
 import { useFavorites } from '../../hooks/useFavorites';
-import { NovaRatingBanner } from '../../components/food/NovaRatingBanner';
-import { ProcessingLevelBanner } from '../../components/food/ProcessingLevelBanner';
-import { ProcessingLevelCard } from '../../components/common/ProcessingLevelCard';
-import { ImprovedNutritionPanel } from '../../components/food/ImprovedNutritionPanel';
-import { ImprovedIngredientsList } from '../../components/food/ImprovedIngredientsList';
-import { RelatedFoodsSection } from '../../components/food/RelatedFoodsSection';
 import { SubmitterInfo } from '../../components/food/SubmitterInfo';
-import { CategoryCard } from '../../components/aisles/CategoryCard';
-import { CollapsibleSection } from '../../components/common/CollapsibleSection';
 import { SimilarFoodsSection } from '../../components/food/SimilarFoodsSection';
 import { logger } from '../../utils/logger';
 import { FoodDetailSkeleton } from '../../components/common/skeletons/FoodDetailSkeleton';
@@ -52,6 +39,10 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
   const [loading, setLoading] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [hasUserReview, setHasUserReview] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const reviewSectionRef = useRef<View>(null);
   const scrollHandlerRef = useRef(null);
@@ -232,7 +223,27 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         ratings_count: ratings.length
       });
     } catch (error) {
-      logger.error('Error:', error);
+      logger.error('Error fetching food details:', error);
+
+      // Show user-friendly error message
+      if (error instanceof TypeError && error.message.includes('Network request failed')) {
+        Alert.alert(
+          'Network Error',
+          'Unable to load food details. Please check your internet connection and try again.',
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack() },
+            { text: 'Retry', onPress: () => fetchFoodDetails() }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          'Failed to load food details. Please try again later.',
+          [
+            { text: 'OK', onPress: () => navigation.goBack() }
+          ]
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -322,13 +333,39 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
     }
   };
 
-  const handleSubmitReview = async (rating: number, review: string) => {
-    if (rating === 0) {
+  const handleOpenReviewModal = async () => {
+    // Check if user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      Alert.alert('Login Required', 'Please log in to leave a review.');
+      return;
+    }
+
+    // Check if user already has a review
+    if (hasUserReview) {
+      Alert.alert('Already Reviewed', 'You have already reviewed this product.');
+      return;
+    }
+
+    setShowReviewModal(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedRating(0);
+    setReviewText('');
+  };
+
+  const handleSubmitReview = async () => {
+    if (selectedRating === 0) {
       Alert.alert('Rating Required', 'Please select a star rating before submitting.');
       return;
     }
 
     try {
+      setIsSubmittingReview(true);
+
       // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -343,25 +380,26 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         .insert({
           food_id: foodId,
           user_id: user.id,
-          rating: rating.toString(),
-          review: review || null,
+          rating: selectedRating.toString(),
+          review: reviewText.trim() || null,
         });
 
-      if (insertError) {
-        logger.error('Error submitting review:', insertError);
-        Alert.alert('Error', 'Failed to submit review. Please try again.');
-        return;
-      }
+      if (insertError) throw insertError;
 
       Alert.alert('Success', 'Your review has been submitted!');
 
-      // Refresh food details to show new review
+      // Close modal and refresh
+      handleCloseReviewModal();
       fetchFoodDetails();
+
     } catch (error) {
-      logger.error('Error in handleSubmitReview:', error);
-      Alert.alert('Error', 'An unexpected error occurred.');
+      logger.error('Error submitting review:', error);
+      Alert.alert('Error', 'Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
+
 
   if (loading) {
     return <FoodDetailSkeleton />;
@@ -429,38 +467,72 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         {/* Drag Handle */}
         <View style={styles.dragHandle} />
 
-        {/* Close Button - Top Right */}
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="close" size={28} color={theme.colors.neutral[600]} />
-        </TouchableOpacity>
+        {/* Header with Background */}
+        <View style={styles.header}>
+          <View style={styles.headerBackground} />
 
-        {/* Header Actions - Share & Favorite */}
-        <View style={styles.headerActions}>
+          {/* Close Button - Top Right */}
           <TouchableOpacity
-            style={styles.actionButton}
-            onPress={shareFood}
+            style={styles.closeButton}
+            onPress={() => navigation.goBack()}
             activeOpacity={0.7}
           >
-            <Ionicons name="share-outline" size={22} color={theme.colors.text.primary} />
+            <Ionicons name="close" size={24} color={theme.colors.neutral[600]} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionButton, favoriteLoading && styles.buttonDisabled]}
-            onPress={handleToggleFavorite}
-            disabled={favoriteLoading}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={isFavorite(foodId) ? 'heart' : 'heart-outline'}
-              size={22}
-              color={isFavorite(foodId) ? theme.colors.error : theme.colors.text.primary}
-            />
-          </TouchableOpacity>
+          {/* Header Actions - Share & Favorite */}
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={shareFood}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="share-outline" size={20} color={theme.colors.neutral[600]} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, favoriteLoading && styles.buttonDisabled]}
+              onPress={handleToggleFavorite}
+              disabled={favoriteLoading}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isFavorite(foodId) ? 'heart' : 'heart-outline'}
+                size={20}
+                color={theme.colors.neutral[600]}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* Processing Level Ribbon - Below Header (with transparent sides) */}
+        {food.nova_group && (
+          <View style={styles.processingRibbonContainer}>
+            <View style={[
+              styles.processingRibbon,
+              food.nova_group === 1 && styles.processingRibbonNova1,
+              food.nova_group === 2 && styles.processingRibbonNova2,
+              food.nova_group === 3 && styles.processingRibbonNova3,
+            ]}>
+              <Text style={[
+                styles.processingRibbonLabel,
+                food.nova_group === 1 && styles.processingRibbonTextNova1,
+                food.nova_group === 2 && styles.processingRibbonTextNova2,
+                food.nova_group === 3 && styles.processingRibbonTextNova3,
+              ]}>
+                {food.nova_group === 1 ? 'Whole Foods' : food.nova_group === 2 ? 'Extract Foods' : 'Lightly Processed'}
+              </Text>
+              <Text style={[
+                styles.processingRibbonNova,
+                food.nova_group === 1 && styles.processingRibbonTextNova1,
+                food.nova_group === 2 && styles.processingRibbonTextNova2,
+                food.nova_group === 3 && styles.processingRibbonTextNova3,
+              ]}>
+                Nova {food.nova_group}
+              </Text>
+            </View>
+          </View>
+        )}
 
         <NativeViewGestureHandler ref={scrollHandlerRef} disallowInterruption={true}>
           <ScrollView
@@ -481,11 +553,6 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
               </View>
             )}
           </View>
-
-          {/* Processing Level Card - Full Width */}
-          {food.nova_group && (
-            <ProcessingLevelCard level={food.nova_group} />
-          )}
 
           {/* Content Container with Card Layout */}
           <View style={styles.contentContainer}>
@@ -562,38 +629,164 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
               </View>
             </View>
 
-            {/* Collapsible Sections - Full Width with Top Margin */}
-            <View style={styles.collapsibleSectionsContainer}>
+            {/* Static Sections - Full Width with Top Margin */}
+            <View style={styles.staticSectionsContainer}>
               {/* Ingredients Section */}
-              <CollapsibleSection
-                icon={require('../../../assets/ingred.png')}
-                title="Ingredients"
-                defaultExpanded={true}
-              >
-                <ImprovedIngredientsList
-                  ingredients={food.ingredients}
-                  description={food.description}
-                />
-              </CollapsibleSection>
+              <View style={styles.staticSection}>
+                <Text style={styles.sectionTitleText}>Ingredients</Text>
+                <View style={styles.sectionContent}>
+                  <Text style={styles.ingredientsText}>
+                    {food.ingredients || food.description || 'No ingredients information available'}
+                  </Text>
+                </View>
+              </View>
 
               {/* Nutrition Section */}
-              <CollapsibleSection
-                icon={require('../../../assets/nut.png')}
-                title="Nutrition Facts"
-                defaultExpanded={true}
-              >
-                <ImprovedNutritionPanel nutrition={food.nutrition} />
-              </CollapsibleSection>
+              {food.nutrition && (
+                <View style={styles.staticSection}>
+                  <Text style={styles.sectionTitleText}>Nutrition Facts</Text>
+                  <View style={styles.nutritionList}>
+                    {food.nutrition.calories && (
+                      <View style={styles.nutritionRow}>
+                        <Text style={styles.nutritionLabel}>Calories</Text>
+                        <Text style={styles.nutritionValue}>{food.nutrition.calories}</Text>
+                      </View>
+                    )}
+                    {food.nutrition.fat && (
+                      <View style={styles.nutritionRow}>
+                        <Text style={styles.nutritionLabel}>Fat</Text>
+                        <Text style={styles.nutritionValue}>{food.nutrition.fat}g</Text>
+                      </View>
+                    )}
+                    {food.nutrition.carbs && (
+                      <View style={styles.nutritionRow}>
+                        <Text style={styles.nutritionLabel}>Carbs</Text>
+                        <Text style={styles.nutritionValue}>{food.nutrition.carbs}g</Text>
+                      </View>
+                    )}
+                    {food.nutrition.protein && (
+                      <View style={[styles.nutritionRow, styles.nutritionRowLast]}>
+                        <Text style={styles.nutritionLabel}>Protein</Text>
+                        <Text style={styles.nutritionValue}>{food.nutrition.protein}g</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
 
-              {/* Reviews Section */}
-              <View ref={reviewSectionRef}>
-                <RatingsSection
-                  ratings={food.ratings}
-                  averageRating={food.average_rating}
-                  ratingsCount={food.ratings_count}
-                  onSubmitReview={handleSubmitReview}
-                  userHasReviewed={hasUserReview}
-                />
+              {/* Reviews Section - Redesigned matching Figma */}
+              <View ref={reviewSectionRef} style={styles.staticSection}>
+                <Text style={styles.sectionTitleText}>Ratings</Text>
+
+                {/* No Reviews State */}
+                {(!food.ratings || food.ratings.length === 0) && (
+                  <View style={styles.noReviewsContainer}>
+                    <View style={styles.noReviewsContent}>
+                      <Text style={styles.avocadoEmoji}>🥑</Text>
+                      <Text style={styles.noReviewsText}>No Reviews</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.writeReviewBtn}
+                      onPress={handleOpenReviewModal}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.writeReviewBtnText}>Write a review</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Has Reviews State */}
+                {food.ratings && food.ratings.length > 0 && (
+                  <View style={styles.reviewsContainer}>
+                    {/* Write a Review Button */}
+                    <TouchableOpacity
+                      style={styles.writeReviewBtn}
+                      onPress={handleOpenReviewModal}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.writeReviewBtnText}>Write a review</Text>
+                    </TouchableOpacity>
+
+                    {/* Rating Summary */}
+                    <View style={styles.ratingSummaryRow}>
+                      {/* Left Column: Average Rating */}
+                      <View style={styles.averageRatingColumn}>
+                        <Text style={styles.averageRatingNumber}>
+                          {food.average_rating ? food.average_rating.toFixed(1) : '0.0'}
+                        </Text>
+                        <View style={styles.starsContainerSmall}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Ionicons
+                              key={star}
+                              name="star"
+                              size={9}
+                              color={star <= Math.round(food.average_rating || 0) ? "#FFA500" : "#E5E5E5"}
+                            />
+                          ))}
+                        </View>
+                        <Text style={styles.reviewCountText}>
+                          {food.ratings_count || 0} review{(food.ratings_count !== 1) ? 's' : ''}
+                        </Text>
+                      </View>
+
+                      {/* Right Column: Rating Distribution Bars */}
+                      <View style={styles.ratingBarsColumn}>
+                        {[5, 4, 3, 2, 1].map((rating) => {
+                          const count = food.ratings?.filter(r => parseInt(r.rating) === rating).length || 0;
+                          const percentage = food.ratings_count ? (count / food.ratings_count) * 100 : 0;
+
+                          return (
+                            <View key={rating} style={styles.ratingBarRow}>
+                              <Text style={styles.ratingBarLabel}>{rating}</Text>
+                              <Ionicons name="star" size={11} color="#FFA500" />
+                              <View style={styles.ratingBarBackground}>
+                                {percentage > 0 && (
+                                  <View style={[styles.ratingBarFill, { width: `${percentage}%` }]} />
+                                )}
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    </View>
+
+                    {/* Review Cards */}
+                    <View style={styles.reviewsList}>
+                      {food.ratings.slice(0, 2).map((rating, index) => (
+                        <View key={rating.id} style={styles.reviewCard}>
+                          <View style={styles.reviewHeader}>
+                            <View style={styles.reviewerAvatar}>
+                              {rating.avatar_url ? (
+                                <Image source={{ uri: rating.avatar_url }} style={styles.avatarImage} />
+                              ) : (
+                                <Ionicons name="person" size={20} color={theme.colors.neutral[400]} />
+                              )}
+                            </View>
+                            <View style={styles.reviewerDetails}>
+                              <Text style={styles.reviewerName}>{rating.username || 'Anonymous'}</Text>
+                              <View style={styles.reviewMeta}>
+                                <View style={styles.reviewStars}>
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Ionicons
+                                      key={star}
+                                      name="star"
+                                      size={16}
+                                      color={star <= parseInt(rating.rating) ? "#FFA500" : "#E5E5E5"}
+                                    />
+                                  ))}
+                                </View>
+                                <Text style={styles.reviewDate}>3 days ago</Text>
+                              </View>
+                            </View>
+                          </View>
+                          {rating.review && (
+                            <Text style={styles.reviewText}>{rating.review}</Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -628,6 +821,104 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
         </NativeViewGestureHandler>
         </Animated.View>
       </PanGestureHandler>
+
+      {/* Review Modal */}
+      <Modal
+        visible={showReviewModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={handleCloseReviewModal}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={handleCloseReviewModal}
+          />
+          <View style={styles.reviewModalContent}>
+            {/* Modal Header */}
+            <View style={styles.reviewModalHeader}>
+              <Text style={styles.reviewModalTitle}>Write a Review</Text>
+              <TouchableOpacity onPress={handleCloseReviewModal} style={styles.closeModalButton}>
+                <Ionicons name="close" size={24} color={theme.colors.neutral[800]} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Star Rating Picker */}
+            <View style={styles.starPickerContainer}>
+              <Text style={styles.starPickerLabel}>Your Rating *</Text>
+              <View style={styles.starPicker}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setSelectedRating(star)}
+                    style={styles.starButton}
+                    hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                  >
+                    <Ionicons
+                      name={star <= selectedRating ? "star" : "star-outline"}
+                      size={40}
+                      color={star <= selectedRating ? "#FFA500" : theme.colors.neutral[300]}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {selectedRating > 0 && (
+                <Text style={styles.selectedRatingText}>
+                  {selectedRating} star{selectedRating === 1 ? '' : 's'}
+                </Text>
+              )}
+            </View>
+
+            {/* Review Text Input */}
+            <View style={styles.reviewTextContainer}>
+              <Text style={styles.reviewTextLabel}>Your Review (Optional)</Text>
+              <TextInput
+                style={styles.reviewTextInput}
+                placeholder="Share your thoughts about this product..."
+                placeholderTextColor={theme.colors.neutral[400]}
+                multiline
+                numberOfLines={4}
+                value={reviewText}
+                onChangeText={setReviewText}
+                maxLength={500}
+                textAlignVertical="top"
+              />
+              <Text style={styles.characterCount}>{reviewText.length}/500</Text>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.reviewModalActions}>
+              <TouchableOpacity
+                style={[styles.reviewModalButton, styles.reviewModalButtonPrimary]}
+                onPress={handleSubmitReview}
+                disabled={selectedRating === 0 || isSubmittingReview}
+                activeOpacity={0.8}
+              >
+                {isSubmittingReview ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.reviewModalButtonPrimaryText}>
+                    {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.reviewModalButton, styles.reviewModalButtonSecondary]}
+                onPress={handleCloseReviewModal}
+                disabled={isSubmittingReview}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.reviewModalButtonSecondaryText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </GestureHandlerRootView>
   );
 };
@@ -647,7 +938,7 @@ const styles = StyleSheet.create({
   // Modal Card Container
   modalCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.neutral[100], // Changed from white to neutral-100
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     marginTop: 80, // Space for status bar and dynamic island
@@ -673,40 +964,78 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral[300],
     alignSelf: 'center',
     marginTop: 12,
-    marginBottom: 8,
+    marginBottom: 0, // No margin - header is directly below
+  },
+
+  // Header Container
+  header: {
+    height: 64,
+    width: '100%',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 3,
+    elevation: 2,
+    marginTop: 8, // Space from drag handle
+  },
+
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.neutral[100],
+    borderBottomWidth: 0, // No border - ribbon is directly below
+    borderBottomColor: theme.colors.neutral[200],
   },
 
   // Close Button - Top Right
   closeButton: {
     position: 'absolute',
-    top: 16,
+    top: 12,
     right: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.neutral[100],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FAFAFA', // var(--Neutral-50)
+    borderWidth: 0.5,
+    borderColor: 'rgba(161, 153, 105, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    // Subtle gradient effect (approximated with background color)
+    shadowColor: 'rgba(212, 207, 181, 0.05)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
   },
 
   // Header Actions - Share & Favorite (Top Left)
   headerActions: {
     position: 'absolute',
-    top: 16,
+    top: 12,
     left: 16,
     flexDirection: 'row',
-    gap: theme.spacing.xs,
+    gap: 8,
     zIndex: 10,
   },
 
   actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.neutral[100],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FAFAFA', // var(--Neutral-50)
+    borderWidth: 0.5,
+    borderColor: 'rgba(161, 153, 105, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    // Subtle gradient effect (approximated with background color)
+    shadowColor: 'rgba(212, 207, 181, 0.05)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
   },
 
   buttonDisabled: {
@@ -725,12 +1054,12 @@ const styles = StyleSheet.create({
 
   // Hero Image Container
   heroImageContainer: {
-    height: 280,
+    height: 200, // Reduced from 280 to match Figma
     backgroundColor: theme.colors.neutral.white,
     position: 'relative',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5', // neutral-200
     marginTop: 0, // Remove margin - drag handle provides spacing
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   heroImage: {
@@ -770,7 +1099,8 @@ const styles = StyleSheet.create({
   // Content Container
   contentContainer: {
     paddingTop: 0, // No top padding for hero section
-    paddingBottom: theme.spacing.md,
+    paddingBottom: 40, // Extra bottom padding for comfortable scrolling
+    paddingHorizontal: 24, // 24pt padding left and right
     gap: 0, // No gap - we control spacing manually
     backgroundColor: theme.colors.neutral.white,
   },
@@ -781,8 +1111,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.neutral[200],
     backgroundColor: theme.colors.neutral.white,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md, // 16px horizontal padding
+    paddingTop: 24, // Generous top padding
+    paddingBottom: 32, // Extra bottom padding for separation
+    paddingHorizontal: 0, // No padding - handled by contentContainer
   },
 
   // Card Styling from Figma (with horizontal margin for rounded cards)
@@ -829,14 +1160,351 @@ const styles = StyleSheet.create({
     letterSpacing: -0.11,
   },
 
-  // Collapsible Sections Container
-  collapsibleSectionsContainer: {
-    marginTop: theme.spacing.md, // Add spacing after hero section
+  // Processing Level Ribbon Container (neutral-100 background matching header)
+  processingRibbonContainer: {
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: theme.colors.neutral[100], // Match header background
+    paddingBottom: 8, // Small padding for visual separation
+  },
+
+  // Processing Level Ribbon (below image, above content)
+  processingRibbon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: theme.spacing.md,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    borderWidth: 0.5,
+    width: '80%', // 80% width instead of full width
+  },
+
+  processingRibbonNova1: {
+    backgroundColor: '#A3F6B8', // Green-200
+    borderColor: '#89EAA2',
+  },
+
+  processingRibbonNova2: {
+    backgroundColor: '#F5FFD6', // Light yellow-green
+    borderColor: '#C7DA8F',
+  },
+
+  processingRibbonNova3: {
+    backgroundColor: '#FAE1CB', // Peach
+    borderColor: '#F1D0B2',
+  },
+
+  processingRibbonLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: -0.45,
+    fontFamily: 'System',
+  },
+
+  processingRibbonNova: {
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: -0.42,
+    fontFamily: 'System',
+  },
+
+  processingRibbonTextNova1: {
+    color: '#26733E',
+  },
+
+  processingRibbonTextNova2: {
+    color: '#608000',
+  },
+
+  processingRibbonTextNova3: {
+    color: '#CB6C17',
+  },
+
+  // Static Sections Container
+  staticSectionsContainer: {
+    marginTop: 0, // No extra margin - hero card handles it
+    gap: 40, // 40px gap between sections for better breathing room
+  },
+
+  staticSection: {
+    paddingHorizontal: 0, // No padding - handled by contentContainer
+  },
+
+  sectionTitleText: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+    letterSpacing: -0.36,
+    color: theme.colors.neutral[800],
+    marginBottom: 20, // Increased from 16px to 20px for better hierarchy
+    fontFamily: 'System',
+  },
+
+  sectionContent: {
+    gap: theme.spacing.md,
+  },
+
+  ingredientsText: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 23,
+    letterSpacing: -0.15,
+    color: theme.colors.neutral[600],
+    fontFamily: 'System',
+  },
+
+  nutritionList: {
+    gap: theme.spacing.md,
+  },
+
+  nutritionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.neutral[100],
+  },
+
+  nutritionRowLast: {
+    borderBottomWidth: 0,
+  },
+
+  nutritionLabel: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 23,
+    letterSpacing: -0.15,
+    color: theme.colors.neutral[900],
+    fontFamily: 'System',
+  },
+
+  nutritionValue: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 23,
+    letterSpacing: -0.15,
+    color: theme.colors.neutral[900],
+    fontFamily: 'System',
+  },
+
+  // Ratings Section Styles
+  // No Reviews State Styles
+  noReviewsContainer: {
+    gap: 24,
+    alignItems: 'center',
+  },
+
+  noReviewsContent: {
+    gap: 8,
+    alignItems: 'center',
+  },
+
+  avocadoEmoji: {
+    fontSize: 60,
+  },
+
+  noReviewsText: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.48,
+    color: theme.colors.neutral[700],
+    fontFamily: 'System',
+  },
+
+  // Write Review Button (matching Figma gradient design)
+  writeReviewBtn: {
+    height: 48,
+    borderRadius: 1000,
+    borderWidth: 0.5,
+    borderColor: 'rgba(161, 153, 105, 0.3)',
+    backgroundColor: '#FAFAFA', // Base color, gradient applied via shadow
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    // Gradient effect simulated with shadow
+    shadowColor: 'rgba(212, 207, 181, 0.05)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+
+  writeReviewBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.48,
+    color: theme.colors.neutral[700],
+    fontFamily: 'System',
+  },
+
+  // Reviews Container (has reviews state)
+  reviewsContainer: {
+    gap: 20, // 20px gap between button and summary
+  },
+
+  // Rating Summary Row (horizontal layout)
+  ratingSummaryRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+
+  ratingSummaryContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+
+  averageRatingColumn: {
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  averageRatingNumber: {
+    fontSize: 30,
+    fontWeight: '700',
+    lineHeight: 28,
+    letterSpacing: -0.6,
+    color: theme.colors.neutral[800],
+    fontFamily: 'System',
+  },
+
+  starsContainer: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+
+  starsContainerSmall: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+
+  reviewCountText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: theme.colors.neutral[500],
+    fontFamily: 'System',
+  },
+
+  ratingBarsColumn: {
+    flex: 1,
+    gap: 4,
+    justifyContent: 'center',
+  },
+
+  ratingBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  ratingBarLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: theme.colors.neutral[950],
+    fontFamily: 'System',
+    width: 12,
+  },
+
+  ratingBarBackground: {
+    flex: 1,
+    height: 10,
+    backgroundColor: theme.colors.neutral[200],
+    borderRadius: 32,
+    overflow: 'hidden',
+  },
+
+  ratingBarFill: {
+    height: '100%',
+    backgroundColor: '#FFA500',
+    borderRadius: 32,
+  },
+
+  reviewsList: {
+    gap: 8,
+  },
+
+  reviewCard: {
+    backgroundColor: theme.colors.neutral[50],
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: theme.colors.neutral[200],
+    padding: 16,
+    gap: 8,
+  },
+
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+
+  reviewerInfo: {
+    flexDirection: 'row',
+    gap: 8,
+    flex: 1,
+  },
+
+  reviewerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.neutral[200],
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  reviewerDetails: {
+    flex: 1,
+    gap: 4,
+  },
+
+  reviewerName: {
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 18,
+    letterSpacing: -0.45,
+    color: theme.colors.neutral[800],
+    fontFamily: 'System',
+  },
+
+  reviewMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  reviewStars: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+
+  reviewDate: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: theme.colors.neutral[500],
+    fontFamily: 'System',
+  },
+
+  reviewText: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 23,
+    letterSpacing: -0.15,
+    color: theme.colors.neutral[500],
+    fontFamily: 'System',
   },
 
   // Submitter Container - At bottom of page
   submitterContainer: {
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 0, // No padding - handled by contentContainer
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.sm,
     borderTopWidth: 1,
@@ -940,11 +1608,148 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.background,
   },
-  
+
   errorText: {
     ...theme.typography.headline,
     color: theme.colors.text.primary,
     marginVertical: theme.spacing.lg,
     textAlign: 'center',
+  },
+
+  // Review Modal Styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+
+  reviewModalContent: {
+    backgroundColor: theme.colors.neutral.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    gap: 24,
+  },
+
+  reviewModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  reviewModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    lineHeight: 26,
+    letterSpacing: -0.3,
+    color: theme.colors.neutral[800],
+    fontFamily: 'System',
+  },
+
+  closeModalButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  starPickerContainer: {
+    gap: 12,
+    alignItems: 'center',
+  },
+
+  starPickerLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.neutral[800],
+    fontFamily: 'System',
+  },
+
+  starPicker: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+
+  starButton: {
+    padding: 4,
+  },
+
+  selectedRatingText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.neutral[600],
+    fontFamily: 'System',
+  },
+
+  reviewTextContainer: {
+    gap: 8,
+  },
+
+  reviewTextLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.neutral[800],
+    fontFamily: 'System',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  reviewTextInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.neutral[200],
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
+    fontFamily: 'System',
+    color: theme.colors.neutral[800],
+    minHeight: 100,
+    backgroundColor: theme.colors.neutral.white,
+  },
+
+  characterCount: {
+    fontSize: 12,
+    color: theme.colors.neutral[500],
+    textAlign: 'right',
+    fontFamily: 'System',
+  },
+
+  reviewModalActions: {
+    gap: 12,
+  },
+
+  reviewModalButton: {
+    height: 56,
+    borderRadius: 9999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  reviewModalButtonPrimary: {
+    backgroundColor: theme.colors.green[500],
+  },
+
+  reviewModalButtonPrimaryText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.neutral.white,
+    fontFamily: 'System',
+  },
+
+  reviewModalButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: theme.colors.neutral[300],
+  },
+
+  reviewModalButtonSecondaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.neutral[700],
+    fontFamily: 'System',
   },
 });

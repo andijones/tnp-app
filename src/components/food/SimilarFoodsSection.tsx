@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 0, // No padding - parent handles it
     marginBottom: theme.spacing.md,
   },
 
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 0, // No padding - parent handles it
     gap: 12,
   },
 

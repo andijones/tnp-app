@@ -1167,7 +1167,6 @@ const styles = StyleSheet.create({
   // Grid Row (for 2-column layout)
   gridRow: {
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
   },
 
   gridCardWrapper: {

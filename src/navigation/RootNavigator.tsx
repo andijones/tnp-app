@@ -3,8 +3,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform, Animated } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, StyleSheet } from 'react-native';
 import { theme } from '../theme';
 import type { RootStackParamList, TabParamList } from '../types/navigation';
 
@@ -32,25 +31,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 // Drawer removed – Aisle browsing lives as a regular stack screen
 
-// Custom Floating Tab Bar Background
-function FloatingTabBarBackground({ style }: any) {
+// Custom Fixed Tab Bar Background (90% opacity)
+function FixedTabBarBackground({ style }: any) {
   return (
-    <View style={[StyleSheet.absoluteFillObject, { paddingHorizontal: 20 }]}>
-      <View style={styles.floatingContainer}>
-        <BlurView
-          intensity={80}
-          tint="light"
-          style={styles.blurContainer}
-        >
-          <View style={styles.glassOverlay} />
-        </BlurView>
-      </View>
-    </View>
+    <View style={[StyleSheet.absoluteFillObject, styles.fixedTabBarBackground]} />
   );
 }
 
-// Animated Tab Icon Component
-function AnimatedTabIcon({
+// Simple Tab Icon Component (no animation, just color change)
+function SimpleTabIcon({
   name,
   focusedName,
   focused,
@@ -65,32 +54,6 @@ function AnimatedTabIcon({
   size: number;
   customIcon?: 'scanner' | 'tnp-logo' | 'add' | 'heart';
 }) {
-  const scaleAnim = React.useRef(new Animated.Value(focused ? 1 : 0.85)).current;
-  const bounceAnim = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: focused ? 1.15 : 0.85,
-        useNativeDriver: true,
-        friction: 4,
-        tension: 80,
-      }),
-      Animated.sequence([
-        Animated.timing(bounceAnim, {
-          toValue: focused ? -4 : 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(bounceAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          friction: 5,
-        }),
-      ]),
-    ]).start();
-  }, [focused]);
-
   // Render custom icon if specified
   const renderIcon = () => {
     if (customIcon === 'scanner') {
@@ -115,56 +78,34 @@ function AnimatedTabIcon({
   };
 
   return (
-    <Animated.View
-      style={{
-        transform: [
-          { scale: scaleAnim },
-          { translateY: bounceAnim }
-        ],
-      }}
-    >
+    <View>
       {renderIcon()}
-    </Animated.View>
+    </View>
   );
 }
 
-// Profile Tab Icon Component
+// Profile Tab Icon Component (simple version, no animation)
 function ProfileTabIcon({ color, size, focused }: { color: string; size: number; focused: boolean }) {
   const { user, profile, loading } = useUser();
-  const scaleAnim = React.useRef(new Animated.Value(focused ? 1 : 0.85)).current;
-
-  React.useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: focused ? 1.15 : 0.85,
-      useNativeDriver: true,
-      friction: 4,
-      tension: 80,
-    }).start();
-  }, [focused, scaleAnim]);
 
   if (loading) {
     return (
-      <Animated.View
-        style={{
-          transform: [{ scale: scaleAnim }],
-        }}
-      >
+      <View>
         <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />
-      </Animated.View>
+      </View>
     );
   }
 
   return (
-    <Animated.View
+    <View
       style={{
-        transform: [{ scale: scaleAnim }],
         width: size,
         height: size,
         borderRadius: size / 2,
-        borderWidth: focused ? 2 : 0,
-        borderColor: focused ? color : 'transparent',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: focused ? 2 : 0,
+        borderColor: focused ? theme.colors.green[500] : 'transparent',
       }}
     >
       <ProfilePicture
@@ -173,7 +114,7 @@ function ProfileTabIcon({ color, size, focused }: { color: string; size: number;
         email={user?.email}
         size="small"
       />
-    </Animated.View>
+    </View>
   );
 }
 
@@ -186,28 +127,23 @@ function TabNavigator() {
         tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
-          bottom: 30,
+          bottom: 0,
           left: 0,
           right: 0,
-          height: 68,
-          borderRadius: 34,
+          height: 83,
           backgroundColor: 'transparent',
-          borderTopWidth: 0,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: 10,
-          },
-          shadowOpacity: 0.25,
-          shadowRadius: 20,
-          elevation: 15,
-          paddingHorizontal: 24,
-          paddingTop: 12,
-          paddingBottom: 12,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.neutral.BG2,
+          paddingHorizontal: 20,
+          paddingTop: 10,
+          paddingBottom: 32,
         },
-        tabBarActiveTintColor: '#1F5932',
-        tabBarInactiveTintColor: 'rgba(31, 89, 50, 0.5)',
-        tabBarBackground: () => <FloatingTabBarBackground style={undefined} />,
+        tabBarItemStyle: {
+          paddingHorizontal: 8,
+        },
+        tabBarActiveTintColor: theme.colors.green[950],
+        tabBarInactiveTintColor: theme.colors.neutral[400],
+        tabBarBackground: () => <FixedTabBarBackground style={undefined} />,
       }}
     >
       <Tab.Screen
@@ -217,7 +153,7 @@ function TabNavigator() {
           title: 'All Foods',
           tabBarAccessibilityLabel: 'Home, Browse all foods',
           tabBarIcon: ({ focused, color }) => (
-            <AnimatedTabIcon
+            <SimpleTabIcon
               name="nutrition-outline"
               focusedName="nutrition"
               focused={focused}
@@ -251,7 +187,7 @@ function TabNavigator() {
           title: 'Scanner',
           tabBarAccessibilityLabel: 'Scanner, Scan ingredient labels',
           tabBarIcon: ({ focused, color }) => (
-            <AnimatedTabIcon
+            <SimpleTabIcon
               name="scan-outline"
               focusedName="scan"
               focused={focused}
@@ -262,24 +198,16 @@ function TabNavigator() {
           ),
           tabBarStyle: (route.params as any)?.hideTabBar ? { display: 'none' } : {
             position: 'absolute',
-            bottom: 30,
+            bottom: 0,
             left: 0,
             right: 0,
-            height: 68,
-            borderRadius: 34,
+            height: 83,
             backgroundColor: 'transparent',
-            borderTopWidth: 0,
-            shadowColor: '#000',
-            shadowOffset: {
-              width: 0,
-              height: 10,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 20,
-            elevation: 15,
-            paddingHorizontal: 24,
-            paddingTop: 12,
-            paddingBottom: 12,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.neutral.BG2,
+            paddingHorizontal: 20,
+            paddingTop: 10,
+            paddingBottom: 32,
           },
         })}
       />
@@ -290,7 +218,7 @@ function TabNavigator() {
           title: 'Submit',
           tabBarAccessibilityLabel: 'Submit, Add a food suggestion',
           tabBarIcon: ({ focused, color }) => (
-            <AnimatedTabIcon
+            <SimpleTabIcon
               name="add-circle-outline"
               focusedName="add-circle"
               focused={focused}
@@ -308,7 +236,7 @@ function TabNavigator() {
           title: 'Favorites',
           tabBarAccessibilityLabel: 'Favorites, View your favorite foods',
           tabBarIcon: ({ focused, color }) => (
-            <AnimatedTabIcon
+            <SimpleTabIcon
               name="heart-outline"
               focusedName="heart"
               focused={focused}
@@ -330,24 +258,16 @@ function TabNavigator() {
           ),
           tabBarStyle: (route.params as any)?.hideTabBar ? { display: 'none' } : {
             position: 'absolute',
-            bottom: 30,
+            bottom: 0,
             left: 0,
             right: 0,
-            height: 68,
-            borderRadius: 34,
+            height: 83,
             backgroundColor: 'transparent',
-            borderTopWidth: 0,
-            shadowColor: '#000',
-            shadowOffset: {
-              width: 0,
-              height: 10,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 20,
-            elevation: 15,
-            paddingHorizontal: 24,
-            paddingTop: 12,
-            paddingBottom: 12,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.neutral.BG2,
+            paddingHorizontal: 20,
+            paddingTop: 10,
+            paddingBottom: 32,
           },
         })}
       />
@@ -410,21 +330,7 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  floatingContainer: {
-    flex: 1,
-    borderRadius: 34,
-    overflow: 'hidden',
-  },
-  blurContainer: {
-    flex: 1,
-    borderRadius: 34,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderRadius: 34,
+  fixedTabBarBackground: {
+    backgroundColor: `${theme.colors.neutral.BG}F2`, // 95% opacity (F2 = 242/255 ≈ 95%)
   },
 });
