@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.tnp",
+      "bundleIdentifier": "com.thenakedpantry.app",
       "buildNumber": "1",
       "associatedDomains": [
         "applinks:uacihrlnwlqhpbobzajs.supabase.co"
@@ -30,7 +30,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yourcompany.tnp",
+      "package": "com.thenakedpantry.app",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -54,7 +54,9 @@
     },
     "scheme": "thenakedpantry",
     "plugins": [
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      "expo-web-browser",
+      "expo-font"
     ]
   }
 }
