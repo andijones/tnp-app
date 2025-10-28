@@ -1,11 +1,6 @@
 PODS:
   - EXApplication (7.0.7):
     - ExpoModulesCore
-  - EXBarCodeScanner (13.0.1):
-    - EXImageLoader
-    - ExpoModulesCore
-    - ZXingObjC/OneD
-    - ZXingObjC/PDF417
   - EXConstants (18.0.10):
     - ExpoModulesCore
   - EXImageLoader (6.0.0):
@@ -2100,7 +2095,6 @@ PODS:
 
 DEPENDENCIES:
   - EXApplication (from `../node_modules/expo-auth-session/node_modules/expo-application/ios`)
-  - EXBarCodeScanner (from `../node_modules/expo-barcode-scanner/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
   - Expo (from `../node_modules/expo`)
@@ -2205,8 +2199,6 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   EXApplication:
     :path: "../node_modules/expo-auth-session/node_modules/expo-application/ios"
-  EXBarCodeScanner:
-    :path: "../node_modules/expo-barcode-scanner/ios"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
   EXImageLoader:
@@ -2395,7 +2387,6 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   EXApplication: 296622817d459f46b6c5fe8691f4aac44d2b79e7
-  EXBarCodeScanner: 6415603150dd5989a139570bb5af19b7f169fe49
   EXConstants: fd688cef4e401dcf798a021cfb5d87c890c30ba3
   EXImageLoader: 189e3476581efe3ad4d1d3fb4735b7179eb26f05
   Expo: c524bec66bed697b2140037e2ba110b3a8281b78

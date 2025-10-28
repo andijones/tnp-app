@@ -47,6 +47,9 @@
             "DEFAULT"
           ]
         }
+      ],
+      "permissions": [
+        "android.permission.CAMERA"
       ]
     },
     "web": {
@@ -54,9 +57,19 @@
     },
     "scheme": "thenakedpantry",
     "plugins": [
-      "expo-barcode-scanner",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan ingredient labels and barcodes"
+        }
+      ],
       "expo-web-browser",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a751daac-0d25-4c9d-935c-fe1a5329ad96"
+      }
+    }
   }
 }

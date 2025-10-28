@@ -46,7 +46,7 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>This app uses the camera to scan ingredient labels and barcodes</string>
+    <string>Allow $(PRODUCT_NAME) to access your camera to scan ingredient labels and barcodes</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
