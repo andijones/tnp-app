@@ -185,7 +185,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         <FoodGrid
         foods={filteredFoods}
         onFoodPress={navigateToFoodDetail}
-        isFavorite={isFavorite}
+        isFavorite={() => true} // All items on this screen are favorites
         onToggleFavorite={handleToggleFavorite}
         ListHeaderComponent={() => (
           searchQuery ? (

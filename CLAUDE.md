@@ -1060,26 +1060,70 @@ useEffect(() => {
 
 ## 8. Common Patterns and Examples
 
-### Pattern 1: Card Component
+### Pattern 1: Grid Food Card Component
 
+The `GridFoodCard` component is the primary card design used throughout the app for displaying food items in a grid layout. It follows the latest Figma design specifications.
+
+**Design Specifications (from Figma at 390×844)**:
+- **Card**: 6px border radius, 0.5px border (#E5E5E5), white background
+- **Image**: Square aspect ratio (1:1), 3.8px border radius
+- **Processing level indicator**: 44×44px colored overlay in top-left corner with curved edge
+- **Favorite button**: 40×40px circular button in top-right with gradient background
+- **Typography**: 16px bold title, 12px regular ingredient count
+- **Spacing**: 8px padding and gaps throughout
+
+**Color Mapping for Processing Levels**:
 ```typescript
-// FoodCard pattern with image, title, metadata, and favorite button
-<View style={styles.card}>
-  {/* Header */}
-  <View style={styles.cardHeader}>
-    <FoodImage imageUrl={food.image} size="medium" novaGroup={food.nova_group} />
-    <FavoriteButton foodId={food.id} isFavorite={isFavorite} />
-  </View>
+NOVA 1 (Whole Food) → #E0FFE7 (Green-50)
+NOVA 2 (Extracted Foods) → #FFFDD2 (Yellow)
+NOVA 3 (Lightly Processed) → #FFF4E6 (Orange)
+NOVA 4 (Processed) → #FFE4E1 (Light Red) - rarely shown
+```
 
-  {/* Content */}
-  <View style={styles.cardContent}>
-    <Text style={styles.cardTitle}>{food.name}</Text>
-    <View style={styles.metaRow}>
-      <Ionicons name="list-outline" size={14} color={theme.colors.text.secondary} />
-      <Text style={styles.metaText}>5 ingredients</Text>
-    </View>
-  </View>
+**Component Structure**:
+```typescript
+<GridFoodCard
+  food={food}
+  onPress={() => navigateToDetail(food.id)}
+  isFavorite={isFavorite(food.id)}
+  onToggleFavorite={handleToggleFavorite}
+/>
+```
+
+**Key Features**:
+1. **Processing Level Color Badge**: Top-left 44×44px colored overlay indicating NOVA processing level
+2. **Rounded Favorite Button**: Top-right circular button (300px border radius) with gradient background
+3. **Dynamic Ingredient Count**: Automatically calculates and displays ingredient count
+4. **Bounce Animation**: Card animates when favorite status changes
+5. **Gradient Background on Button**: Uses `expo-linear-gradient` for sophisticated button styling
+
+**Implementation Example**:
+```typescript
+import { GridFoodCard } from '../../components/common/GridFoodCard';
+
+// In a FlatList or grid layout
+<View style={styles.gridContainer}>
+  <GridFoodCard
+    food={foodItem}
+    onPress={() => navigation.navigate('FoodDetail', { foodId: foodItem.id })}
+    isFavorite={favorites.has(foodItem.id)}
+    onToggleFavorite={toggleFavorite}
+  />
 </View>
+```
+
+**Gradient Button Styling** (requires `expo-linear-gradient`):
+```typescript
+import { LinearGradient } from 'expo-linear-gradient';
+
+<LinearGradient
+  colors={['rgba(255, 255, 255, 0)', 'rgba(212, 207, 181, 0.05)']}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 0, y: 1 }}
+  style={styles.favoriteGradientContainer}
+>
+  <FavoriteButton ... />
+</LinearGradient>
 ```
 
 ### Pattern 2: Button Variants

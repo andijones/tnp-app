@@ -40,24 +40,32 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     label: string;
     description: string;
     icon: any;
+    backgroundColor: string;
+    iconColor: string;
   }> = [
     {
       type: 'wholeFood',
       label: 'Whole Food',
       description: 'Natural and unprocessed',
-      icon: 'leaf',
+      icon: 'leaf', // Matching GridFoodCard
+      backgroundColor: '#C1FFD0', // Green-100 - matching GridFoodCard
+      iconColor: '#26733E', // Dark green for contrast
     },
     {
       type: 'extractedFoods',
       label: 'Extracted Foods',
       description: 'Single ingredient',
-      icon: 'restaurant',
+      icon: 'water', // Matching GridFoodCard
+      backgroundColor: '#FFF9B3', // Richer yellow - matching GridFoodCard
+      iconColor: '#928D1D', // Dark yellow/olive for contrast
     },
     {
       type: 'lightlyProcessed',
       label: 'Lightly Processed',
       description: 'Few added ingredients',
-      icon: 'warning-outline',
+      icon: 'restaurant', // Matching GridFoodCard
+      backgroundColor: '#FFE4CC', // Warmer orange - matching GridFoodCard
+      iconColor: '#E6630B', // Dark orange for contrast
     },
   ];
 
@@ -192,7 +200,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                       styles.iconContainer,
                       {
                         backgroundColor: isActive
-                          ? theme.colors.processing[level.type].light
+                          ? level.backgroundColor
                           : theme.colors.neutral[100],
                       },
                     ]}
@@ -202,7 +210,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                       size={20}
                       color={
                         isActive
-                          ? theme.colors.processing[level.type].color
+                          ? level.iconColor
                           : theme.colors.text.secondary
                       }
                     />

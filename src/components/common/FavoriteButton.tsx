@@ -104,10 +104,9 @@ const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 40,
-    height: 40,
+    // Size is controlled by parent container in GridFoodCard
   },
-  
+
   buttonDisabled: {
     opacity: 0.5,
   },

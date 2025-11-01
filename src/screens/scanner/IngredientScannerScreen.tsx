@@ -388,40 +388,86 @@ export const IngredientScannerScreen: React.FC = () => {
     setScanResult(null);
   };
 
-  const renderIntro = () => (
-    <View style={styles.introContainer}>
-      {/* Product Illustration */}
-      <View style={styles.illustrationContainer}>
-        <Image
-          source={require('../../../assets/Ingredients.png')}
-          style={styles.ingredientsImage}
-          resizeMode="contain"
-        />
+  const renderIntro = () => {
+    // Check camera permissions for split view
+    if (!permission) {
+      return (
+        <View style={styles.introContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading camera...</Text>
+        </View>
+      );
+    }
+
+    if (!permission.granted) {
+      return (
+        <View style={styles.introContainer}>
+          <View style={styles.permissionContainer}>
+            <Ionicons name="videocam-off-outline" size={64} color={theme.colors.text.secondary} />
+            <Text style={styles.permissionText}>Camera permission required</Text>
+            <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+              <Text style={styles.permissionButtonText}>Grant Permission</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.splitViewContainer}>
+        {/* Top Half - Camera Preview */}
+        <View style={styles.cameraPreviewContainer}>
+          <CameraView
+            ref={cameraRef}
+            style={styles.cameraPreview}
+            facing={facing}
+            flash={flash}
+          />
+          {/* Camera indicator overlay */}
+          <View style={styles.cameraIndicatorOverlay}>
+            <View style={styles.cameraIndicatorBox}>
+              <Ionicons name="scan-outline" size={48} color="white" />
+              <Text style={styles.cameraIndicatorText}>Ready to scan</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Bottom Half - Content */}
+        <View style={styles.contentContainer}>
+          {/* Product Illustration */}
+          <View style={styles.illustrationContainer}>
+            <Image
+              source={require('../../../assets/Ingredients.png')}
+              style={styles.ingredientsImage}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Title */}
+          <Text style={styles.title}>Scan Ingredients</Text>
+
+          {/* Subtitle */}
+          <Text style={styles.subtitle}>
+            We couldn't find that barcode, but no worries, we can still help. Just point your camera at the ingredients list and snap it
+          </Text>
+
+          {/* CTA Buttons */}
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Start Scanning"
+              onPress={() => setCurrentStep('ingredients')}
+              variant="secondary"
+            />
+            <Button
+              title="Return Home"
+              onPress={() => navigation.goBack()}
+              variant="outline"
+            />
+          </View>
+        </View>
       </View>
-
-      {/* Title */}
-      <Text style={styles.title}>Scan Ingredients</Text>
-
-      {/* Subtitle */}
-      <Text style={styles.subtitle}>
-        We couldn't find that barcode, but no worries, we can still help. Just point your camera at the ingredients list and snap it
-      </Text>
-
-      {/* CTA Buttons */}
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Scan Ingredients"
-          onPress={() => setCurrentStep('ingredients')}
-          variant="secondary"
-        />
-        <Button
-          title="Return Home"
-          onPress={() => navigation.goBack()}
-          variant="outline"
-        />
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderCamera = () => {
     if (!permission) {
@@ -727,6 +773,56 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
   },
+  // Split View Container (50/50)
+  splitViewContainer: {
+    flex: 1,
+    backgroundColor: '#F7F6F0',
+  },
+
+  // Top Half - Camera Preview (50%)
+  cameraPreviewContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+    position: 'relative',
+  },
+
+  cameraPreview: {
+    flex: 1,
+  },
+
+  cameraIndicatorOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+
+  cameraIndicatorBox: {
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  cameraIndicatorText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+
+  // Bottom Half - Content (50%)
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#F7F6F0',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 100, // Account for tab bar
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   introContainer: {
     flex: 1,
     backgroundColor: '#F7F6F0',
@@ -736,13 +832,13 @@ const styles = StyleSheet.create({
     paddingBottom: 120, // Account for tab bar
   },
   illustrationContainer: {
-    marginBottom: 32,
+    marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ingredientsImage: {
-    width: 160,
-    height: 160,
+    width: 120, // Reduced from 160 to fit better in split view
+    height: 120,
   },
   title: {
     fontSize: 22, // Figma title size

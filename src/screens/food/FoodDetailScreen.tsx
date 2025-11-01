@@ -529,7 +529,7 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
                   food.nova_group === 2 && styles.processingRibbonTextNova2,
                   food.nova_group === 3 && styles.processingRibbonTextNova3,
                 ]}>
-                  {food.nova_group === 1 ? 'Whole Foods' : food.nova_group === 2 ? 'Extract Foods' : 'Lightly Processed'}
+                  {food.nova_group === 1 ? 'Whole Food' : food.nova_group === 2 ? 'Extracted Foods' : 'Lightly Processed'}
                 </Text>
                 <Text style={[
                   styles.processingRibbonNova,
@@ -646,28 +646,28 @@ export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ route, navig
                 <View style={styles.staticSection}>
                   <Text style={styles.sectionTitleText}>Nutrition Facts</Text>
                   <View style={styles.nutritionList}>
-                    {food.nutrition.calories && (
+                    {food.nutrition.calories != null && (
                       <View style={styles.nutritionRow}>
                         <Text style={styles.nutritionLabel}>Calories</Text>
-                        <Text style={styles.nutritionValue}>{food.nutrition.calories}</Text>
+                        <Text style={styles.nutritionValue}>{`${food.nutrition.calories}`}</Text>
                       </View>
                     )}
-                    {food.nutrition.fat && (
+                    {food.nutrition.fat != null && (
                       <View style={styles.nutritionRow}>
                         <Text style={styles.nutritionLabel}>Fat</Text>
-                        <Text style={styles.nutritionValue}>{food.nutrition.fat}g</Text>
+                        <Text style={styles.nutritionValue}>{`${food.nutrition.fat}g`}</Text>
                       </View>
                     )}
-                    {food.nutrition.carbs && (
+                    {food.nutrition.carbs != null && (
                       <View style={styles.nutritionRow}>
                         <Text style={styles.nutritionLabel}>Carbs</Text>
-                        <Text style={styles.nutritionValue}>{food.nutrition.carbs}g</Text>
+                        <Text style={styles.nutritionValue}>{`${food.nutrition.carbs}g`}</Text>
                       </View>
                     )}
-                    {food.nutrition.protein && (
+                    {food.nutrition.protein != null && (
                       <View style={[styles.nutritionRow, styles.nutritionRowLast]}>
                         <Text style={styles.nutritionLabel}>Protein</Text>
-                        <Text style={styles.nutritionValue}>{food.nutrition.protein}g</Text>
+                        <Text style={styles.nutritionValue}>{`${food.nutrition.protein}g`}</Text>
                       </View>
                     )}
                   </View>
@@ -1165,7 +1165,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     backgroundColor: 'transparent', // Transparent so sides show through
-    paddingVertical: 8, // Padding for visual breathing
+    paddingTop: 0, // No top padding - closer to header
+    paddingBottom: 8, // Bottom padding for visual breathing
   },
 
   // Processing Level Ribbon (below image, above content)
@@ -1182,18 +1183,18 @@ const styles = StyleSheet.create({
   },
 
   processingRibbonNova1: {
-    backgroundColor: '#A3F6B8', // Green-200
-    borderColor: '#89EAA2',
+    backgroundColor: '#C1FFD0', // Green-100 - Matching GridFoodCard
+    borderColor: 'rgba(38, 115, 62, 0.2)', // Subtle dark green border
   },
 
   processingRibbonNova2: {
-    backgroundColor: '#F5FFD6', // Light yellow-green
-    borderColor: '#C7DA8F',
+    backgroundColor: '#FFF9B3', // Richer yellow - Matching GridFoodCard
+    borderColor: 'rgba(146, 141, 29, 0.2)', // Subtle dark yellow border
   },
 
   processingRibbonNova3: {
-    backgroundColor: '#FAE1CB', // Peach
-    borderColor: '#F1D0B2',
+    backgroundColor: '#FFE4CC', // Warmer orange - Matching GridFoodCard
+    borderColor: 'rgba(230, 99, 11, 0.2)', // Subtle dark orange border
   },
 
   processingRibbonLabel: {
@@ -1211,15 +1212,15 @@ const styles = StyleSheet.create({
   },
 
   processingRibbonTextNova1: {
-    color: '#26733E',
+    color: '#26733E', // Dark green for contrast - Matching GridFoodCard
   },
 
   processingRibbonTextNova2: {
-    color: '#608000',
+    color: '#928D1D', // Dark yellow/olive for contrast - Matching GridFoodCard
   },
 
   processingRibbonTextNova3: {
-    color: '#CB6C17',
+    color: '#E6630B', // Dark orange for contrast - Matching GridFoodCard
   },
 
   // Static Sections Container

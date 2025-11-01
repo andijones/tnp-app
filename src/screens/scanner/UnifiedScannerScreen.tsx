@@ -30,7 +30,7 @@ export const UnifiedScannerScreen: React.FC = () => {
   const { user } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
   const [currentMode, setCurrentMode] = useState<ScanMode>('intro');
-  const [flash, setFlash] = useState<'off' | 'on'>('off');
+  const [torchEnabled, setTorchEnabled] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -217,35 +217,104 @@ export const UnifiedScannerScreen: React.FC = () => {
     setScanCooldown(false);
   };
 
-  const renderIntro = () => (
-    <View style={styles.introContainer}>
-      {/* Product Illustration */}
-      <View style={styles.illustrationContainer}>
-        <Image
-          source={require('../../../assets/Scan.png')}
-          style={styles.scanImage}
-          resizeMode="contain"
-        />
+  const renderIntro = () => {
+    // Check camera permissions for split view
+    if (!permission) {
+      return (
+        <View style={styles.introContainer}>
+          <ActivityIndicator size="large" color={theme.colors.green[500]} />
+          <Text style={styles.loadingText}>Loading camera...</Text>
+        </View>
+      );
+    }
+
+    if (!permission.granted) {
+      return (
+        <View style={styles.introContainer}>
+          <View style={styles.permissionContainer}>
+            <Ionicons name="videocam-off-outline" size={64} color={theme.colors.text.secondary} />
+            <Text style={styles.permissionText}>Camera permission required</Text>
+            <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+              <Text style={styles.permissionButtonText}>Grant Permission</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.splitViewContainer}>
+        {/* Top 70% - Active Camera with Barcode Scanning */}
+        <View style={styles.cameraPreviewContainer}>
+          <CameraView
+            ref={cameraRef}
+            style={styles.cameraPreview}
+            facing="back"
+            enableTorch={torchEnabled}
+            onBarcodeScanned={isProcessing ? undefined : handleBarcodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'qr'],
+            }}
+          />
+
+          {/* Scanning Frame Overlay */}
+          <View style={styles.scanningOverlay}>
+            {/* Scanning Frame */}
+            <View style={styles.scanningFrameContainer}>
+              <View style={styles.scanningFrame}>
+                <View style={[styles.corner, styles.cornerTopLeft]} />
+                <View style={[styles.corner, styles.cornerTopRight]} />
+                <View style={[styles.corner, styles.cornerBottomLeft]} />
+                <View style={[styles.corner, styles.cornerBottomRight]} />
+              </View>
+              {isProcessing && (
+                <View style={styles.processingOverlay}>
+                  <ActivityIndicator size="large" color={theme.colors.green[500]} />
+                  <Text style={styles.processingText}>Processing...</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Camera Controls */}
+          <View style={styles.cameraControls}>
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => setTorchEnabled(!torchEnabled)}
+            >
+              <Ionicons
+                name={torchEnabled ? 'flash' : ('flash-off' as any)}
+                size={24}
+                color="white"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Bottom 20% - Compact Content (50% width) */}
+        <View style={styles.contentHalfContainer}>
+          <View style={styles.contentWrapper}>
+            {/* Product Illustration */}
+            <View style={styles.illustrationContainer}>
+              <Image
+                source={require('../../../assets/Scan.png')}
+                style={styles.scanImage}
+                resizeMode="contain"
+              />
+            </View>
+
+            {/* Title */}
+            <Text style={styles.title}>Scan an item</Text>
+
+            {/* Subtitle */}
+            <Text style={styles.subtitle}>
+              You can check if an item is processed or not by simply scanning the barcode.
+            </Text>
+          </View>
+        </View>
       </View>
-
-      {/* Title */}
-      <Text style={styles.title}>Scan an item</Text>
-
-      {/* Subtitle */}
-      <Text style={styles.subtitle}>
-        You can check if an item is processed or not by simply scanning the barcode.
-      </Text>
-
-      {/* Open Camera Button */}
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Open Camera"
-          onPress={() => setCurrentMode('barcode')}
-          variant="secondary"
-        />
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderBarcodeScanner = () => {
     if (!permission) {
@@ -275,7 +344,7 @@ export const UnifiedScannerScreen: React.FC = () => {
           ref={cameraRef}
           style={styles.camera}
           facing="back"
-          flash={flash}
+          enableTorch={torchEnabled}
           onBarcodeScanned={isProcessing ? undefined : handleBarcodeScanned}
           barcodeScannerSettings={{
             barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'qr'],
@@ -312,10 +381,10 @@ export const UnifiedScannerScreen: React.FC = () => {
         <View style={styles.cameraControls}>
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={() => setFlash(flash === 'off' ? 'on' : 'off')}
+            onPress={() => setTorchEnabled(!torchEnabled)}
           >
             <Ionicons
-              name={flash === 'on' ? 'flash' : ('flash-off' as any)}
+              name={torchEnabled ? 'flash' : ('flash-off' as any)}
               size={24}
               color="white"
             />
@@ -380,6 +449,41 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
   },
+  // Split View Container (70/30)
+  splitViewContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+
+  // Top 70% - Active Camera Preview
+  cameraPreviewContainer: {
+    flex: 7, // 70% of screen
+    backgroundColor: '#000000',
+    position: 'relative',
+  },
+
+  cameraPreview: {
+    flex: 1,
+  },
+
+  // Bottom 30% - Compact Content Container
+  contentHalfContainer: {
+    flex: 3, // 30% of screen
+    backgroundColor: theme.colors.background,
+    paddingTop: 8,
+    paddingBottom: 100, // Account for tab bar
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  // Content Wrapper - 70% width, centered
+  contentWrapper: {
+    width: '70%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   introContainer: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -389,16 +493,16 @@ const styles = StyleSheet.create({
     paddingBottom: 120, // Account for tab bar
   },
   illustrationContainer: {
-    marginBottom: 32,
+    marginBottom: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scanImage: {
-    width: 160,
-    height: 160,
+    width: 80, // Matching design system
+    height: 80,
   },
   title: {
-    fontSize: 22, // Figma title size
+    fontSize: 22, // Figma title size (design system)
     fontWeight: 'bold',
     color: theme.colors.text.primary,
     textAlign: 'center',
@@ -406,12 +510,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 15, // Figma body size
+    fontSize: 15, // Figma body size (design system)
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
-    paddingHorizontal: 32,
-    marginBottom: 32,
+    marginBottom: 0,
   },
   buttonContainer: {
     width: '100%',

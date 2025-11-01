@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../theme';
 import { Food } from '../../types';
 import { FoodImage } from './FoodImage';
 import { FavoriteButton } from './FavoriteButton';
@@ -22,7 +22,7 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
 }) => {
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const prevIsFavorite = useRef(isFavorite);
-  
+
   useEffect(() => {
     if (prevIsFavorite.current !== isFavorite) {
       // Animate when favorite status changes
@@ -44,53 +44,52 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
 
   const ingredientCount = getIngredientCount(food.ingredients, food.description);
 
-  const getNovaLabel = (novaGroup?: number) => {
+  // Get processing level color based on NOVA group
+  // Using slightly more saturated colors for better visibility while maintaining elegance
+  const getProcessingLevelColor = (novaGroup?: number): string => {
     switch (novaGroup) {
       case 1:
-        return 'Unprocessed';
+        return '#C1FFD0'; // Green-100 - More visible green for Whole Food
       case 2:
-        return 'Minimally Processed';
+        return '#FFF9B3'; // Richer yellow - Extracted Foods
       case 3:
-        return 'Processed';
+        return '#FFE4CC'; // Warmer orange - Lightly Processed
       case 4:
-        return 'Ultra-processed';
+        return '#FFD4D4'; // Soft red - Processed (rarely shown)
       default:
-        return null;
+        return '#F5F5F5'; // Neutral fallback
     }
   };
 
-  const getNovaStyles = (novaGroup?: number) => {
+  // Get icon name for processing level
+  const getProcessingLevelIcon = (novaGroup?: number): keyof typeof Ionicons.glyphMap => {
     switch (novaGroup) {
       case 1:
-        return {
-          backgroundColor: theme.colors.green[50], // var(--Green-50, #E0FFE7)
-          borderColor: theme.colors.green[300], // var(--Green-300, #84EDA0)
-          color: theme.colors.green[900], // var(--Green-900, #26733E)
-        };
+        return 'leaf'; // Whole Food - natural/leaf icon
       case 2:
-        return {
-          backgroundColor: '#FFFDD2',
-          borderColor: '#E5E181',
-          color: '#928D1D',
-        };
+        return 'water'; // Extracted Foods - drop/liquid icon
       case 3:
-        return {
-          backgroundColor: '#FFF4E6',
-          borderColor: '#F9DEBC',
-          color: '#E6630B',
-        };
+        return 'restaurant'; // Lightly Processed - bowl/food icon
       case 4:
-        return {
-          backgroundColor: theme.colors.nova?.group4 || '#ef4444',
-          borderColor: theme.colors.nova?.group4 || '#ef4444',
-          color: '#FFFFFF',
-        };
+        return 'warning'; // Processed - warning icon
       default:
-        return {
-          backgroundColor: theme.colors.text.tertiary,
-          borderColor: theme.colors.text.tertiary,
-          color: '#FFFFFF',
-        };
+        return 'help-circle'; // Fallback
+    }
+  };
+
+  // Get icon color for contrast against background
+  const getProcessingLevelIconColor = (novaGroup?: number): string => {
+    switch (novaGroup) {
+      case 1:
+        return '#26733E'; // Dark green for contrast
+      case 2:
+        return '#928D1D'; // Dark yellow/olive for contrast
+      case 3:
+        return '#E6630B'; // Dark orange for contrast
+      case 4:
+        return '#DC2626'; // Dark red for contrast
+      default:
+        return '#737373'; // Neutral gray
     }
   };
 
@@ -100,63 +99,71 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
         transform: [{ scale: bounceAnim }]
       }}
     >
-      <TouchableOpacity 
-        style={styles.gridCard} 
+      <TouchableOpacity
+        style={styles.gridCard}
         onPress={onPress}
         activeOpacity={0.7}
       >
-      {/* Image Container with Overlays */}
-      <View style={styles.imageContainer}>
-        <FoodImage 
-          imageUrl={food.image}
-          size="large"
-          style={styles.cardImage}
-        />
-        
-        {/* NOVA Rating Overlay */}
-        {food.nova_group && getNovaLabel(food.nova_group) && (
-          <View style={styles.novaOverlay}>
-            <View style={[styles.novaBadge, getNovaStyles(food.nova_group)]}>
-              <Text style={[styles.novaNumber, { color: getNovaStyles(food.nova_group).color }]}>{food.nova_group}</Text>
-            </View>
-          </View>
-        )}
-        
-        {/* Favorite Button Overlay */}
-        <View style={styles.favoriteOverlay}>
-          <FavoriteButton
-            foodId={food.id}
-            isFavorite={isFavorite}
-            onToggle={async (foodId: string) => {
-              onToggleFavorite(foodId);
-              return true;
-            }}
-            size={22}
+        {/* Image Container with Overlays */}
+        <View style={styles.imageContainer}>
+          <FoodImage
+            imageUrl={food.image}
+            size="large"
+            style={styles.cardImage}
           />
+
+          {/* Processing Level Color Overlay with Icon - Top Left */}
+          {food.nova_group && (
+            <View
+              style={[
+                styles.processingLevelOverlay,
+                { backgroundColor: getProcessingLevelColor(food.nova_group) }
+              ]}
+            >
+              <Ionicons
+                name={getProcessingLevelIcon(food.nova_group)}
+                size={18}
+                color={getProcessingLevelIconColor(food.nova_group)}
+              />
+            </View>
+          )}
+
+          {/* Favorite Button Overlay - Top Right with Gradient Background */}
+          <View style={styles.favoriteOverlay}>
+            <LinearGradient
+              colors={['rgba(255, 255, 255, 0)', 'rgba(212, 207, 181, 0.05)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.favoriteGradientContainer}
+            >
+              <View style={styles.favoriteGradientOverlay}>
+                <FavoriteButton
+                  foodId={food.id}
+                  isFavorite={isFavorite}
+                  onToggle={async (foodId: string) => {
+                    onToggleFavorite(foodId);
+                    return true;
+                  }}
+                  size={20}
+                />
+              </View>
+            </LinearGradient>
+          </View>
         </View>
-      </View>
-      
-      {/* Content Container */}
-      <View style={styles.contentContainer}>
-        <Text style={styles.foodName} numberOfLines={2}>
-          {food.name}
-        </Text>
-        
-        {/* Simplified Meta Information */}
-        <View style={styles.metaContainer}>
-          {/* Supermarket - Primary info */}
-          <Text style={styles.supermarketText} numberOfLines={1}>
-            {food.supermarket || 'Store not specified'}
+
+        {/* Content Container */}
+        <View style={styles.contentContainer}>
+          <Text style={styles.foodName} numberOfLines={2}>
+            {food.name}
           </Text>
-          
-          {/* Ingredient Count - Secondary info */}
+
+          {/* Ingredient Count */}
           {ingredientCount > 0 && (
             <Text style={styles.ingredientText}>
-              {ingredientCount} ingredient{ingredientCount === 1 ? '' : 's'}
+              {ingredientCount} Ingredient{ingredientCount === 1 ? '' : 's'}
             </Text>
           )}
         </View>
-      </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -164,111 +171,96 @@ export const GridFoodCard: React.FC<GridFoodCardProps> = ({
 
 const styles = StyleSheet.create({
   gridCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
+    backgroundColor: '#FFFFFF', // var(--neutral/white)
+    borderRadius: 6, // var(--spacing/6, 6px) from Figma
+    borderWidth: 0.5,
+    borderColor: '#E5E5E5', // var(--neutral/200)
     marginBottom: 0,
     overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
     flex: 1,
   },
-  
+
   imageContainer: {
     position: 'relative',
-    aspectRatio: 1.2,
+    aspectRatio: 1, // Square image from Figma (152x152)
     backgroundColor: 'transparent',
   },
-  
+
   cardImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 0,
+    borderRadius: 3.8, // Figma inner image radius
   },
-  
-  
-  novaOverlay: {
+
+  // Processing Level Color Overlay with Icon - Top Left (33x33)
+  processingLevelOverlay: {
     position: 'absolute',
-    top: theme.spacing.sm,
-    left: theme.spacing.sm,
-  },
-  
-  favoriteOverlay: {
-    position: 'absolute',
-    top: theme.spacing.sm,
-    right: theme.spacing.sm,
-    backgroundColor: '#FFFFFF', // var(--Neutral-white, #FFF)
-    borderRadius: 8, // var(--Spacing-8, 8px)
-    borderWidth: 1,
-    borderColor: '#E5E5E5', // var(--Neutral-200, #E5E5E5)
-    padding: theme.spacing.xs,
-    // Card Shadow from Figma
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  
-  contentContainer: {
-    padding: theme.spacing.sm,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.md,
-    flex: 1,
-  },
-  
-  foodName: {
-    ...theme.typography.cardTitle,
-    color: theme.colors.green[950],
-    marginBottom: theme.spacing.xs,
-  },
-  
-  metaContainer: {
-    gap: theme.spacing.xs,
-  },
-  
-  supermarketText: {
-    ...theme.typography.cardMeta,
-    color: theme.colors.neutral[500],
-    marginBottom: 2,
-  },
-  
-  ingredientText: {
-    ...theme.typography.cardMeta,
-    color: theme.colors.neutral[500],
-  },
-  
-  novaBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 1,
+    top: 0,
+    left: 0,
+    width: 33, // 44px reduced by 25% = 33px
+    height: 33, // 44px reduced by 25% = 33px
+    borderBottomRightRadius: 6, // Proportionally reduced from 8px
+    // Center the icon
     justifyContent: 'center',
     alignItems: 'center',
+    // Border for definition
+    borderRightWidth: 0.5,
+    borderBottomWidth: 0.5,
+    borderColor: 'rgba(0, 0, 0, 0.08)', // Subtle border for definition
+    // Shadow for depth and visibility (slightly reduced)
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 1.5,
     },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOpacity: 0.09, // Reduced from 0.12
+    shadowRadius: 3,
+    elevation: 2, // Android shadow (reduced from 3)
   },
-  
-  novaNumber: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    fontFamily: 'System',
+
+  // Favorite Button Overlay - Top Right (40x40)
+  favoriteOverlay: {
+    position: 'absolute',
+    top: 7.5, // Figma positioning
+    right: 7.5, // Figma positioning from right edge
+  },
+
+  favoriteGradientContainer: {
+    width: 40, // Figma 40px
+    height: 40, // Figma 40px
+    borderRadius: 300, // Fully rounded (pill-shaped)
+    borderWidth: 0.5,
+    borderColor: 'rgba(161, 153, 105, 0.3)', // Figma border color
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  favoriteGradientOverlay: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 300,
+    backgroundColor: '#FAFAFA', // Base background from gradient
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  contentContainer: {
+    padding: 8, // var(--spacing/8) from Figma
+    gap: 8, // var(--spacing/8) between elements
+  },
+
+  foodName: {
+    fontSize: 16, // var(--spacing/16) from Figma
+    fontWeight: '700', // Bold
+    lineHeight: 19, // 1.197 ratio
+    letterSpacing: -0.48,
+    color: '#171717', // var(--neutral/900)
+  },
+
+  ingredientText: {
+    fontSize: 12, // Figma CardMeta
+    fontWeight: '400', // Regular
+    lineHeight: 12, // Normal line-height
+    color: '#737373', // var(--neutral/500)
   },
 });
