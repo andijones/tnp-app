@@ -11,18 +11,21 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BarcodeScanningResult } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { Button } from '../../components/common/Button';
 import { supabase } from '../../services/supabase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchProductByBarcode, transformToFoodData, TransformedProduct } from '../../services/openFoodFacts';
 import { BarcodeProductResult } from '../../components/scanner/BarcodeProductResult';
+import { ScanCompleteScreen } from '../../components/scanner/ScanCompleteScreen';
 import { logger } from '../../utils/logger';
 import { FoodCelebration } from '../../components/common/FoodCelebration';
+import { addScanToHistory } from '../../services/scanHistoryService';
 
-type ScanMode = 'intro' | 'barcode' | 'barcodeResult';
+type ScanMode = 'intro' | 'barcode' | 'scanComplete' | 'barcodeResult';
 
 export const UnifiedScannerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -43,16 +46,39 @@ export const UnifiedScannerScreen: React.FC = () => {
   const [scanCooldown, setScanCooldown] = useState(false);
 
   const cameraRef = useRef<CameraView>(null);
+  const alertShowing = useRef(false);
 
   // Hide/show tab bar based on mode
   useEffect(() => {
-    const shouldHideTabBar = currentMode === 'barcode' || currentMode === 'barcodeResult';
+    const shouldHideTabBar = currentMode === 'barcode' || currentMode === 'scanComplete' || currentMode === 'barcodeResult';
     navigation.setParams({ hideTabBar: shouldHideTabBar } as any);
   }, [currentMode, navigation]);
 
+  // Track if we should reset on next focus
+  const shouldResetOnFocus = useRef(false);
+
+  // Reset scanner when screen comes back into focus (e.g., after navigating to ingredient scanner)
+  useFocusEffect(
+    React.useCallback(() => {
+      // When screen comes into focus
+      if (shouldResetOnFocus.current) {
+        logger.log('Screen refocused after navigation - resetting scanner');
+        resetScanner();
+        shouldResetOnFocus.current = false;
+      }
+
+      return () => {
+        // When screen loses focus, mark for reset if we're showing results
+        if (currentMode === 'scanComplete' || currentMode === 'barcodeResult') {
+          shouldResetOnFocus.current = true;
+        }
+      };
+    }, [])
+  );
+
   const handleBarcodeScanned = async ({ data: barcode }: BarcodeScanningResult) => {
-    // Prevent scanning same barcode multiple times
-    if (scanCooldown || barcode === lastScannedBarcode || !barcode) {
+    // Prevent scanning same barcode multiple times or while alert is showing
+    if (scanCooldown || barcode === lastScannedBarcode || !barcode || alertShowing.current) {
       return;
     }
 
@@ -82,13 +108,45 @@ export const UnifiedScannerScreen: React.FC = () => {
 
       if (existingFood) {
         logger.log('✅ Found in database:', existingFood.id);
+
         // Still fetch from Open Food Facts to show product details
         const offProduct = await fetchProductByBarcode(barcode);
         if (offProduct) {
           const transformed = transformToFoodData(offProduct);
           setBarcodeProduct(transformed);
           setExistingFoodId(existingFood.id);
-          setCurrentMode('barcodeResult');
+
+          // Haptic feedback based on processing level
+          if (transformed.novaGroup <= 3) {
+            // Non-UPF: Happy, cheerful, joyful feedback
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 150);
+            setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 300);
+            setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 450);
+          } else {
+            // UPF (NOVA 4): Negative, warning, dangerous feedback
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 200);
+            setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 400);
+            setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 550);
+          }
+
+          // Go to scan complete screen first, then auto-transition to results
+          setCurrentMode('scanComplete');
+
+          // Auto-transition to results after 2 seconds
+          setTimeout(() => {
+            setCurrentMode('barcodeResult');
+          }, 2000);
+
+          // Add to scan history
+          await addScanToHistory({
+            productName: transformed.name,
+            barcode: transformed.barcode,
+            novaGroup: transformed.novaGroup,
+            image: transformed.image,
+            scanType: 'barcode',
+          });
         } else {
           Alert.alert('Product Exists', 'This product is already in our database.');
           resetScanner();
@@ -115,9 +173,98 @@ export const UnifiedScannerScreen: React.FC = () => {
       // Step 3: Transform and display
       const transformedProduct = transformToFoodData(product);
       logger.log('✅ Product found:', transformedProduct.name);
+
+      // Step 4: Check if product has ingredients - if not, redirect to ingredient scanner
+      if (!transformedProduct.ingredients || transformedProduct.ingredients.trim() === '') {
+        logger.log('⚠️ Product found but no ingredients - navigating to ingredient scanner');
+
+        // Check if alert is already showing
+        if (alertShowing.current) {
+          logger.log('Alert already showing, skipping duplicate');
+          setIsProcessing(false);
+          return;
+        }
+
+        // Mark alert as showing
+        alertShowing.current = true;
+
+        // Immediately reset state to prevent re-triggering
+        setIsProcessing(false);
+        setScannedBarcode(null);
+        setBarcodeProduct(null);
+        setExistingFoodId(null);
+
+        // Show alert
+        Alert.alert(
+          'No Ingredients Found',
+          'This product was found but has no ingredient list. Please scan the ingredients manually.',
+          [
+            {
+              text: 'Scan Ingredients',
+              onPress: () => {
+                alertShowing.current = false;
+                setLastScannedBarcode('');
+                setScanCooldown(false);
+                setCurrentMode('intro');
+
+                // Navigate to ingredient scanner
+                setTimeout(() => {
+                  const parentNav = navigation.getParent();
+                  if (parentNav) {
+                    (parentNav as any).navigate('IngredientScanner');
+                  }
+                }, 100);
+              }
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => {
+                alertShowing.current = false;
+                setLastScannedBarcode('');
+                setScanCooldown(false);
+                setCurrentMode('intro');
+              }
+            }
+          ]
+        );
+        return;
+      }
+
       setBarcodeProduct(transformedProduct);
       setExistingFoodId(null);
-      setCurrentMode('barcodeResult');
+
+      // Haptic feedback based on processing level
+      if (transformedProduct.novaGroup <= 3) {
+        // Non-UPF: Happy, cheerful, joyful feedback
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 150);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 300);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 450);
+      } else {
+        // UPF (NOVA 4): Negative, warning, dangerous feedback
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 200);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 400);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 550);
+      }
+
+      // Go to scan complete screen first, then auto-transition to results
+      setCurrentMode('scanComplete');
+
+      // Auto-transition to results after 2 seconds
+      setTimeout(() => {
+        setCurrentMode('barcodeResult');
+      }, 2000);
+
+      // Add to scan history
+      await addScanToHistory({
+        productName: transformedProduct.name,
+        barcode: transformedProduct.barcode,
+        novaGroup: transformedProduct.novaGroup,
+        image: transformedProduct.image,
+        scanType: 'barcode',
+      });
 
     } catch (error) {
       logger.error('❌ Barcode scan error:', error);
@@ -209,6 +356,7 @@ export const UnifiedScannerScreen: React.FC = () => {
   };
 
   const resetScanner = () => {
+    alertShowing.current = false;
     setCurrentMode('intro');
     setScannedBarcode(null);
     setBarcodeProduct(null);
@@ -284,6 +432,18 @@ export const UnifiedScannerScreen: React.FC = () => {
             >
               <Ionicons
                 name={torchEnabled ? 'flash' : ('flash-off' as any)}
+                size={24}
+                color="white"
+              />
+            </TouchableOpacity>
+
+            {/* Scan History Button */}
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => (navigation as any).navigate('ScanHistory')}
+            >
+              <Ionicons
+                name="time-outline"
                 size={24}
                 color="white"
               />
@@ -401,6 +561,17 @@ export const UnifiedScannerScreen: React.FC = () => {
     );
   };
 
+  const renderScanComplete = () => {
+    if (!barcodeProduct) return null;
+
+    return (
+      <ScanCompleteScreen
+        novaGroup={barcodeProduct.novaGroup as 1 | 2 | 3 | 4}
+        onCelebrationTrigger={() => setShowCelebration(true)}
+      />
+    );
+  };
+
   const renderBarcodeResult = () => {
     if (!barcodeProduct) return null;
 
@@ -421,6 +592,7 @@ export const UnifiedScannerScreen: React.FC = () => {
     <View style={[styles.safeArea, currentMode === 'intro' && { paddingTop: insets.top }]}>
       {currentMode === 'intro' && renderIntro()}
       {currentMode === 'barcode' && renderBarcodeScanner()}
+      {currentMode === 'scanComplete' && renderScanComplete()}
       {currentMode === 'barcodeResult' && renderBarcodeResult()}
 
       {/* Celebration Animation */}

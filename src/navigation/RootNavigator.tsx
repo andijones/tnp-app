@@ -15,6 +15,7 @@ import { AisleDetailView } from '../screens/aisles/AisleDetailScreen';
 import { FoodDetailScreen } from '../screens/food/FoodDetailScreen';
 import { UnifiedScannerScreen } from '../screens/scanner/UnifiedScannerScreen';
 import { IngredientScannerScreen } from '../screens/scanner/IngredientScannerScreen';
+import { ScanHistoryScreen } from '../screens/scanner/ScanHistoryScreen';
 import { SubmissionScreen } from '../screens/scanner/SubmissionScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { UserReviewsScreen } from '../screens/profile/UserReviewsScreen';
@@ -324,6 +325,10 @@ export function RootNavigator() {
       <Stack.Screen
         name="IngredientScanner"
         component={IngredientScannerScreen}
+      />
+      <Stack.Screen
+        name="ScanHistory"
+        component={ScanHistoryScreen}
       />
     </Stack.Navigator>
   );

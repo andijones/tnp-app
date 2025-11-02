@@ -4,6 +4,16 @@ This directory contains Supabase Edge Functions for The Naked Pantry app.
 
 ## Available Functions
 
+### ingredient-extractor
+
+Extracts text from ingredient list images using Google Cloud Vision API for the OCR scanner feature.
+
+**Requirements**:
+- Google Cloud Vision API key
+- Configure `GOOGLE_CLOUD_VISION_API_KEY` in Supabase Edge Function secrets
+
+**See**: `ingredient-extractor/README.md` for full setup instructions
+
 ### delete-account
 
 Handles secure account deletion with the following steps:

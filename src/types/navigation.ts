@@ -26,6 +26,7 @@ export type RootStackParamList = {
   UserContributions: { userId: string };
   Settings: undefined;
   IngredientScanner: undefined;
+  ScanHistory: undefined;
 };
 
 /**
