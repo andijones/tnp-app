@@ -28,8 +28,9 @@ export const FoodGrid = forwardRef<FlatList, FoodGridProps>(({
   refreshing,
 }, ref) => {
   const screenWidth = Dimensions.get('window').width;
-  const cardSpacing = theme.spacing.md;
-  const cardWidth = (screenWidth - (cardSpacing * 3)) / 2; // 2 columns with spacing
+  const horizontalSpacing = 16; // Horizontal padding on each side
+  const columnGap = 12; // Gap between columns (slightly less than vertical for better proportion)
+  const cardWidth = (screenWidth - (horizontalSpacing * 2) - columnGap) / 2; // 2 columns with spacing
 
   const renderFoodItem = ({ item }: { item: Food }) => (
     <View style={[styles.cardContainer, { width: cardWidth }]}>
@@ -62,16 +63,17 @@ export const FoodGrid = forwardRef<FlatList, FoodGridProps>(({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md, // Match horizontal spacing
+    paddingHorizontal: 16, // Consistent horizontal padding
+    paddingTop: 16, // Top padding
     paddingBottom: 120, // Extra padding for floating tab bar
   },
 
   row: {
     justifyContent: 'space-between',
+    gap: 12, // Explicit gap between columns for better control
   },
 
   cardContainer: {
-    marginBottom: theme.spacing.md,
+    marginBottom: 24, // Increased to 24px for better vertical breathing room
   },
 });

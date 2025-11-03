@@ -397,79 +397,38 @@ export const IngredientScannerScreen: React.FC = () => {
 
   // Render intro screen
   const renderIntro = () => (
-    <View style={styles.introContainer}>
-      <ScrollView
-        contentContainerStyle={styles.introScrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.contentWrapper}>
-          {/* Illustration Section - 70% */}
-          <View style={styles.illustrationSection}>
-            <View style={styles.largeIconContainer}>
-              <Ionicons name="document-text" size={80} color={theme.colors.green[500]} />
-            </View>
-            <Text style={styles.introTitle}>AI Ingredient Scanner</Text>
-            <Text style={styles.introSubtitle}>
-              Use AI to extract and analyze ingredients from food packages
-            </Text>
-          </View>
+    <SafeAreaView style={styles.introContainer}>
+      <View style={styles.centeredContent}>
+        {/* Product Image */}
+        <Image
+          source={require('../../../assets/Ingredients.png')}
+          style={styles.productImage}
+          resizeMode="contain"
+        />
 
-          {/* Instructions Section - 30% */}
-          <View style={styles.instructionsSection}>
-            <View style={styles.step}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="camera" size={20} color={theme.colors.green[950]} />
-              </View>
-              <View style={styles.stepTextContainer}>
-                <Text style={styles.stepTitle}>1. Capture Ingredients</Text>
-                <Text style={styles.stepDescription}>
-                  Take a clear photo of the ingredients list
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.step}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="sparkles" size={20} color={theme.colors.green[950]} />
-              </View>
-              <View style={styles.stepTextContainer}>
-                <Text style={styles.stepTitle}>2. AI Analysis</Text>
-                <Text style={styles.stepDescription}>
-                  Our AI extracts and classifies ingredients
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.step}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="checkmark-circle" size={20} color={theme.colors.green[950]} />
-              </View>
-              <View style={styles.stepTextContainer}>
-                <Text style={styles.stepTitle}>3. Review & Submit</Text>
-                <Text style={styles.stepDescription}>
-                  Confirm details and help build our database
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.startButton}
-              onPress={() => setCurrentStep('capture_ingredients')}
-            >
-              <Text style={styles.startButtonText}>Start AI Scan</Text>
-              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backButtonText}>Back to Barcode Scanner</Text>
-            </TouchableOpacity>
-          </View>
+        {/* Text Content */}
+        <View style={styles.textContent}>
+          <Text style={styles.introTitle}>Scan ingredients instead</Text>
+          <Text style={styles.introSubtitle}>
+            We couldn't find that barcode, but no worries, we can still help! Just point your camera at the ingredients list and snap a photo.
+          </Text>
         </View>
-      </ScrollView>
-    </View>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonGroup}>
+          <Button
+            title="Start AI Scan"
+            onPress={() => setCurrentStep('capture_ingredients')}
+            variant="secondary"
+          />
+          <Button
+            title="Return home"
+            onPress={() => navigation.goBack()}
+            variant="outline"
+          />
+        </View>
+      </View>
+    </SafeAreaView>
   );
 
   // Render camera screen
@@ -722,100 +681,47 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
 
-  // Intro screen styles
+  // Intro screen styles - New centered design
   introContainer: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  introScrollContent: {
-    flexGrow: 1,
-  },
-  contentWrapper: {
+  centeredContent: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
-  },
-  illustrationSection: {
-    flex: 0.7,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.md,
+    gap: 24, // var(--spacing/24) from Figma
   },
-  largeIconContainer: {
+  productImage: {
     width: 160,
     height: 160,
-    borderRadius: 80,
-    backgroundColor: theme.colors.green[50],
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+  },
+  textContent: {
+    width: 300, // Max width from Figma
+    gap: 8, // var(--spacing/8) from Figma
   },
   introTitle: {
-    ...theme.typography.title,
-    color: theme.colors.text.primary,
+    fontFamily: 'System',
+    fontSize: 22, // Heading2 from Figma
+    fontWeight: '700',
+    lineHeight: 28,
+    letterSpacing: -0.44,
+    color: '#262626', // var(--neutral/800)
     textAlign: 'center',
-    marginBottom: theme.spacing.sm,
   },
   introSubtitle: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
+    fontFamily: 'System',
+    fontSize: 15, // Body from Figma
+    fontWeight: '400',
+    lineHeight: 23,
+    letterSpacing: -0.15,
+    color: '#737373', // var(--neutral/500)
     textAlign: 'center',
-    paddingHorizontal: theme.spacing.lg,
   },
-  instructionsSection: {
-    flex: 0.3,
-    paddingVertical: theme.spacing.md,
-  },
-  step: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
-  },
-  stepIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.green[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: theme.spacing.sm,
-  },
-  stepTextContainer: {
-    flex: 1,
-  },
-  stepTitle: {
-    ...theme.typography.headline,
-    color: theme.colors.text.primary,
-    marginBottom: 4,
-  },
-  stepDescription: {
-    ...theme.typography.subtext,
-    color: theme.colors.text.secondary,
-  },
-  startButton: {
-    height: 56,
-    backgroundColor: theme.colors.green[500],
-    borderRadius: theme.borderRadius.full,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  startButtonText: {
-    ...theme.typography.headline,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginRight: theme.spacing.sm,
-  },
-  backButton: {
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.sm,
-  },
-  backButtonText: {
-    ...theme.typography.body,
-    color: theme.colors.green[950],
+  buttonGroup: {
+    width: 300, // Max width from Figma
+    gap: 16, // var(--spacing/16) from Figma
   },
 
   // Camera styles
