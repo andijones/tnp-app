@@ -21,11 +21,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { fetchProductByBarcode, transformToFoodData, TransformedProduct } from '../../services/openFoodFacts';
 import { BarcodeProductResult } from '../../components/scanner/BarcodeProductResult';
 import { ScanCompleteScreen } from '../../components/scanner/ScanCompleteScreen';
+import { ScanResultSheet } from '../../components/scanner/ScanResultSheet';
 import { logger } from '../../utils/logger';
 import { FoodCelebration } from '../../components/common/FoodCelebration';
 import { addScanToHistory } from '../../services/scanHistoryService';
+import type { Food } from '../../types';
 
-type ScanMode = 'intro' | 'barcode' | 'scanComplete' | 'barcodeResult';
+type ScanMode = 'intro' | 'barcode' | 'scanComplete' | 'results';
 
 export const UnifiedScannerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -37,6 +39,7 @@ export const UnifiedScannerScreen: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showResultSheet, setShowResultSheet] = useState(false);
 
   // Barcode scanning state
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
@@ -44,13 +47,14 @@ export const UnifiedScannerScreen: React.FC = () => {
   const [existingFoodId, setExistingFoodId] = useState<string | null>(null);
   const [lastScannedBarcode, setLastScannedBarcode] = useState<string>('');
   const [scanCooldown, setScanCooldown] = useState(false);
+  const [scannedFood, setScannedFood] = useState<Food | null>(null);
 
   const cameraRef = useRef<CameraView>(null);
   const alertShowing = useRef(false);
 
   // Hide/show tab bar based on mode
   useEffect(() => {
-    const shouldHideTabBar = currentMode === 'barcode' || currentMode === 'scanComplete' || currentMode === 'barcodeResult';
+    const shouldHideTabBar = currentMode === 'barcode' || currentMode === 'scanComplete' || currentMode === 'results';
     navigation.setParams({ hideTabBar: shouldHideTabBar } as any);
   }, [currentMode, navigation]);
 
@@ -69,7 +73,7 @@ export const UnifiedScannerScreen: React.FC = () => {
 
       return () => {
         // When screen loses focus, mark for reset if we're showing results
-        if (currentMode === 'scanComplete' || currentMode === 'barcodeResult') {
+        if (currentMode === 'scanComplete' || currentMode === 'results') {
           shouldResetOnFocus.current = true;
         }
       };
@@ -131,12 +135,34 @@ export const UnifiedScannerScreen: React.FC = () => {
             setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 550);
           }
 
-          // Go to scan complete screen first, then auto-transition to results
+          // Convert to Food object for the sheet
+          const foodData: Food = {
+            id: existingFood.id,
+            name: transformed.name,
+            image: transformed.image,
+            ingredients: transformed.ingredients,
+            nova_group: transformed.novaGroup as 1 | 2 | 3 | 4,
+            status: 'approved',
+            user_id: '',
+            created_at: new Date().toISOString(),
+            url: transformed.barcode,
+            supermarket: transformed.stores.length > 0 ? transformed.stores[0] : undefined,
+            nutrition_data: {
+              calories: transformed.nutritionData?.calories,
+              fat: transformed.nutritionData?.fat,
+              carbs: transformed.nutritionData?.carbs,
+              protein: transformed.nutritionData?.protein,
+            },
+          };
+          setScannedFood(foodData);
+
+          // Go to scan complete screen first, then auto-transition to results sheet
           setCurrentMode('scanComplete');
 
           // Auto-transition to results after 2 seconds
           setTimeout(() => {
-            setCurrentMode('barcodeResult');
+            setCurrentMode('results');
+            setShowResultSheet(true);
           }, 2000);
 
           // Add to scan history
@@ -234,6 +260,49 @@ export const UnifiedScannerScreen: React.FC = () => {
       setBarcodeProduct(transformedProduct);
       setExistingFoodId(null);
 
+      // Convert to Food object for the sheet - Map ALL fields from OpenFoodFacts
+      const foodData: Food = {
+        id: `scan-${Date.now()}`,
+        name: transformedProduct.name,
+        image: transformedProduct.image,
+        ingredients: transformedProduct.ingredients,
+        nova_group: transformedProduct.novaGroup as 1 | 2 | 3 | 4,
+        status: 'pending',
+        user_id: '',
+        created_at: new Date().toISOString(),
+        url: transformedProduct.barcode,
+        supermarket: transformedProduct.stores.length > 0 ? transformedProduct.stores[0] : undefined,
+        nutrition_data: {
+          // Core nutrition
+          calories: transformedProduct.nutrition?.calories,
+          fat: transformedProduct.nutrition?.fat,
+          carbs: transformedProduct.nutrition?.carbs,
+          protein: transformedProduct.nutrition?.protein,
+          // Extended nutrition
+          fiber: transformedProduct.nutrition?.fiber,
+          sugar: transformedProduct.nutrition?.sugar,
+          sodium: transformedProduct.nutrition?.sodium,
+          // Warnings and allergens
+          additives: transformedProduct.additives.length > 0
+            ? `${transformedProduct.additivesCount} additive${transformedProduct.additivesCount !== 1 ? 's' : ''}`
+            : undefined,
+          allergens: transformedProduct.allergens.length > 0
+            ? transformedProduct.allergens.join(', ')
+            : undefined,
+          palm_oil: transformedProduct.hasPalmOil || undefined,
+          // Dietary preferences
+          vegan: transformedProduct.isVegan,
+          vegetarian: transformedProduct.isVegetarian,
+          // Additional info
+          additional_info: [
+            transformedProduct.nutriScore ? `Nutri-Score: ${transformedProduct.nutriScore}` : null,
+            transformedProduct.ecoScore ? `Eco-Score: ${transformedProduct.ecoScore}` : null,
+            transformedProduct.labels.length > 0 ? transformedProduct.labels.join(', ') : null,
+          ].filter(Boolean).join(' • '),
+        },
+      };
+      setScannedFood(foodData);
+
       // Haptic feedback based on processing level
       if (transformedProduct.novaGroup <= 3) {
         // Non-UPF: Happy, cheerful, joyful feedback
@@ -249,12 +318,13 @@ export const UnifiedScannerScreen: React.FC = () => {
         setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 550);
       }
 
-      // Go to scan complete screen first, then auto-transition to results
+      // Go to scan complete screen first, then auto-transition to results sheet
       setCurrentMode('scanComplete');
 
       // Auto-transition to results after 2 seconds
       setTimeout(() => {
-        setCurrentMode('barcodeResult');
+        setCurrentMode('results');
+        setShowResultSheet(true);
       }, 2000);
 
       // Add to scan history
@@ -363,6 +433,23 @@ export const UnifiedScannerScreen: React.FC = () => {
     setExistingFoodId(null);
     setLastScannedBarcode('');
     setScanCooldown(false);
+    setScannedFood(null);
+    setShowResultSheet(false);
+  };
+
+  const handleSheetClose = () => {
+    setShowResultSheet(false);
+    setCurrentMode('intro');
+  };
+
+  const handleScanAnother = () => {
+    setShowResultSheet(false);
+    resetScanner();
+  };
+
+  const handleSheetReturnHome = () => {
+    setShowResultSheet(false);
+    navigation.goBack();
   };
 
   const renderIntro = () => {
@@ -572,28 +659,21 @@ export const UnifiedScannerScreen: React.FC = () => {
     );
   };
 
-  const renderBarcodeResult = () => {
-    if (!barcodeProduct) return null;
-
-    return (
-      <BarcodeProductResult
-        product={barcodeProduct}
-        onAddToDatabase={handleAddToDatabase}
-        onScanAnother={resetScanner}
-        onViewExisting={handleViewExisting}
-        onReturnHome={handleReturnHome}
-        existingFoodId={existingFoodId || undefined}
-        isSubmitting={isSubmitting}
-      />
-    );
-  };
-
   return (
     <View style={[styles.safeArea, currentMode === 'intro' && { paddingTop: insets.top }]}>
       {currentMode === 'intro' && renderIntro()}
       {currentMode === 'barcode' && renderBarcodeScanner()}
       {currentMode === 'scanComplete' && renderScanComplete()}
-      {currentMode === 'barcodeResult' && renderBarcodeResult()}
+      {currentMode === 'results' && renderIntro()}
+
+      {/* Scan Result Sheet */}
+      <ScanResultSheet
+        visible={showResultSheet}
+        food={scannedFood}
+        onClose={handleSheetClose}
+        onScanAnother={handleScanAnother}
+        onReturnHome={handleSheetReturnHome}
+      />
 
       {/* Celebration Animation */}
       {showCelebration && (

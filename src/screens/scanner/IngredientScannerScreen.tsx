@@ -22,19 +22,21 @@ import { Input } from '../../components/common/Input';
 import { ProcessingLevelCard } from '../../components/common/ProcessingLevelCard';
 import { FoodCelebration } from '../../components/common/FoodCelebration';
 import { ScanCompleteScreen } from '../../components/scanner/ScanCompleteScreen';
+import { ScanResultSheet } from '../../components/scanner/ScanResultSheet';
 import { supabase } from '../../services/supabase/config';
 import { classifyFoodByIngredients, type NovaClassificationResult } from '../../utils/enhancedNovaClassifier';
 import { useNavigation } from '@react-navigation/native';
 import { addScanToHistory } from '../../services/scanHistoryService';
 import { logger } from '../../utils/logger';
 
-type ScanStep = 'intro' | 'capture_ingredients' | 'processing' | 'scan_complete' | 'review' | 'capture_front' | 'submission';
+type ScanStep = 'intro' | 'capture_ingredients' | 'processing' | 'scan_complete' | 'results';
 
 interface ScanData {
   ingredientsImage: string;
   frontImage?: string;
   extractedText: string;
   classification: NovaClassificationResult;
+  foodData?: Food; // For displaying in the sheet
 }
 
 export const IngredientScannerScreen: React.FC = () => {
@@ -45,6 +47,7 @@ export const IngredientScannerScreen: React.FC = () => {
   const [flash, setFlash] = useState<'off' | 'on'>('off');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showResultSheet, setShowResultSheet] = useState(false);
 
   // Scan data
   const [scanData, setScanData] = useState<ScanData | null>(null);
@@ -207,19 +210,37 @@ export const IngredientScannerScreen: React.FC = () => {
           setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 550);
         }
 
+        // Create a Food object for the sheet
+        const scannedFood: Food = {
+          id: `scan-${Date.now()}`,
+          name: 'Scanned Product',
+          image: optimizedUri,
+          ingredients: extractedText,
+          nova_group: classification.nova_group as 1 | 2 | 3 | 4,
+          status: 'pending',
+          user_id: '',
+          created_at: new Date().toISOString(),
+          // Optional nutrition data from classification if available
+          nutrition_data: classification.nova_details ? {
+            additives: classification.nova_details.foundIndicators.join(', '),
+          } : undefined,
+        };
+
         // Store scan data
         setScanData({
           ingredientsImage: optimizedUri,
           extractedText,
           classification,
+          foodData: scannedFood,
         });
 
         // Move to scan complete step (shows celebration or warning)
         setCurrentStep('scan_complete');
 
-        // Auto-transition to review after 2 seconds
+        // Auto-transition to results sheet after 2 seconds
         setTimeout(() => {
-          setCurrentStep('review');
+          setCurrentStep('results');
+          setShowResultSheet(true);
         }, 2000);
       } else if (currentStep === 'capture_front') {
         // Optimize front image
@@ -370,9 +391,25 @@ export const IngredientScannerScreen: React.FC = () => {
   };
 
   const resetScanner = () => {
-    setCurrentStep('intro');
+    setCurrentStep('capture_ingredients');
     setScanData(null);
     setShowCelebration(false);
+    setShowResultSheet(false);
+  };
+
+  const handleSheetClose = () => {
+    setShowResultSheet(false);
+    setCurrentStep('capture_ingredients');
+  };
+
+  const handleScanAnother = () => {
+    setShowResultSheet(false);
+    resetScanner();
+  };
+
+  const handleReturnHome = () => {
+    setShowResultSheet(false);
+    navigation.goBack();
   };
 
   const getNovaColor = (novaGroup: number): string => {
@@ -660,10 +697,18 @@ export const IngredientScannerScreen: React.FC = () => {
     <View style={styles.container}>
       {currentStep === 'intro' && renderIntro()}
       {currentStep === 'capture_ingredients' && renderCamera()}
-      {currentStep === 'capture_front' && renderCamera()}
       {currentStep === 'processing' && renderProcessing()}
       {currentStep === 'scan_complete' && renderScanComplete()}
-      {currentStep === 'review' && renderReview()}
+      {currentStep === 'results' && renderCamera()}
+
+      {/* Scan Result Sheet */}
+      <ScanResultSheet
+        visible={showResultSheet}
+        food={scanData?.foodData || null}
+        onClose={handleSheetClose}
+        onScanAnother={handleScanAnother}
+        onReturnHome={handleReturnHome}
+      />
 
       {/* Celebration Animation (only for non-UPF foods) */}
       {showCelebration && (
